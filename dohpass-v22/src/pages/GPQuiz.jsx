@@ -8,9 +8,8 @@ function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
 export default function GPQuiz() {
   const navigate = useNavigate()
-  const [systemMap, setSystemMap] = useState({})
+  const [systems, setSystems] = useState(['All'])
   const [activeSystem, setActiveSystem] = useState('All')
-  const [activeTopic, setActiveTopic] = useState('All')
   const [bank, setBank] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -24,24 +23,18 @@ export default function GPQuiz() {
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    fetchGPSystems().then(setSystemMap).catch(console.error)
+    fetchGPSystems().then(map => {
+      setSystems(['All', ...Object.keys(map)])
+    }).catch(console.error)
   }, [])
 
-  const systems = ['All', ...Object.keys(systemMap)]
-  const topics = activeSystem === 'All' ? [] : (systemMap[activeSystem] || [])
-
-  const loadQuestions = useCallback(async (system, topic) => {
+  const loadQuestions = useCallback(async (system) => {
     setLoading(true)
     setError(null)
     try {
-      let data
-      if (system === 'All') {
-        data = await fetchGPQuestions(null)
-      } else if (topic === 'All') {
-        data = await fetchGPQuestionsBySystem(system)
-      } else {
-        data = await fetchGPQuestions(topic)
-      }
+      const data = system === 'All'
+        ? await fetchGPQuestions(null)
+        : await fetchGPQuestionsBySystem(system)
       setBank(shuffle(data))
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
@@ -52,12 +45,7 @@ export default function GPQuiz() {
     }
   }, [])
 
-  useEffect(() => { loadQuestions(activeSystem, activeTopic) }, [activeSystem, activeTopic, loadQuestions])
-
-  function handleSystemSelect(sys) {
-    setActiveSystem(sys)
-    setActiveTopic('All')
-  }
+  useEffect(() => { loadQuestions(activeSystem) }, [activeSystem, loadQuestions])
 
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
@@ -102,33 +90,17 @@ export default function GPQuiz() {
           <div className="quiz-title blue">General Practitioner</div>
         </div>
 
-        {/* System row */}
-        <div className="topics" style={{ marginBottom: '8px' }}>
+        <div className="topics">
           {systems.map(s => (
             <button
               key={s}
               className={`topic-btn blue${activeSystem === s ? ' active' : ''}`}
-              onClick={() => handleSystemSelect(s)}
+              onClick={() => setActiveSystem(s)}
             >
               {s}
             </button>
           ))}
         </div>
-
-        {/* Topic row — only shows when a system is selected */}
-        {activeSystem !== 'All' && topics.length > 0 && (
-          <div className="topics">
-            {topics.map(t => (
-              <button
-                key={t}
-                className={`topic-btn blue${activeTopic === t ? ' active' : ''}`}
-                onClick={() => setActiveTopic(t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
 
         {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
         {error && <div className="loading error">{error}</div>}
@@ -155,7 +127,7 @@ export default function GPQuiz() {
         )}
 
         {!loading && !error && bank.length === 0 && (
-          <div className="loading">No questions found for this topic.</div>
+          <div className="loading">No questions found for this system.</div>
         )}
       </div>
     </>

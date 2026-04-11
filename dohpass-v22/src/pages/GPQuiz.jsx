@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchGPQuestions, fetchGPTopics } from '../lib/supabase'
+import { fetchGPQuestions, fetchGPSystems, fetchGPQuestionsBySystem } from '../lib/supabase'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 
@@ -8,7 +8,8 @@ function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
 export default function GPQuiz() {
   const navigate = useNavigate()
-  const [topics, setTopics] = useState(['All'])
+  const [systemMap, setSystemMap] = useState({})
+  const [activeSystem, setActiveSystem] = useState('All')
   const [activeTopic, setActiveTopic] = useState('All')
   const [bank, setBank] = useState([])
   const [loading, setLoading] = useState(true)
@@ -23,14 +24,24 @@ export default function GPQuiz() {
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    fetchGPTopics().then(setTopics).catch(console.error)
+    fetchGPSystems().then(setSystemMap).catch(console.error)
   }, [])
 
-  const loadQuestions = useCallback(async (topic) => {
+  const systems = ['All', ...Object.keys(systemMap)]
+  const topics = activeSystem === 'All' ? [] : (systemMap[activeSystem] || [])
+
+  const loadQuestions = useCallback(async (system, topic) => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchGPQuestions(topic === 'All' ? null : topic)
+      let data
+      if (system === 'All') {
+        data = await fetchGPQuestions(null)
+      } else if (topic === 'All') {
+        data = await fetchGPQuestionsBySystem(system)
+      } else {
+        data = await fetchGPQuestions(topic)
+      }
       setBank(shuffle(data))
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
@@ -41,7 +52,12 @@ export default function GPQuiz() {
     }
   }, [])
 
-  useEffect(() => { loadQuestions(activeTopic) }, [activeTopic, loadQuestions])
+  useEffect(() => { loadQuestions(activeSystem, activeTopic) }, [activeSystem, activeTopic, loadQuestions])
+
+  function handleSystemSelect(sys) {
+    setActiveSystem(sys)
+    setActiveTopic('All')
+  }
 
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
@@ -86,17 +102,33 @@ export default function GPQuiz() {
           <div className="quiz-title blue">General Practitioner</div>
         </div>
 
-        <div className="topics">
-          {topics.map(t => (
+        {/* System row */}
+        <div className="topics" style={{ marginBottom: '8px' }}>
+          {systems.map(s => (
             <button
-              key={t}
-              className={`topic-btn blue${activeTopic === t ? ' active' : ''}`}
-              onClick={() => setActiveTopic(t)}
+              key={s}
+              className={`topic-btn blue${activeSystem === s ? ' active' : ''}`}
+              onClick={() => handleSystemSelect(s)}
             >
-              {t}
+              {s}
             </button>
           ))}
         </div>
+
+        {/* Topic row — only shows when a system is selected */}
+        {activeSystem !== 'All' && topics.length > 0 && (
+          <div className="topics">
+            {topics.map(t => (
+              <button
+                key={t}
+                className={`topic-btn blue${activeTopic === t ? ' active' : ''}`}
+                onClick={() => setActiveTopic(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
         {error && <div className="loading error">{error}</div>}

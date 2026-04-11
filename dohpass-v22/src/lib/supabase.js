@@ -46,3 +46,33 @@ export async function fetchGPTopics() {
   const unique = ['All', ...new Set(data.map(r => r.topic).filter(Boolean).sort())]
   return unique
 }
+export async function fetchGPSystems() {
+  const { data, error } = await supabase
+    .from('gp_questions')
+    .select('broad_topic, topic')
+    .limit(2000)
+  if (error) throw error
+  
+  const systemMap = {}
+  data.forEach(r => {
+    if (!r.broad_topic || !r.topic) return
+    if (!systemMap[r.broad_topic]) systemMap[r.broad_topic] = new Set()
+    systemMap[r.broad_topic].add(r.topic)
+  })
+  
+  const result = {}
+  Object.keys(systemMap).sort().forEach(sys => {
+    result[sys] = ['All', ...Array.from(systemMap[sys]).sort()]
+  })
+  return result
+}
+
+export async function fetchGPQuestionsBySystem(broadTopic) {
+  const { data, error } = await supabase
+    .from('gp_questions')
+    .select('id, topic, subtopic, q, options, answer, explanation')
+    .eq('broad_topic', broadTopic)
+    .limit(2000)
+  if (error) throw error
+  return data
+}

@@ -5,6 +5,8 @@ import Home from './pages/Home.jsx'
 import SpecialistQuiz from './pages/SpecialistQuiz.jsx'
 import GPQuiz from './pages/GPQuiz.jsx'
 import AuthPage from './pages/AuthPage.jsx'
+import FlashcardsHome from './pages/FlashcardsHome.jsx'
+import FlashcardsTrack from './pages/FlashcardsTrack.jsx'
 import FlashcardSystem from './components/FlashcardSystem.jsx'
 
 function ProtectedRoute({ user, children }) {
@@ -33,14 +35,9 @@ export default function App() {
         <Route path='/' element={<ProtectedRoute user={user}><Home /></ProtectedRoute>} />
         <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
         <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />
-        <Route
-          path='/flashcards/:system'
-          element={
-            <ProtectedRoute user={user}>
-              <FlashcardSystem userId={user?.id} />
-            </ProtectedRoute>
-          }
-        />
+        <Route path='/flashcards' element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
+        <Route path='/flashcards/:track' element={<ProtectedRoute user={user}><FlashcardsTrack /></ProtectedRoute>} />
+        <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

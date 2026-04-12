@@ -39,10 +39,10 @@ Deno.serve(async (req) => {
         });
 
         const claudeData = await claudeRes.json();
-        const flashcards = JSON.parse(claudeData.content[0].text.trim());
+        const parsedCards = JSON.parse(claudeData.content[0].text.trim());
 
         const rows = [];
-        for (const f of flashcards) {
+        for (const f of parsedCards) {
           rows.push({
             system: "Internal Medicine",
             track: "Specialist",

@@ -34,12 +34,16 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 2000,
-            messages: [{ role: "user", content: `Generate exactly 5 flashcards for UAE DOH exam on: ${subtopic}. Respond ONLY with JSON array: [{"card_type":"concept","front":"question","back":"answer","difficulty":"medium","tags":["tag"]}]` }],
+            messages: [{ role: "user", content: `Return ONLY a JSON array with exactly 5 objects. No explanation, no markdown, no backticks. Just the raw JSON array starting with [ and ending with ]. Topic: ${subtopic}. Each object: {"card_type":"concept","front":"question here","back":"answer here","difficulty":"medium","tags":["tag1"]}` }],
           }),
         });
 
         const claudeData = await claudeRes.json();
-        const parsedCards = JSON.parse(claudeData.content[0].text.trim());
+        let rawText = claudeData.content[0].text.trim();
+        if (rawText.startsWith("```")) {
+          rawText = rawText.replace(/```json?/g, "").replace(/```/g, "").trim();
+        }
+        const parsedCards = JSON.parse(rawText);
 
         const rows = [];
         for (const f of parsedCards) {

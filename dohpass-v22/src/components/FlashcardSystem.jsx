@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 // ─── SUPABASE CLIENT ──────────────────────────────────────────────────────────
@@ -172,7 +173,12 @@ function FilterTabs({ active, onChange }) {
 //   system     {string}  — "Neurology", "Cardiology", etc.
 //   userId     {string}  — from supabase auth (null = guest mode, progress not saved)
 //   onSwitchTab {fn}     — called with "questions" when user clicks that tab
-export default function FlashcardSystem({ system = "Neurology", userId = null, onSwitchTab }) {
+export default function FlashcardSystem({ userId = null, onSwitchTab }) {
+  const { system: systemParam } = useParams();
+  const navigate = useNavigate();
+  const system = systemParam
+    ? systemParam.charAt(0).toUpperCase() + systemParam.slice(1)
+    : "Neurology";
   const [activeTab,   setActiveTab]   = useState("flashcards");
   const [filter,      setFilter]      = useState("all");
   const [cards,       setCards]       = useState([]);
@@ -260,7 +266,10 @@ export default function FlashcardSystem({ system = "Neurology", userId = null, o
   const pct        = cards.length === 0 ? 0 : Math.round((knownCount / cards.length) * 100);
 
   const handleFilter  = (f) => { setFilter(f); setCurrentIdx(0); };
-  const handleTabSwitch = (tab) => { setActiveTab(tab); if (tab === "questions" && onSwitchTab) onSwitchTab(tab); };
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    if (tab === "questions") navigate("/specialist");
+  };
 
   // ─────────────────────────────────────────────────────────────
   return (

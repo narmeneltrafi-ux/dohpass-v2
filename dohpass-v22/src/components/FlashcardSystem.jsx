@@ -174,7 +174,7 @@ function FilterTabs({ active, onChange }) {
 //   userId     {string}  — from supabase auth (null = guest mode, progress not saved)
 //   onSwitchTab {fn}     — called with "questions" when user clicks that tab
 export default function FlashcardSystem({ userId = null, onSwitchTab }) {
-  const { system: systemParam } = useParams();
+  const { track, system: systemParam } = useParams();
   const navigate = useNavigate();
   const system = systemParam
     ? systemParam.charAt(0).toUpperCase() + systemParam.slice(1)
@@ -268,7 +268,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const handleFilter  = (f) => { setFilter(f); setCurrentIdx(0); };
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
-    if (tab === "questions") navigate("/specialist");
+    if (tab === 'questions') navigate('/' + (track || 'specialist'));
   };
 
   // ─────────────────────────────────────────────────────────────

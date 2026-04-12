@@ -21,6 +21,7 @@ export default function Home() {
           <p className="hero-sub">High-yield questions. Real exam format. UAE-focused.</p>
         </div>
         <div className="tracks">
+
           <div className="track-card gold-card" onClick={() => navigate('/specialist')}>
             <div className="track-icon">🏅</div>
             <div className="track-info">
@@ -41,15 +42,20 @@ export default function Home() {
             <div className="track-arrow">→</div>
           </div>
 
-          <div className="track-card" style={{background:'linear-gradient(135deg,#0F172A 0%,#1A2744 100%)',border:'1px solid rgba(79,195,247,0.25)',cursor:'pointer'}} onClick={() => navigate('/flashcards/neurology')}>
+          <div
+            className="track-card"
+            style={{background:'linear-gradient(135deg,#0F172A 0%,#1A2744 100%)',border:'1px solid rgba(79,195,247,0.25)',cursor:'pointer'}}
+            onClick={() => navigate('/flashcards')}
+          >
             <div className="track-icon">🗂</div>
             <div className="track-info">
               <h2 className="track-title" style={{color:'#4FC3F7'}}>Flashcards</h2>
-              <p className="track-desc">High-yield concept, drug & anatomy cards — by system</p>
+              <p className="track-desc">Concept, drug & anatomy cards — Specialist & GP tracks</p>
               <span className="track-badge" style={{background:'rgba(79,195,247,0.15)',color:'#4FC3F7',border:'1px solid rgba(79,195,247,0.3)'}}>Neurology Live</span>
             </div>
             <div className="track-arrow" style={{color:'#4FC3F7'}}>→</div>
           </div>
+
         </div>
       </div>
     </>

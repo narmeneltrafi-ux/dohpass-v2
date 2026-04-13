@@ -5,7 +5,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-// Fetches ALL rows from a table by paginating in chunks of 1000
+// Fetches ALL rows by paginating in chunks of 1000 (bypasses Supabase 1000-row cap)
 async function fetchAllRows(table, selectFields, filters = {}) {
   const PAGE_SIZE = 1000
   let allData = []
@@ -17,7 +17,6 @@ async function fetchAllRows(table, selectFields, filters = {}) {
       .select(selectFields)
       .range(from, from + PAGE_SIZE - 1)
 
-    // Apply any eq filters
     for (const [key, value] of Object.entries(filters)) {
       if (value !== null && value !== undefined) {
         query = query.eq(key, value)
@@ -29,42 +28,52 @@ async function fetchAllRows(table, selectFields, filters = {}) {
     if (!data || data.length === 0) break
 
     allData = allData.concat(data)
-
-    // If we got fewer rows than PAGE_SIZE, we've reached the end
     if (data.length < PAGE_SIZE) break
-
     from += PAGE_SIZE
   }
 
   return allData
 }
 
-export async function fetchSpecialistQuestions(topic = null) {
-  return fetchAllRows(
-    'specialist_questions',
-    'id, topic, subtopic, q, options, answer, explanation',
-    topic ? { topic } : {}
-  )
+// Extracts the primary specialty from e.g. "Cardiology / Endocrinology" → "Cardiology"
+function primaryTopic(topic) {
+  return (topic || '').split(/\/|,/)[0].trim()
 }
 
+// ── SPECIALIST ────────────────────────────────────────────────────────────────
+
+// Fetch all specialist questions; filter by primary specialty if topic is given
+export async function fetchSpecialistQuestions(topic = null) {
+  const data = await fetchAllRows(
+    'specialist_questions',
+    'id, topic, subtopic, q, options, answer, explanation'
+  )
+  if (!topic) return data
+  return data.filter(r => primaryTopic(r.topic) === topic)
+}
+
+// Returns clean deduplicated list of primary specialties only
 export async function fetchSpecialistTopics() {
   const data = await fetchAllRows('specialist_questions', 'topic')
-  const unique = ['All', ...new Set(data.map(r => r.topic).filter(Boolean).sort())]
-  return unique
+  const primaries = [...new Set(data.map(r => primaryTopic(r.topic)).filter(Boolean))].sort()
+  return ['All', ...primaries]
 }
 
+// ── GP ────────────────────────────────────────────────────────────────────────
+
 export async function fetchGPQuestions(topic = null) {
-  return fetchAllRows(
+  const data = await fetchAllRows(
     'gp_questions',
-    'id, topic, subtopic, q, options, answer, explanation',
-    topic ? { topic } : {}
+    'id, topic, subtopic, q, options, answer, explanation'
   )
+  if (!topic) return data
+  return data.filter(r => primaryTopic(r.topic) === topic)
 }
 
 export async function fetchGPTopics() {
   const data = await fetchAllRows('gp_questions', 'topic')
-  const unique = ['All', ...new Set(data.map(r => r.topic).filter(Boolean).sort())]
-  return unique
+  const primaries = [...new Set(data.map(r => primaryTopic(r.topic)).filter(Boolean))].sort()
+  return ['All', ...primaries]
 }
 
 export async function fetchGPSystems() {
@@ -72,9 +81,11 @@ export async function fetchGPSystems() {
 
   const systemMap = {}
   data.forEach(r => {
-    if (!r.broad_topic || !r.topic) return
+    if (!r.broad_topic) return
+    const primary = primaryTopic(r.topic)
+    if (!primary) return
     if (!systemMap[r.broad_topic]) systemMap[r.broad_topic] = new Set()
-    systemMap[r.broad_topic].add(r.topic)
+    systemMap[r.broad_topic].add(primary)
   })
 
   const result = {}

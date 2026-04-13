@@ -4,12 +4,18 @@ export default function QuestionCard({
 }) {
   if (!question) return null
   const options = question.options || []
-  const correctIdx = question.answer
-    ? question.options.findIndex(opt =>
-        opt.trim().toUpperCase().startsWith(question.answer.trim().toUpperCase() + '.')
-      )
-    : -1
+
+  const correctIdx = (() => {
+    if (!question.answer) return -1
+    const prefixMatch = question.options.findIndex(opt =>
+      opt.trim().toUpperCase().startsWith(question.answer.trim().toUpperCase() + '.')
+    )
+    if (prefixMatch !== -1) return prefixMatch
+    return question.answer.trim().toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0)
+  })()
+
   const accentColor = track === 'gold' ? 'var(--gold)' : 'var(--blue)'
+
   function getOptionClass(i) {
     let cls = 'option'
     if (!submitted) {
@@ -21,6 +27,7 @@ export default function QuestionCard({
     }
     return cls
   }
+
   return (
     <div className="card-wrap">
       <div className="progress-bar-wrap">

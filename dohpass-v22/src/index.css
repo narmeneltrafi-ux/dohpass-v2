@@ -444,3 +444,59 @@ nav {
   .question-text { font-size: 0.95rem; }
   .option { font-size: 0.85rem; padding: 0.75rem; }
 }
+/* ── SESSION PROGRESS (inside QuestionCard) ─────────────── */
+.session-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 1.25rem;
+}
+
+.session-progress-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.session-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.session-progress-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0.85;
+}
+
+/* ── SESSION PROGRESS (on Home track cards) ─────────────── */
+.home-progress-wrap {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.home-progress-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.home-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.home-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.9;
+}

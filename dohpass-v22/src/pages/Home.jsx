@@ -1,5 +1,40 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+
+function getSessionProgress(track) {
+  const raw = sessionStorage.getItem(`progress_${track}`)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+function TrackProgress({ track, accentColor, total }) {
+  const [progress, setProgress] = useState(null)
+
+  useEffect(() => {
+    const p = getSessionProgress(track)
+    setProgress(p)
+  }, [track])
+
+  if (!progress || progress.answered === 0) return null
+
+  const pct = Math.round((progress.answered / total) * 100)
+
+  return (
+    <div className="home-progress-wrap">
+      <div className="home-progress-bar">
+        <div
+          className="home-progress-fill"
+          style={{ width: `${pct}%`, background: accentColor }}
+        />
+      </div>
+      <div className="home-progress-label">
+        <span style={{ color: accentColor }}>{progress.answered} answered this session</span>
+        <span style={{ color: 'var(--text-muted)' }}>{pct}%</span>
+      </div>
+    </div>
+  )
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -28,6 +63,7 @@ export default function Home() {
               <h2 className="track-title">Internal Medicine Specialist</h2>
               <p className="track-desc">DOH Specialist track — Cardiology, Respiratory, Nephrology & more</p>
               <span className="track-badge gold">756 Questions</span>
+              <TrackProgress track="specialist" accentColor="var(--gold)" total={756} />
             </div>
             <div className="track-arrow">→</div>
           </div>
@@ -38,6 +74,7 @@ export default function Home() {
               <h2 className="track-title">General Practitioner</h2>
               <p className="track-desc">DOH GP track — broad primary care question bank</p>
               <span className="track-badge blue">988 Questions</span>
+              <TrackProgress track="gp" accentColor="var(--blue)" total={988} />
             </div>
             <div className="track-arrow">→</div>
           </div>

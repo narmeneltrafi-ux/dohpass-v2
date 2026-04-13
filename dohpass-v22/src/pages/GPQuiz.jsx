@@ -56,13 +56,20 @@ export default function GPQuiz() {
     const correctIdx = q.options.findIndex(opt =>
       opt.trim().toUpperCase().startsWith(q.answer.trim().toUpperCase() + '.')
     )
-    if (selected === correctIdx) {
+    const isCorrect = selected === correctIdx
+    if (isCorrect) {
       setCorrect(c => c + 1)
       setFeedback({ correct: true, msg: 'Correct ✓' })
     } else {
       setWrong(w => w + 1)
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })
     }
+    // Track session progress
+    const prev = JSON.parse(sessionStorage.getItem('progress_gp') || '{"answered":0,"correct":0}')
+    sessionStorage.setItem('progress_gp', JSON.stringify({
+      answered: prev.answered + 1,
+      correct: prev.correct + (isCorrect ? 1 : 0),
+    }))
   }
 
   function handleNext() {
@@ -72,6 +79,7 @@ export default function GPQuiz() {
   }
 
   function handleRestart() {
+    sessionStorage.removeItem('progress_gp')
     setBank(b => shuffle(b))
     setIndex(0); setCorrect(0); setWrong(0)
     setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)

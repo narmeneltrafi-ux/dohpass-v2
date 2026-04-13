@@ -15,6 +15,8 @@ export default function QuestionCard({
   })()
 
   const accentColor = track === 'gold' ? 'var(--gold)' : 'var(--blue)'
+  const answered = index + (submitted ? 1 : 0)
+  const pct = Math.round((answered / total) * 100)
 
   function getOptionClass(i) {
     let cls = 'option'
@@ -30,14 +32,34 @@ export default function QuestionCard({
 
   return (
     <div className="card-wrap">
+      {/* ── Progress bar ── */}
       <div className="progress-bar-wrap">
-        <div className="progress-bar-fill" style={{ width: `${((index + 1) / total) * 100}%`, background: accentColor }} />
+        <div
+          className="progress-bar-fill"
+          style={{ width: `${((index + 1) / total) * 100}%`, background: accentColor }}
+        />
       </div>
+
+      {/* ── Stats row ── */}
       <div className="stats-row">
         <span className="stat green">✓ {correct}</span>
         <span className="stat-center">{index + 1} / {total}</span>
         <span className="stat red">✗ {wrong}</span>
       </div>
+
+      {/* ── Session progress label ── */}
+      <div className="session-progress-row" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="session-progress-track">
+          <div
+            className="session-progress-fill"
+            style={{ width: `${pct}%`, background: accentColor }}
+          />
+        </div>
+        <span className="session-progress-label" style={{ color: accentColor }}>
+          {answered} answered &mdash; {pct}% complete
+        </span>
+      </div>
+
       {question.subtopic && (
         <div className="topic-tag" style={{ borderColor: accentColor, color: accentColor }}>
           {question.subtopic}
@@ -61,7 +83,12 @@ export default function QuestionCard({
       )}
       <div className="card-actions">
         {!submitted ? (
-          <button className="btn-primary" style={selectedOption !== null ? { background: accentColor } : {}} onClick={onSubmit} disabled={selectedOption === null}>
+          <button
+            className="btn-primary"
+            style={selectedOption !== null ? { background: accentColor } : {}}
+            onClick={onSubmit}
+            disabled={selectedOption === null}
+          >
             Submit
           </button>
         ) : (

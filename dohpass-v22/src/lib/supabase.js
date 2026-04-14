@@ -97,7 +97,7 @@ export async function saveProgress(track, questionId, isCorrect) {
     track,
     question_id: questionId,
     is_correct: isCorrect,
-  }, { onConflict: 'user_id,question_id' })
+  }, { onConflict: 'user_progress_user_id_question_id_key' })
 }
 
 export async function fetchProgress(track) {

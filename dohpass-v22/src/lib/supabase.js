@@ -92,12 +92,13 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
 export async function saveProgress(track, questionId, isCorrect) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  await supabase.from('user_progress').upsert({
+  const { error } = await supabase.from('user_progress').insert({
     user_id: user.id,
     track,
     question_id: questionId,
     is_correct: isCorrect,
-  }, { onConflict: 'user_progress_user_id_question_id_key' })
+  })
+  if (error) console.error('saveProgress error:', error.message)
 }
 
 export async function fetchProgress(track) {

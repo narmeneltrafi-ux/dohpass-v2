@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 // ─── SUPABASE CLIENT ──────────────────────────────────────────────────────────
-const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -169,16 +169,17 @@ function FilterTabs({ active, onChange }) {
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-// Props:
-//   system     {string}  — "Neurology", "Cardiology", etc.
-//   userId     {string}  — from supabase auth (null = guest mode, progress not saved)
-//   onSwitchTab {fn}     — called with "questions" when user clicks that tab
 export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const { track, system: systemParam } = useParams();
   const navigate = useNavigate();
+
+  // FIX: capitalize every word so "primary care" → "Primary Care"
   const system = systemParam
-    ? systemParam.charAt(0).toUpperCase() + systemParam.slice(1)
+    ? systemParam.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : "Neurology";
+
+  const trackLabel = track === 'gp' ? 'General Practitioner' : 'Internal Medicine';
+
   const [activeTab,   setActiveTab]   = useState("flashcards");
   const [filter,      setFilter]      = useState("all");
   const [cards,       setCards]       = useState([]);
@@ -230,14 +231,13 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
 
   // ── 3. TOGGLE KNOWN — optimistic + Supabase upsert ───────────
   const toggleKnown = useCallback(async (cardId, currentlyKnown) => {
-    // Optimistic update immediately
     setKnownIds(prev => {
       const next = new Set(prev);
       currentlyKnown ? next.delete(cardId) : next.add(cardId);
       return next;
     });
 
-    if (!userId) return; // guest — local state only
+    if (!userId) return;
 
     setSaving(true);
     const { error } = await supabase
@@ -248,7 +248,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       );
 
     if (error) {
-      // Revert on failure
       setKnownIds(prev => {
         const next = new Set(prev);
         currentlyKnown ? next.add(cardId) : next.delete(cardId);
@@ -265,7 +264,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const knownCount = cards.filter(c => knownIds.has(c.id)).length;
   const pct        = cards.length === 0 ? 0 : Math.round((knownCount / cards.length) * 100);
 
-  const handleFilter  = (f) => { setFilter(f); setCurrentIdx(0); };
+  const handleFilter    = (f) => { setFilter(f); setCurrentIdx(0); };
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
     if (tab === 'questions') navigate('/' + (track || 'specialist'));
@@ -286,7 +285,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
         <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / Internal Medicine / <span style={{ color: "#4FC3F7" }}>{system}</span>
+          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{system}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>

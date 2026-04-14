@@ -173,7 +173,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const { track, system: systemParam } = useParams();
   const navigate = useNavigate();
 
-  // FIX: capitalize every word so "primary care" → "Primary Care"
   const system = systemParam
     ? systemParam.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : "Neurology";
@@ -189,7 +188,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState(null);
 
-  // ── 1. FETCH CARDS FROM SUPABASE ─────────────────────────────
   useEffect(() => {
     async function fetchCards() {
       setLoading(true);
@@ -197,7 +195,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       const { data, error } = await supabase
         .from("flashcards")
         .select("*")
-        .eq("system", system)
+        .eq(track === 'gp' ? "track" : "system", track === 'gp' ? "GP" : system)
         .eq("is_active", true)
         .order("id", { ascending: true });
 
@@ -210,9 +208,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       setLoading(false);
     }
     fetchCards();
-  }, [system]);
+  }, [system, track]);
 
-  // ── 2. FETCH USER PROGRESS FROM SUPABASE ─────────────────────
   useEffect(() => {
     if (!userId || cards.length === 0) return;
     async function fetchProgress() {
@@ -229,7 +226,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
     fetchProgress();
   }, [userId, cards]);
 
-  // ── 3. TOGGLE KNOWN — optimistic + Supabase upsert ───────────
   const toggleKnown = useCallback(async (cardId, currentlyKnown) => {
     setKnownIds(prev => {
       const next = new Set(prev);
@@ -258,7 +254,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
     setSaving(false);
   }, [userId]);
 
-  // ── DERIVED ──────────────────────────────────────────────────
   const filtered   = filter === "all" ? cards : cards.filter(c => c.card_type === filter);
   const safeIdx    = Math.min(currentIdx, Math.max(0, filtered.length - 1));
   const knownCount = cards.filter(c => knownIds.has(c.id)).length;
@@ -270,7 +265,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
     if (tab === 'questions') navigate('/' + (track || 'specialist'));
   };
 
-  // ─────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", background: "#060E1A", fontFamily: "'IBM Plex Sans',sans-serif", color: "#E2E8F0" }}>
       <style>{`
@@ -285,11 +279,11 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
         <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{system}</span>
+          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{track === 'gp' ? 'GP Flashcards' : system}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{system}</h1>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{track === 'gp' ? 'General Practitioner' : system}</h1>
             <div style={{ fontSize: 12, color: "#475569", marginTop: 4, fontFamily: "'IBM Plex Mono',monospace" }}>
               {loading ? "Loading..." : `${cards.length} flashcards`}
               {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}
@@ -344,7 +338,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                 saving={saving}
               />
 
-              {/* NAV */}
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 {[
                   { label: "← Prev", disabled: safeIdx === 0, onClick: () => setCurrentIdx(i => Math.max(0, i - 1)), activeColor: "#94A3B8", activeBg: "rgba(30,41,59,1)" },
@@ -363,7 +356,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                 ))}
               </div>
 
-              {/* DECK MAP */}
               <div style={{ marginTop: 28 }}>
                 <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
                   Deck Overview

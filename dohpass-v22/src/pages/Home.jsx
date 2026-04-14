@@ -1,23 +1,17 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-
-function getSessionProgress(track) {
-  const raw = sessionStorage.getItem(`progress_${track}`)
-  if (!raw) return null
-  try { return JSON.parse(raw) } catch { return null }
-}
+import { supabase, fetchProgress } from '../lib/supabase'
 
 function TrackProgress({ track, accentColor, total }) {
   const [progress, setProgress] = useState(null)
 
   useEffect(() => {
-    const p = getSessionProgress(track)
-    setProgress(p)
+    fetchProgress(track).then(p => {
+      if (p && p.answered > 0) setProgress(p)
+    })
   }, [track])
 
   if (!progress || progress.answered === 0) return null
-
   const pct = Math.round((progress.answered / total) * 100)
 
   return (
@@ -29,7 +23,7 @@ function TrackProgress({ track, accentColor, total }) {
         />
       </div>
       <div className="home-progress-label">
-        <span style={{ color: accentColor }}>{progress.answered} answered this session</span>
+        <span style={{ color: accentColor }}>{progress.answered} answered</span>
         <span style={{ color: 'var(--text-muted)' }}>{pct}%</span>
       </div>
     </div>
@@ -56,7 +50,6 @@ export default function Home() {
           <p className="hero-sub">High-yield questions. Real exam format. UAE-focused.</p>
         </div>
         <div className="tracks">
-
           <div className="track-card gold-card" onClick={() => navigate('/specialist')}>
             <div className="track-icon">🏅</div>
             <div className="track-info">
@@ -67,7 +60,6 @@ export default function Home() {
             </div>
             <div className="track-arrow">→</div>
           </div>
-
           <div className="track-card blue-card" onClick={() => navigate('/gp')}>
             <div className="track-icon">🩺</div>
             <div className="track-info">
@@ -78,7 +70,6 @@ export default function Home() {
             </div>
             <div className="track-arrow">→</div>
           </div>
-
           <div
             className="track-card"
             style={{background:'linear-gradient(135deg,#0F172A 0%,#1A2744 100%)',border:'1px solid rgba(79,195,247,0.25)',cursor:'pointer'}}
@@ -92,7 +83,6 @@ export default function Home() {
             </div>
             <div className="track-arrow" style={{color:'#4FC3F7'}}>→</div>
           </div>
-
         </div>
       </div>
     </>

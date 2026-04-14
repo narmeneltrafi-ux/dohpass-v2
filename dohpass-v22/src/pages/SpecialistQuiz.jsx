@@ -1,10 +1,31 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchSpecialistQuestions, fetchSpecialistTopics, saveProgress } from '../lib/supabase'
+import { fetchSpecialistQuestions, fetchSpecialistTopics, saveProgress, getUserPlan } from '../lib/supabase'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 
+const FREE_LIMIT = 10
+const SESSION_KEY = 'dohpass_free_specialist'
+
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
+
+function PaywallGate() {
+  return (
+    <div className="paywall-wrap">
+      <div className="paywall-card">
+        <div className="paywall-icon">🔒</div>
+        <h2 className="paywall-title">Free limit reached</h2>
+        <p className="paywall-body">
+          You've answered {FREE_LIMIT} free questions this session.<br />
+          Upgrade for unlimited access to all questions.
+        </p>
+        <button className="btn-primary gold paywall-cta" disabled>
+          Upgrade to Unlimited — Coming Soon
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function SpecialistQuiz() {
   const navigate = useNavigate()
@@ -22,6 +43,16 @@ export default function SpecialistQuiz() {
   const [feedback, setFeedback] = useState(null)
   const [done, setDone] = useState(false)
 
+  // null = loading, true = paid, false = free
+  const [isPaid, setIsPaid] = useState(null)
+  const [sessionCount, setSessionCount] = useState(
+    () => parseInt(sessionStorage.getItem(SESSION_KEY) || '0', 10)
+  )
+
+  useEffect(() => {
+    getUserPlan().then(paid => setIsPaid(paid))
+  }, [])
+
   useEffect(() => {
     fetchSpecialistTopics().then(setTopics).catch(console.error)
   }, [])
@@ -34,7 +65,7 @@ export default function SpecialistQuiz() {
       setBank(shuffle(data))
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-    } catch (e) {
+    } catch {
       setError('Failed to load questions. Check your connection.')
     } finally {
       setLoading(false)
@@ -61,6 +92,10 @@ export default function SpecialistQuiz() {
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })
     }
     await saveProgress('specialist', q.id, isCorrect)
+
+    const newCount = sessionCount + 1
+    setSessionCount(newCount)
+    sessionStorage.setItem(SESSION_KEY, newCount)
   }
 
   function handleNext() {
@@ -74,6 +109,8 @@ export default function SpecialistQuiz() {
     setIndex(0); setCorrect(0); setWrong(0)
     setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
   }
+
+  const hitLimit = isPaid === false && sessionCount >= FREE_LIMIT
 
   return (
     <>
@@ -108,20 +145,22 @@ export default function SpecialistQuiz() {
         )}
 
         {!loading && !error && !done && bank.length > 0 && (
-          <QuestionCard
-            question={bank[index]}
-            index={index}
-            total={bank.length}
-            correct={correct}
-            wrong={wrong}
-            selectedOption={selected}
-            submitted={submitted}
-            onSelect={handleSelect}
-            onSubmit={handleSubmit}
-            onNext={handleNext}
-            feedback={feedback}
-            track="gold"
-          />
+          hitLimit
+            ? <PaywallGate />
+            : <QuestionCard
+                question={bank[index]}
+                index={index}
+                total={bank.length}
+                correct={correct}
+                wrong={wrong}
+                selectedOption={selected}
+                submitted={submitted}
+                onSelect={handleSelect}
+                onSubmit={handleSubmit}
+                onNext={handleNext}
+                feedback={feedback}
+                track="gold"
+              />
         )}
 
         {!loading && !error && bank.length === 0 && (

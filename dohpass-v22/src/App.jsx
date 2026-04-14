@@ -4,13 +4,13 @@ import { supabase } from './lib/supabase'
 import Home from './pages/Home.jsx'
 import SpecialistQuiz from './pages/SpecialistQuiz.jsx'
 import GPQuiz from './pages/GPQuiz.jsx'
-import AuthPage from './pages/AuthPage.jsx'
+import LoginPage from './pages/AuthPage.jsx'
 import FlashcardsHome from './pages/FlashcardsHome.jsx'
 import FlashcardsTrack from './pages/FlashcardsTrack.jsx'
 import FlashcardSystem from './components/FlashcardSystem.jsx'
 
 function ProtectedRoute({ user, children }) {
-  if (user === null) return <Navigate to='/auth' replace />
+  if (user === null) return <Navigate to='/login' replace />
   if (user === undefined) return null
   return children
 }
@@ -31,7 +31,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/auth' element={<AuthPage />} />
+        <Route path='/login' element={<LoginPage />} />
+        <Route path='/auth' element={<Navigate to='/login' replace />} />
         <Route path='/' element={<ProtectedRoute user={user}><Home /></ProtectedRoute>} />
         <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
         <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />

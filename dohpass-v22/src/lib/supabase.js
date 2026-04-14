@@ -101,6 +101,24 @@ export async function saveProgress(track, questionId, isCorrect) {
   if (error) console.error('saveProgress error:', error.message)
 }
 
+// Returns true if the current user has an active paid plan.
+// Requires a `profiles` table: id uuid PK (= auth.uid()), is_paid boolean default false
+export async function getUserPlan() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_paid')
+      .eq('id', user.id)
+      .single()
+    if (error || !data) return false
+    return data.is_paid === true
+  } catch {
+    return false
+  }
+}
+
 export async function fetchProgress(track) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { answered: 0, correct: 0 }

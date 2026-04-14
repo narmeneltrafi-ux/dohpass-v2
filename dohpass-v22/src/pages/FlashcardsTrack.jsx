@@ -23,6 +23,7 @@ const SYSTEM_ICONS = {
   'Paediatrics':      '👶',
   'Ophthalmology':    '👁️',
   'ENT':              '👂',
+  'Primary Care':     '🩺',
 }
 
 function getIcon(system) {
@@ -41,7 +42,7 @@ export default function FlashcardsTrack() {
   const trackLabel = isSpecialist ? 'Specialist' : 'General Practitioner'
   const accentColor = isSpecialist ? '#F59E0B' : '#4FC3F7'
   const accentBg = isSpecialist ? 'rgba(245,158,11,0.12)' : 'rgba(79,195,247,0.12)'
-  const trackValue = isSpecialist ? 'specialist' : 'gp'
+  const trackValue = isSpecialist ? 'Specialist' : 'GP'
 
   useEffect(() => {
     async function fetchSystems() {
@@ -51,7 +52,7 @@ export default function FlashcardsTrack() {
         const { data, error } = await supabase
           .from('flashcards')
           .select('system, card_type')
-          .eq('track', trackValue)
+          .ilike('track', trackValue)
           .eq('is_active', true)
 
         if (error) throw error

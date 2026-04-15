@@ -15,6 +15,7 @@ export default function QuestionCard({
   })()
 
   const accentColor = track === 'gold' ? 'var(--gold)' : 'var(--blue)'
+  const btnClass = `btn-primary ${track === 'blue' ? 'blue' : 'gold'}`
   const answered = index + (submitted ? 1 : 0)
   const pct = Math.round((answered / total) * 100)
 
@@ -32,7 +33,7 @@ export default function QuestionCard({
 
   return (
     <div className="card-wrap">
-      {/* ── Progress bar ── */}
+      {/* Progress bar */}
       <div className="progress-bar-wrap">
         <div
           className="progress-bar-fill"
@@ -40,14 +41,14 @@ export default function QuestionCard({
         />
       </div>
 
-      {/* ── Stats row ── */}
+      {/* Stats row */}
       <div className="stats-row">
         <span className="stat green">✓ {correct}</span>
         <span className="stat-center">{index + 1} / {total}</span>
         <span className="stat red">✗ {wrong}</span>
       </div>
 
-      {/* ── Session progress label ── */}
+      {/* Session progress */}
       <div className="session-progress-row" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="session-progress-track">
           <div
@@ -55,45 +56,59 @@ export default function QuestionCard({
             style={{ width: `${pct}%`, background: accentColor }}
           />
         </div>
-        <span className="session-progress-label" style={{ color: accentColor }}>
+        <span className="session-progress-label">
           {answered} answered &mdash; {pct}% complete
         </span>
       </div>
 
-      {question.subtopic && (
-        <div className="topic-tag" style={{ borderColor: accentColor, color: accentColor }}>
-          {question.subtopic}
-        </div>
-      )}
+      {/* Question */}
       <div className="question-box">
+        <div className="question-tags">
+          {question.subtopic && (
+            <span className={`topic-tag${track === 'blue' ? ' blue' : ''}`}>
+              {question.subtopic}
+            </span>
+          )}
+          {question.difficulty && (
+            <span className={`difficulty-tag ${question.difficulty}`}>
+              {question.difficulty}
+            </span>
+          )}
+        </div>
         <p className="question-text">{question.q}</p>
       </div>
+
+      {/* Options */}
       <div className="options-list">
         {options.map((opt, i) => (
           <button key={i} className={getOptionClass(i)} onClick={() => onSelect(i)} disabled={submitted}>
+            <span className="option-letter">{String.fromCharCode(65 + i)}</span>
             <span className="option-text">{opt}</span>
           </button>
         ))}
       </div>
+
+      {/* Explanation */}
       {submitted && (
         <div className={`explanation ${feedback?.correct ? 'expl-correct' : 'expl-incorrect'}`}>
           <strong>{feedback?.msg}</strong>
           {question.explanation && <p>{question.explanation}</p>}
         </div>
       )}
+
+      {/* Actions */}
       <div className="card-actions">
         {!submitted ? (
           <button
-            className="btn-primary"
-            style={selectedOption !== null ? { background: accentColor } : {}}
+            className={btnClass}
             onClick={onSubmit}
             disabled={selectedOption === null}
           >
-            Submit
+            Submit Answer
           </button>
         ) : (
-          <button className="btn-primary" style={{ background: accentColor }} onClick={onNext}>
-            {index + 1 >= total ? 'See Results' : 'Next →'}
+          <button className={btnClass} onClick={onNext}>
+            {index + 1 >= total ? 'View Results' : 'Next Question →'}
           </button>
         )}
       </div>

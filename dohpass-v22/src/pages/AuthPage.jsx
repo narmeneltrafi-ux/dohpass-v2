@@ -28,90 +28,53 @@ export default function AuthPage() {
     setLoading(false)
   }
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      background: 'var(--bg)'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        background: 'var(--card)',
-        borderRadius: '16px',
-        padding: '32px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
-        <div className="logo" style={{ textAlign: 'center', fontSize: '1.8rem', marginBottom: '8px' }}>
-          DOH<span>Pass</span>
-        </div>
+  function handleKey(e) {
+    if (e.key === 'Enter') handleSubmit()
+  }
 
-        <h2 style={{ textAlign: 'center', margin: 0, color: 'var(--text)' }}>
-          {mode === 'login' ? 'Sign In' : 'Create Account'}
-        </h2>
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-logo">DOH<span>Pass</span></div>
+        <p className="auth-title">
+          {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
+        </p>
 
         <input
           type="email"
-          placeholder="Email"
+          className="auth-input"
+          placeholder="Email address"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          style={{
-            padding: '12px 16px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            fontSize: '1rem'
-          }}
+          onKeyDown={handleKey}
+          autoComplete="email"
         />
 
         <input
           type="password"
+          className="auth-input"
           placeholder="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          style={{
-            padding: '12px 16px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            fontSize: '1rem'
-          }}
+          onKeyDown={handleKey}
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
         />
 
-        {error && <div style={{ color: '#f87171', fontSize: '0.9rem' }}>{error}</div>}
-        {message && <div style={{ color: '#4ade80', fontSize: '0.9rem' }}>{message}</div>}
+        {error && <div className="auth-error">{error}</div>}
+        {message && <div className="auth-success">{message}</div>}
 
-        <button
-          className="nav-cta"
-          onClick={handleSubmit}
-          disabled={loading}
-          style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-        >
-          {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Sign Up'}
+        <button className="auth-btn" onClick={handleSubmit} disabled={loading}>
+          {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
 
-        <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
+        <div className="auth-toggle">
           {mode === 'login' ? (
             <>Don't have an account?{' '}
-              <span
-                onClick={() => setMode('signup')}
-                style={{ color: 'var(--accent)', cursor: 'pointer' }}
-              >Sign Up</span>
+              <span className="auth-toggle-link" onClick={() => setMode('signup')}>Sign Up</span>
             </>
           ) : (
             <>Already have an account?{' '}
-              <span
-                onClick={() => setMode('login')}
-                style={{ color: 'var(--accent)', cursor: 'pointer' }}
-              >Sign In</span>
+              <span className="auth-toggle-link" onClick={() => setMode('login')}>Sign In</span>
             </>
           )}
         </div>

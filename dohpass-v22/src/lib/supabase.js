@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-const SUPABASE_URL = 'https://qvzvdwvyihwwiqlhgogq.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2enZkd3Z5aWh3d2lxbGhnb2dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzA5NTcsImV4cCI6MjA5MTI0Njk1N30.WSViWcjW_Q_ZaxNd4iNKZ5UvBXQDRtW4MfBiwC6rS7A'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 async function fetchAllRows(table, selectFields, filters = {}) {

@@ -46,6 +46,7 @@ export default function Home() {
       </nav>
       <div className="home-page">
         <div className="hero">
+          <div className="hero-eyebrow">UAE Medical Licensing</div>
           <h1 className="hero-title">DOH Exam Prep</h1>
           <p className="hero-sub">High-yield questions. Real exam format. UAE-focused.</p>
         </div>
@@ -70,18 +71,14 @@ export default function Home() {
             </div>
             <div className="track-arrow">→</div>
           </div>
-          <div
-            className="track-card"
-            style={{background:'linear-gradient(135deg,#0F172A 0%,#1A2744 100%)',border:'1px solid rgba(79,195,247,0.25)',cursor:'pointer'}}
-            onClick={() => navigate('/flashcards')}
-          >
+          <div className="track-card teal-card" onClick={() => navigate('/flashcards')}>
             <div className="track-icon">🗂</div>
             <div className="track-info">
-              <h2 className="track-title" style={{color:'#4FC3F7'}}>Flashcards</h2>
+              <h2 className="track-title teal">Flashcards</h2>
               <p className="track-desc">Concept, drug & anatomy cards — Specialist & GP tracks</p>
-              <span className="track-badge" style={{background:'rgba(79,195,247,0.15)',color:'#4FC3F7',border:'1px solid rgba(79,195,247,0.3)'}}>Neurology Live</span>
+              <span className="track-badge teal">Neurology Live</span>
             </div>
-            <div className="track-arrow" style={{color:'#4FC3F7'}}>→</div>
+            <div className="track-arrow">→</div>
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 export default function ResultsScreen({ correct, wrong, track, onRestart }) {
   const total = correct + wrong
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
-  const accentColor = track === 'gold' ? 'var(--gold)' : 'var(--blue)'
 
   function getMessage() {
     if (pct >= 80) return { emoji: '🏆', text: 'Excellent. DOH-ready.' }
@@ -10,6 +9,8 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
   }
 
   const { emoji, text } = getMessage()
+  const scoreClass = `score-pct ${track === 'gold' ? 'gold' : 'blue'}`
+  const btnClass = `btn-primary ${track === 'gold' ? 'gold' : 'blue'} results-restart`
 
   return (
     <div className="results-wrap">
@@ -19,7 +20,7 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
         <p className="results-subtitle">{text}</p>
 
         <div className="results-score">
-          <span className="score-pct" style={{ color: accentColor }}>{pct}%</span>
+          <span className={scoreClass}>{pct}%</span>
         </div>
 
         <div className="results-breakdown">
@@ -39,7 +40,7 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
           </div>
         </div>
 
-        <button className="btn-primary" style={{ background: accentColor, marginTop: '2rem', width: '100%' }} onClick={onRestart}>
+        <button className={btnClass} onClick={onRestart}>
           Restart Session
         </button>
       </div>

@@ -49,6 +49,13 @@ export default function Home() {
           <div className="hero-eyebrow">UAE Medical Licensing</div>
           <h1 className="hero-title">DOH Exam Prep</h1>
           <p className="hero-sub">High-yield questions. Real exam format. UAE-focused.</p>
+          <div className="hero-stats">
+            <span>1,744 Questions</span>
+            <span className="hero-stats-dot" />
+            <span>2 Exam Tracks</span>
+            <span className="hero-stats-dot" />
+            <span>UAE DOH Format</span>
+          </div>
         </div>
         <div className="tracks">
           <div className="track-card gold-card" onClick={() => navigate('/specialist')}>

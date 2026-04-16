@@ -1,68 +1,74 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase, getProfile, createCheckoutSession } from '../lib/supabase'
+import { supabase, getProfile, createCheckoutSession, fetchQuestionCounts } from '../lib/supabase'
 
-const PLANS = [
-  {
-    id: 'gp',
-    name: 'GP Plan',
-    price: '49',
-    currency: 'AED',
-    period: '/month',
-    priceId: 'price_1TMjzp9oYokhs2iDMYKAdc6c',
-    features: [
-      'Full GP question bank (988 questions)',
-      'Unlimited practice sessions',
-      'Progress tracking',
-      'Detailed explanations',
-    ],
-    variant: 'blue',
-    icon: '🩺',
-  },
-  {
-    id: 'specialist',
-    name: 'Specialist Plan',
-    price: '69',
-    currency: 'AED',
-    period: '/month',
-    priceId: 'price_1TMk0W9oYokhs2iDmzZxIyTh',
-    features: [
-      'Full Specialist question bank (756 questions)',
-      'Unlimited practice sessions',
-      'Progress tracking',
-      'Detailed explanations',
-    ],
-    variant: 'gold',
-    icon: '🏅',
-    popular: true,
-  },
-  {
-    id: 'all_access',
-    name: 'All Access',
-    price: '89',
-    currency: 'AED',
-    period: '/month',
-    priceId: 'price_1TMk1L9oYokhs2iDnwA0yLuX',
-    features: [
-      'Both GP & Specialist question banks',
-      'Unlimited practice sessions',
-      'Priority progress tracking',
-      'Flashcards included',
-      'All future content',
-    ],
-    variant: 'all',
-    icon: '👑',
-  },
-]
+function buildPlans(counts) {
+  return [
+    {
+      id: 'gp',
+      name: 'GP Plan',
+      price: '49',
+      currency: 'AED',
+      period: '/month',
+      priceId: 'price_1TMjzp9oYokhs2iDMYKAdc6c',
+      features: [
+        `Full GP question bank (${counts.gp.toLocaleString()} questions)`,
+        'Unlimited practice sessions',
+        'Progress tracking',
+        'Detailed explanations',
+      ],
+      variant: 'blue',
+      icon: '🩺',
+    },
+    {
+      id: 'specialist',
+      name: 'Specialist Plan',
+      price: '69',
+      currency: 'AED',
+      period: '/month',
+      priceId: 'price_1TMk0W9oYokhs2iDmzZxIyTh',
+      features: [
+        `Full Specialist question bank (${counts.specialist.toLocaleString()} questions)`,
+        'Unlimited practice sessions',
+        'Progress tracking',
+        'Detailed explanations',
+      ],
+      variant: 'gold',
+      icon: '🏅',
+      popular: true,
+    },
+    {
+      id: 'all_access',
+      name: 'All Access',
+      price: '89',
+      currency: 'AED',
+      period: '/month',
+      priceId: 'price_1TMk1L9oYokhs2iDnwA0yLuX',
+      features: [
+        'Both GP & Specialist question banks',
+        'Unlimited practice sessions',
+        'Priority progress tracking',
+        'Flashcards included',
+        'All future content',
+      ],
+      variant: 'all',
+      icon: '👑',
+    },
+  ]
+}
 
 export default function Pricing() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(null) // which plan is loading
+  const [counts, setCounts] = useState({ specialist: 0, gp: 0 })
 
   useEffect(() => {
     getProfile().then(setProfile)
+    fetchQuestionCounts().then(setCounts)
   }, [])
+
+  const PLANS = buildPlans(counts)
 
   async function handleSubscribe(plan) {
     setLoading(plan.id)

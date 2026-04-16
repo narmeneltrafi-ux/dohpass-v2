@@ -46,7 +46,7 @@ export default function App() {
         <Route path='/gems'       element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
         <Route path='/flashcards/:track' element={<ProtectedRoute user={user}><FlashcardsTrack /></ProtectedRoute>} />
         <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
-        <Route path='/pricing' element={<ProtectedRoute user={user}><Pricing /></ProtectedRoute>} />
+        <Route path='/pricing' element={<Pricing />} />
         <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

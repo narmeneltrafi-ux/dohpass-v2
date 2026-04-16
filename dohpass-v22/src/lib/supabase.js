@@ -92,8 +92,8 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
 
 export async function fetchQuestionCounts() {
   const [specialist, gp] = await Promise.all([
-    supabase.from('specialist_questions').select('id', { count: 'exact', head: true }),
-    supabase.from('gp_questions').select('id', { count: 'exact', head: true }),
+    supabase.from('specialist_questions').select('*', { count: 'exact', head: true }),
+    supabase.from('gp_questions').select('*', { count: 'exact', head: true }),
   ])
   return {
     specialist: specialist.count ?? 0,

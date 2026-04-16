@@ -1473,6 +1473,24 @@ nav {
 
 .aw-toggle-link:hover { color: var(--gold-light); }
 
+.aw-plans-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.aw-plans-link:hover {
+  color: var(--gold);
+}
+.aw-plans-link svg {
+  opacity: 0.7;
+}
+
 /* ─── PAYWALL ─────────────────────────────────────────────────── */
 .paywall-wrap { display: flex; justify-content: center; padding: 2rem 0; }
 

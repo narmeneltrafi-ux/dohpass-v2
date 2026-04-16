@@ -117,43 +117,25 @@ export default function SpecialistQuiz() {
 
   const hitLimit = isPaid === false && sessionCount >= FREE_LIMIT
 
-  const planLabel = plan === 'all_access' ? 'All Access'
-    : plan === 'specialist' ? 'Specialist'
-    : plan === 'gp' ? 'GP Plan'
-    : 'Free'
-  const planCls = plan === 'all_access' ? 'plan-badge--all'
-    : plan === 'specialist' ? 'plan-badge--gold'
-    : plan === 'gp' ? 'plan-badge--blue'
-    : 'plan-badge--free'
-
   return (
-    <>
-      <nav>
-        <div className="logo">DOH<span>Pass</span></div>
-        <div className="nav-right">
-          {plan !== null && (
-            <span className={`plan-badge ${planCls}`}>{planLabel}</span>
-          )}
-          <button className="nav-cta ghost" onClick={() => navigate('/')}>All Tracks</button>
-        </div>
-      </nav>
-
-      <div className="quiz-page">
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <div className="quiz-header">
           <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
           <div className="quiz-title gold">Internal Medicine Specialist</div>
         </div>
 
-        <div className="topics">
-          {topics.map(t => (
-            <button
-              key={t}
-              className={`topic-btn${activeTopic === t ? ' active' : ''}`}
-              onClick={() => setActiveTopic(t)}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="filter-pills-scroll">
+          <div className="filter-pills">
+            {topics.map(t => (
+              <button
+                key={t}
+                className={`filter-pill${activeTopic === t ? ' filter-pill--active' : ''} filter-pill--gold`}
+                onClick={() => setActiveTopic(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading && <div className="loading"><div className="spinner" />Loading questions...</div>}
@@ -186,6 +168,5 @@ export default function SpecialistQuiz() {
           <div className="loading">No questions found for this topic.</div>
         )}
       </div>
-    </>
   )
 }

@@ -121,43 +121,25 @@ export default function GPQuiz() {
 
   const hitLimit = isPaid === false && sessionCount >= FREE_LIMIT
 
-  const planLabel = plan === 'all_access' ? 'All Access'
-    : plan === 'specialist' ? 'Specialist'
-    : plan === 'gp' ? 'GP Plan'
-    : 'Free'
-  const planCls = plan === 'all_access' ? 'plan-badge--all'
-    : plan === 'specialist' ? 'plan-badge--gold'
-    : plan === 'gp' ? 'plan-badge--blue'
-    : 'plan-badge--free'
-
   return (
-    <>
-      <nav>
-        <div className="logo">DOH<span>Pass</span></div>
-        <div className="nav-right">
-          {plan !== null && (
-            <span className={`plan-badge ${planCls}`}>{planLabel}</span>
-          )}
-          <button className="nav-cta ghost" onClick={() => navigate('/')}>All Tracks</button>
-        </div>
-      </nav>
-
-      <div className="quiz-page">
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <div className="quiz-header">
           <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
           <div className="quiz-title blue">General Practitioner</div>
         </div>
 
-        <div className="topics">
-          {systems.map(s => (
-            <button
-              key={s}
-              className={`topic-btn blue${activeSystem === s ? ' active' : ''}`}
-              onClick={() => setActiveSystem(s)}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="filter-pills-scroll">
+          <div className="filter-pills">
+            {systems.map(s => (
+              <button
+                key={s}
+                className={`filter-pill${activeSystem === s ? ' filter-pill--active' : ''} filter-pill--blue`}
+                onClick={() => setActiveSystem(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
@@ -190,6 +172,5 @@ export default function GPQuiz() {
           <div className="loading">No questions found for this system.</div>
         )}
       </div>
-    </>
   )
 }

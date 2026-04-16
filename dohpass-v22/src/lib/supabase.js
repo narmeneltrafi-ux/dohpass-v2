@@ -27,8 +27,15 @@ async function fetchAllRows(table, selectFields, filters = {}) {
   return allData
 }
 
+/* ── Topic normalization ──────────────────────────────────────── */
+const TOPIC_ALIASES = {
+  'Respiratory': 'Respiratory Medicine',
+  // Add future merges here: 'OldName': 'CanonicalName'
+}
+
 export function primaryTopic(topic) {
-  return (topic || '').split(/\/|,/)[0].trim()
+  const raw = (topic || '').split(/\/|,/)[0].trim()
+  return TOPIC_ALIASES[raw] || raw
 }
 
 // ── SPECIALIST ────────────────────────────────────────────────────────────────

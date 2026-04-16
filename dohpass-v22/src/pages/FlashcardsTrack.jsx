@@ -80,13 +80,7 @@ export default function FlashcardsTrack() {
   }, [trackValue])
 
   return (
-    <>
-      <nav>
-        <div className="logo">DOH<span>Pass</span></div>
-        <button className="nav-cta ghost" onClick={() => navigate('/flashcards')}>← Flashcards</button>
-      </nav>
-
-      <div className="home-page">
+      <div className="home-page" style={{ paddingTop: '62px' }}>
         <div className="hero">
           <h1 className="hero-title" style={{color: accentColor}}>{trackLabel}</h1>
           <p className="hero-sub">Choose a system to start reviewing</p>
@@ -143,6 +137,5 @@ export default function FlashcardsTrack() {
 
         </div>
       </div>
-    </>
   )
 }

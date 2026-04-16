@@ -289,31 +289,16 @@ export default function MockExam() {
       : 'me-timer'
 
   return (
-    <div className="me">
+    <div className="me" style={{ paddingTop: '62px' }}>
       <div className="hw-orb hw-orb--1" />
       <div className="hw-orb hw-orb--2" />
 
-      {/* Nav */}
-      <nav className="hw-nav">
-        <div className="hw-nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <span className="hw-nav-cross"><IconCross /></span>
-          <span className="hw-nav-brand">DOH<span>Pass</span></span>
+      {/* Exam timer bar (only during active exam) */}
+      {phase === 'exam' && (
+        <div className="me-timer-bar">
+          <span className={timerClass}>{formatTime(timeRemaining)}</span>
         </div>
-        <div className="hw-nav-right">
-          {badge && <span className={`plan-badge ${badge.cls}`}>{badge.label}</span>}
-          {phase === 'exam' && (
-            <span className={timerClass}>{formatTime(timeRemaining)}</span>
-          )}
-          {phase !== 'exam' && (
-            <button className="pr-back" onClick={() => navigate('/')}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Home
-            </button>
-          )}
-        </div>
-      </nav>
+      )}
 
       <div className="me-page">
         {phase === 'select' && (

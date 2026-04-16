@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { supabase, fetchProgress, getProfile, fetchQuestionCounts } from '../lib/supabase'
+import { fetchProgress, getProfile, fetchQuestionCounts } from '../lib/supabase'
 
-/* ── 3-D tilt hook (from 21st.dev ExamTrackCard) ─────────────── */
+/* ── 3-D tilt hook ──────────────────────────────────────────────── */
 function useTilt() {
   const ref = useRef(null)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
@@ -14,8 +14,8 @@ function useTilt() {
       const el = ref.current
       if (!el) return
       const r = el.getBoundingClientRect()
-      const px = (e.clientX - r.left) / r.width   // 0–1
-      const py = (e.clientY - r.top)  / r.height  // 0–1
+      const px = (e.clientX - r.left) / r.width
+      const py = (e.clientY - r.top) / r.height
       setTilt({ x: (py - 0.5) * 14, y: (0.5 - px) * 14 })
     })
   }, [])
@@ -32,19 +32,6 @@ function useTilt() {
 const IconPulse = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-  </svg>
-)
-const IconCross = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
-const IconLogOut = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 )
 const IconHelpCircle = () => (
@@ -72,26 +59,32 @@ const IconArrow = () => (
   </svg>
 )
 
-/* ── Stat pill (21st.dev StatPill) ────────────────────────────── */
+/* ── Animated stat badge ────────────────────────────────────────── */
 const STAT_ICONS = {
   questions: <IconHelpCircle />,
   tracks:    <IconMonitor />,
   format:    <IconShield />,
 }
 
-function StatPill({ type, value, label }) {
+function AnimatedStatBadge({ type, value, label, delay }) {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+
   return (
-    <div className="sp">
-      <div className="sp-icon">{STAT_ICONS[type]}</div>
-      <div className="sp-text">
-        <span className="sp-val">{value}</span>
-        <span className="sp-lbl">{label}</span>
+    <div className={`hero-stat${visible ? ' hero-stat--visible' : ''}`} style={{ transitionDelay: `${delay}ms` }}>
+      <div className="hero-stat__icon">{STAT_ICONS[type]}</div>
+      <div className="hero-stat__text">
+        <span className="hero-stat__value">{value}</span>
+        <span className="hero-stat__label">{label}</span>
       </div>
     </div>
   )
 }
 
-/* ── Track card (21st.dev ExamTrackCard) ──────────────────────── */
+/* ── Track card (3D tilt) ────────────────────────────────────────── */
 function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, navigate }) {
   const { ref, tilt, onMove, onLeave } = useTilt()
   const [progress, setProgress] = useState(null)
@@ -114,14 +107,12 @@ function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, n
       onMouseLeave={onLeave}
       onClick={() => navigate(route)}
     >
-      {/* Gradient header (replaces image from 21st.dev) */}
       <div className={`tc-hd tc-hd--${variant}`}>
         <div className="tc-hd-icon">{icon}</div>
         <span className={`tc-hd-badge tc-hd-badge--${variant}`}>{badge}</span>
         <div className="tc-hd-shimmer" />
       </div>
 
-      {/* Content area */}
       <div className="tc-body">
         <h3 className="tc-title">{title}</h3>
         <p className="tc-desc">{desc}</p>
@@ -149,77 +140,28 @@ function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, n
         </button>
       </div>
 
-      {/* Hover glow */}
       <div className={`tc-glow tc-glow--${variant}`} />
     </div>
   )
 }
 
-/* ── Plan badge ───────────────────────────────────────────────── */
-function planInfo(profile) {
-  if (!profile) return null
-  const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist')) {
-    return { label: 'All Access', cls: 'plan-badge--all' }
-  }
-  if (plan === 'specialist') return { label: 'Specialist', cls: 'plan-badge--gold' }
-  if (plan === 'gp')         return { label: 'GP Plan',    cls: 'plan-badge--blue' }
-  return { label: 'Free',    cls: 'plan-badge--free' }
-}
-
 /* ── Page ─────────────────────────────────────────────────────── */
 export default function Home() {
   const navigate = useNavigate()
-  const [profile, setProfile] = useState(null)
   const [counts, setCounts] = useState({ specialist: 0, gp: 0 })
 
   useEffect(() => {
-    getProfile().then(setProfile)
     fetchQuestionCounts().then(setCounts)
   }, [])
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
-
-  const badge = planInfo(profile)
-
   return (
-    <div className="hw">
-      {/* Floating orbs — mirrors 21st.dev animated background */}
+    <div className="hw" style={{ paddingTop: '62px' }}>
+      {/* Floating orbs */}
       <div className="hw-orb hw-orb--1" />
       <div className="hw-orb hw-orb--2" />
       <div className="hw-orb hw-orb--3" />
 
-      {/* Nav */}
-      <nav className="hw-nav">
-        <div className="hw-nav-logo">
-          <span className="hw-nav-cross"><IconCross /></span>
-          <span className="hw-nav-brand">DOH<span>Pass</span></span>
-        </div>
-        <div className="hw-nav-right">
-          {badge && (
-            <span className={`plan-badge ${badge.cls}`}>{badge.label}</span>
-          )}
-          <button className="hw-nav-analytics" onClick={() => navigate('/analytics')}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 20V10M12 20V4M6 20v-6" />
-            </svg>
-            Analytics
-          </button>
-          {(!profile || profile.plan === 'free') && (
-            <button className="hw-nav-upgrade" onClick={() => navigate('/pricing')}>
-              Upgrade
-            </button>
-          )}
-          <button className="hw-nav-logout" onClick={handleLogout}>
-            <IconLogOut /> Log Out
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero */}
+      {/* Hero — Animated stat badges */}
       <div className="hw-hero">
         <div className="hw-eyebrow">
           <IconPulse />
@@ -236,10 +178,19 @@ export default function Home() {
           High-yield questions. Real exam format. UAE-focused.
         </p>
 
-        <div className="hw-stats">
-          <StatPill type="questions" value={(counts.specialist + counts.gp).toLocaleString()} label="Questions" />
-          <StatPill type="tracks"    value="2"     label="Exam Tracks" />
-          <StatPill type="format"    value="UAE"   label="DOH Format" />
+        <div className="hero-stats-row">
+          <AnimatedStatBadge type="questions" value={(counts.specialist + counts.gp).toLocaleString()} label="Questions" delay={200} />
+          <AnimatedStatBadge type="tracks"    value="2"     label="Exam Tracks" delay={400} />
+          <AnimatedStatBadge type="format"    value="UAE"   label="DOH Format" delay={600} />
+        </div>
+
+        <div className="hw-hero-ctas">
+          <button className="hw-hero-cta hw-hero-cta--primary" onClick={() => navigate('/specialist')}>
+            Start Specialist <IconArrow />
+          </button>
+          <button className="hw-hero-cta hw-hero-cta--secondary" onClick={() => navigate('/gp')}>
+            Start GP Track <IconArrow />
+          </button>
         </div>
       </div>
 
@@ -247,7 +198,6 @@ export default function Home() {
       <div className="hw-section">
         <h2 className="hw-section-title">Your Exam Tracks</h2>
         <div className="hw-grid">
-
           <TrackCard
             trackId="specialist"
             icon="🏅"
@@ -259,7 +209,6 @@ export default function Home() {
             route="/specialist"
             navigate={navigate}
           />
-
           <TrackCard
             trackId="gp"
             icon="🩺"
@@ -271,7 +220,6 @@ export default function Home() {
             route="/gp"
             navigate={navigate}
           />
-
           <TrackCard
             trackId={null}
             icon="🗂"
@@ -283,7 +231,6 @@ export default function Home() {
             route="/gems"
             navigate={navigate}
           />
-
         </div>
       </div>
 

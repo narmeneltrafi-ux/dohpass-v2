@@ -101,28 +101,10 @@ export default function Pricing() {
   const currentPlan = profile?.plan || 'free'
 
   return (
-    <div className="pr">
+    <div className="pr" style={{ paddingTop: '62px' }}>
       <div className="hw-orb hw-orb--1" />
       <div className="hw-orb hw-orb--2" />
       <div className="hw-orb hw-orb--3" />
-
-      <nav className="hw-nav">
-        <div className="hw-nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <span className="hw-nav-cross">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="9" y="2" width="6" height="20" rx="2" />
-              <rect x="2" y="9" width="20" height="6" rx="2" />
-            </svg>
-          </span>
-          <span className="hw-nav-brand">DOH<span>Pass</span></span>
-        </div>
-        <button className="pr-back" onClick={() => navigate('/')}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
-      </nav>
 
       <div className="pr-hero">
         <h1 className="pr-title">Choose Your Plan</h1>

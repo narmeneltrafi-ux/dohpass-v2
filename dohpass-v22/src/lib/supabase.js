@@ -88,6 +88,19 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
   )
 }
 
+// ── QUESTION COUNTS ──────────────────────────────────────────────────────────
+
+export async function fetchQuestionCounts() {
+  const [specialist, gp] = await Promise.all([
+    supabase.from('specialist_questions').select('id', { count: 'exact', head: true }),
+    supabase.from('gp_questions').select('id', { count: 'exact', head: true }),
+  ])
+  return {
+    specialist: specialist.count ?? 0,
+    gp: gp.count ?? 0,
+  }
+}
+
 // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────────
 
 export async function createCheckoutSession(priceId, userId, userEmail) {

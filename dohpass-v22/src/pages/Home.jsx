@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { supabase, fetchProgress, getProfile } from '../lib/supabase'
+import { supabase, fetchProgress, getProfile, fetchQuestionCounts } from '../lib/supabase'
 
 /* ── 3-D tilt hook (from 21st.dev ExamTrackCard) ─────────────── */
 function useTilt() {
@@ -171,8 +171,12 @@ function planInfo(profile) {
 export default function Home() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
+  const [counts, setCounts] = useState({ specialist: 0, gp: 0 })
 
-  useEffect(() => { getProfile().then(setProfile) }, [])
+  useEffect(() => {
+    getProfile().then(setProfile)
+    fetchQuestionCounts().then(setCounts)
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -227,7 +231,7 @@ export default function Home() {
         </p>
 
         <div className="hw-stats">
-          <StatPill type="questions" value="1,744" label="Questions" />
+          <StatPill type="questions" value={(counts.specialist + counts.gp).toLocaleString()} label="Questions" />
           <StatPill type="tracks"    value="2"     label="Exam Tracks" />
           <StatPill type="format"    value="UAE"   label="DOH Format" />
         </div>
@@ -243,9 +247,9 @@ export default function Home() {
             icon="🏅"
             title="Internal Medicine Specialist"
             desc="DOH Specialist track — Cardiology, Respiratory, Nephrology & more"
-            badge="756 Questions"
+            badge={`${counts.specialist.toLocaleString()} Questions`}
             variant="gold"
-            total={756}
+            total={counts.specialist}
             route="/specialist"
             navigate={navigate}
           />
@@ -255,9 +259,9 @@ export default function Home() {
             icon="🩺"
             title="General Practitioner"
             desc="DOH GP track — broad primary care question bank"
-            badge="988 Questions"
+            badge={`${counts.gp.toLocaleString()} Questions`}
             variant="blue"
-            total={988}
+            total={counts.gp}
             route="/gp"
             navigate={navigate}
           />

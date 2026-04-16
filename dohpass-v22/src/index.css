@@ -91,6 +91,117 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   SCREEN GUARD — Anti-screenshot protection
+   ═══════════════════════════════════════════════════════════════ */
+.screen-guard {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: filter 0.3s ease;
+}
+
+.screen-guard--blurred {
+  filter: blur(32px) brightness(0.3);
+  pointer-events: none;
+}
+
+.screen-guard__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 7, 14, 0.95);
+  backdrop-filter: blur(20px);
+  animation: guard-fadein 0.25s ease;
+}
+
+@keyframes guard-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.screen-guard__message {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.screen-guard__icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SESSION KICKED — Single-device enforcement overlay
+   ═══════════════════════════════════════════════════════════════ */
+.kicked-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 1.5rem;
+}
+
+.kicked-card {
+  background: var(--surface2);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow);
+}
+
+.kicked-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.kicked-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.kicked-body {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+
+.kicked-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 2rem;
+  background: var(--gold);
+  color: #0f1117;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kicked-btn:hover {
+  background: var(--gold-light);
+  box-shadow: 0 0 24px var(--gold-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    SITE HEADER (global sticky)
    ═══════════════════════════════════════════════════════════════ */
 .site-header {

@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase } from './lib/supabase'
+import { supabase, ensureProfile } from './lib/supabase'
 import Home from './pages/Home.jsx'
 import SpecialistQuiz from './pages/SpecialistQuiz.jsx'
 import GPQuiz from './pages/GPQuiz.jsx'
@@ -20,10 +20,14 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
+      const u = data.session?.user ?? null
+      setUser(u)
+      if (u) ensureProfile(u)
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      const u = session?.user ?? null
+      setUser(u)
+      if (event === 'SIGNED_IN' && u) ensureProfile(u)
     })
     return () => listener.subscription.unsubscribe()
   }, [])

@@ -88,6 +88,36 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
   )
 }
 
+// ── PROFILES ──────────────────────────────────────────────────────────────────
+
+// Upsert a profile row for the given user. Call once on sign-in.
+export async function ensureProfile(user) {
+  if (!user) return
+  const { error } = await supabase.from('profiles').upsert(
+    { id: user.id, email: user.email },
+    { onConflict: 'id', ignoreDuplicates: true }
+  )
+  if (error) console.error('ensureProfile error:', error.message)
+}
+
+// Returns the current user's profile: { plan, is_paid, email, full_name }
+// Returns null if unauthenticated or profiles table not yet available.
+export async function getProfile() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('plan, is_paid, email, full_name')
+      .eq('id', user.id)
+      .single()
+    if (error || !data) return null
+    return data
+  } catch {
+    return null
+  }
+}
+
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
 export async function saveProgress(track, questionId, isCorrect) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -102,21 +132,9 @@ export async function saveProgress(track, questionId, isCorrect) {
 }
 
 // Returns true if the current user has an active paid plan.
-// Requires a `profiles` table: id uuid PK (= auth.uid()), is_paid boolean default false
 export async function getUserPlan() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return false
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_paid')
-      .eq('id', user.id)
-      .single()
-    if (error || !data) return false
-    return data.is_paid === true
-  } catch {
-    return false
-  }
+  const profile = await getProfile()
+  return profile?.is_paid === true
 }
 
 export async function fetchProgress(track) {

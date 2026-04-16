@@ -143,6 +143,60 @@ nav {
   background: var(--gold-dim);
 }
 
+/* Right-side nav group (badge + button) */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Premium home nav right group */
+.hw-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ─── PLAN BADGE ──────────────────────────────────────────────── */
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.plan-badge--free {
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-med);
+}
+
+.plan-badge--gold {
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+}
+
+.plan-badge--blue {
+  color: var(--blue-light);
+  background: var(--blue-dim);
+  border: 1px solid var(--blue-border);
+}
+
+.plan-badge--all {
+  background: linear-gradient(135deg, var(--gold-dim), var(--blue-dim));
+  border: 1px solid var(--gold-border);
+  background-clip: padding-box;
+  /* Gold text with subtle shimmer */
+  color: var(--gold-light);
+}
+
 /* ─── HOME ────────────────────────────────────────────────────── */
 .home-page {
   max-width: 760px;

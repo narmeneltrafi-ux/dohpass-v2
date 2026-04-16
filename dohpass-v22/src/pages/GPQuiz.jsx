@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchGPQuestions, fetchGPSystems, fetchGPQuestionsBySystem, saveProgress, getUserPlan } from '../lib/supabase'
+import { fetchGPQuestions, fetchGPSystems, fetchGPQuestionsBySystem, saveProgress, getProfile } from '../lib/supabase'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 
@@ -45,12 +45,16 @@ export default function GPQuiz() {
 
   // null = loading, true = paid, false = free
   const [isPaid, setIsPaid] = useState(null)
+  const [plan, setPlan] = useState(null)
   const [sessionCount, setSessionCount] = useState(
     () => parseInt(sessionStorage.getItem(SESSION_KEY) || '0', 10)
   )
 
   useEffect(() => {
-    getUserPlan().then(paid => setIsPaid(paid))
+    getProfile().then(p => {
+      setIsPaid(p?.is_paid === true)
+      setPlan(p?.plan ?? 'free')
+    })
   }, [])
 
   useEffect(() => {
@@ -116,11 +120,25 @@ export default function GPQuiz() {
 
   const hitLimit = isPaid === false && sessionCount >= FREE_LIMIT
 
+  const planLabel = plan === 'all_access' ? 'All Access'
+    : plan === 'specialist' ? 'Specialist'
+    : plan === 'gp' ? 'GP Plan'
+    : 'Free'
+  const planCls = plan === 'all_access' ? 'plan-badge--all'
+    : plan === 'specialist' ? 'plan-badge--gold'
+    : plan === 'gp' ? 'plan-badge--blue'
+    : 'plan-badge--free'
+
   return (
     <>
       <nav>
         <div className="logo">DOH<span>Pass</span></div>
-        <button className="nav-cta ghost" onClick={() => navigate('/')}>All Tracks</button>
+        <div className="nav-right">
+          {plan !== null && (
+            <span className={`plan-badge ${planCls}`}>{planLabel}</span>
+          )}
+          <button className="nav-cta ghost" onClick={() => navigate('/')}>All Tracks</button>
+        </div>
       </nav>
 
       <div className="quiz-page">

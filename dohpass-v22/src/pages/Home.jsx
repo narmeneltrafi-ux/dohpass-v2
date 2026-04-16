@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { supabase, fetchProgress } from '../lib/supabase'
+import { supabase, fetchProgress, getProfile } from '../lib/supabase'
 
 /* ── 3-D tilt hook (from 21st.dev ExamTrackCard) ─────────────── */
 function useTilt() {
@@ -155,14 +155,31 @@ function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, n
   )
 }
 
+/* ── Plan badge ───────────────────────────────────────────────── */
+function planInfo(profile) {
+  if (!profile) return null
+  const { plan, is_paid } = profile
+  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist')) {
+    return { label: 'All Access', cls: 'plan-badge--all' }
+  }
+  if (plan === 'specialist') return { label: 'Specialist', cls: 'plan-badge--gold' }
+  if (plan === 'gp')         return { label: 'GP Plan',    cls: 'plan-badge--blue' }
+  return { label: 'Free',    cls: 'plan-badge--free' }
+}
+
 /* ── Page ─────────────────────────────────────────────────────── */
 export default function Home() {
   const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
+
+  useEffect(() => { getProfile().then(setProfile) }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     navigate('/login')
   }
+
+  const badge = planInfo(profile)
 
   return (
     <div className="hw">
@@ -177,9 +194,14 @@ export default function Home() {
           <span className="hw-nav-cross"><IconCross /></span>
           <span className="hw-nav-brand">DOH<span>Pass</span></span>
         </div>
-        <button className="hw-nav-logout" onClick={handleLogout}>
-          <IconLogOut /> Log Out
-        </button>
+        <div className="hw-nav-right">
+          {badge && (
+            <span className={`plan-badge ${badge.cls}`}>{badge.label}</span>
+          )}
+          <button className="hw-nav-logout" onClick={handleLogout}>
+            <IconLogOut /> Log Out
+          </button>
+        </div>
       </nav>
 
       {/* Hero */}

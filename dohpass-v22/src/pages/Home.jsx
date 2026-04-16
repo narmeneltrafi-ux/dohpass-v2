@@ -202,6 +202,12 @@ export default function Home() {
           {badge && (
             <span className={`plan-badge ${badge.cls}`}>{badge.label}</span>
           )}
+          <button className="hw-nav-analytics" onClick={() => navigate('/analytics')}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+            Analytics
+          </button>
           {(!profile || profile.plan === 'free') && (
             <button className="hw-nav-upgrade" onClick={() => navigate('/pricing')}>
               Upgrade
@@ -278,6 +284,19 @@ export default function Home() {
             navigate={navigate}
           />
 
+        </div>
+      </div>
+
+      {/* Mock Exam */}
+      <div className="hw-section">
+        <h2 className="hw-section-title">Mock Exam</h2>
+        <div className="hw-mock-banner" onClick={() => navigate('/mock-exam')}>
+          <span className="hw-mock-icon">📝</span>
+          <div className="hw-mock-text">
+            <h3>Timed Mock Exam</h3>
+            <p>100 questions, 150 minutes. Simulates the real DOH exam. Pass mark: 60%.</p>
+          </div>
+          <span className="hw-mock-arrow"><IconArrow /></span>
         </div>
       </div>
     </div>

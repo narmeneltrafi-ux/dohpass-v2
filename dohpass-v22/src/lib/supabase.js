@@ -27,7 +27,7 @@ async function fetchAllRows(table, selectFields, filters = {}) {
   return allData
 }
 
-function primaryTopic(topic) {
+export function primaryTopic(topic) {
   return (topic || '').split(/\/|,/)[0].trim()
 }
 
@@ -99,6 +99,22 @@ export async function fetchQuestionCounts() {
     specialist: specialist.count ?? 0,
     gp: gp.count ?? 0,
   }
+}
+
+// ── ANALYTICS ────────────────────────────────────────────────────────────────
+
+export async function fetchFullProgress(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  return fetchAllRows('user_progress', 'question_id, is_correct, created_at', {
+    user_id: user.id,
+    track,
+  })
+}
+
+export async function fetchAllQuestionsMinimal(track) {
+  const table = track === 'specialist' ? 'specialist_questions' : 'gp_questions'
+  return fetchAllRows(table, 'id, topic')
 }
 
 // ── STRIPE CHECKOUT ──────────────────────────────────────────────────────────

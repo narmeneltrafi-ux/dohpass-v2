@@ -10,6 +10,7 @@ const SESSION_KEY = 'dohpass_free_gp'
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
 function PaywallGate() {
+  const navigate = useNavigate()
   return (
     <div className="paywall-wrap">
       <div className="paywall-card">
@@ -19,8 +20,8 @@ function PaywallGate() {
           You've answered {FREE_LIMIT} free questions this session.<br />
           Upgrade for unlimited access to all questions.
         </p>
-        <button className="btn-primary blue paywall-cta" disabled>
-          Upgrade to Unlimited — Coming Soon
+        <button className="btn-primary blue paywall-cta" onClick={() => navigate('/pricing')}>
+          Upgrade to Unlimited
         </button>
       </div>
     </div>

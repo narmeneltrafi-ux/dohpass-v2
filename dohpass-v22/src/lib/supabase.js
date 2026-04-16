@@ -88,6 +88,16 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
   )
 }
 
+// ── STRIPE CHECKOUT ──────────────────────────────────────────────────────────
+
+export async function createCheckoutSession(priceId, userId, userEmail) {
+  const { data, error } = await supabase.functions.invoke('create-checkout', {
+    body: { priceId, userId, userEmail },
+  })
+  if (error) return { url: null, error: error.message }
+  return { url: data.url, error: null }
+}
+
 // ── PROFILES ──────────────────────────────────────────────────────────────────
 
 // Upsert a profile row for the given user. Call once on sign-in.

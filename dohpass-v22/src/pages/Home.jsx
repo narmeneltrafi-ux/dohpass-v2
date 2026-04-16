@@ -198,6 +198,11 @@ export default function Home() {
           {badge && (
             <span className={`plan-badge ${badge.cls}`}>{badge.label}</span>
           )}
+          {(!profile || profile.plan === 'free') && (
+            <button className="hw-nav-upgrade" onClick={() => navigate('/pricing')}>
+              Upgrade
+            </button>
+          )}
           <button className="hw-nav-logout" onClick={handleLogout}>
             <IconLogOut /> Log Out
           </button>

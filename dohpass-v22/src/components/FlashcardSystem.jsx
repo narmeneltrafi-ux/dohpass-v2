@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
-
-// ─── SUPABASE CLIENT ──────────────────────────────────────────────────────────
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from "../lib/supabase";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {

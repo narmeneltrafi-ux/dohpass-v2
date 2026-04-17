@@ -1,6 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase, ensureProfile } from './lib/supabase'
+import { supabase, ensureProfile, getProfile } from './lib/supabase'
 import { registerDeviceSession, startSessionPolling, stopSessionPolling, clearDeviceSession } from './lib/deviceSession'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
@@ -22,6 +22,39 @@ function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
   if (user === undefined) return null
   return children
+}
+
+function PaidRoute({ user, allowedPlans, children }) {
+  const [profile, setProfile] = useState(undefined)
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    getProfile().then(p => { if (!cancelled) setProfile(p ?? null) })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  if (user === null) return <Navigate to='/login' replace />
+  if (user === undefined) return null
+  if (profile === undefined) return null
+
+  if (!profile?.is_paid) return <Navigate to='/pricing' replace />
+
+  if (allowedPlans) {
+    const allowed = [...allowedPlans, 'all_access'].includes(profile.plan)
+    if (!allowed) return <Navigate to='/pricing' replace />
+  }
+
+  return children
+}
+
+function FlashcardsTrackGuard({ user, children }) {
+  const { track } = useParams()
+  const allowedPlans =
+    track === 'specialist' ? ['specialist'] :
+    track === 'gp' ? ['gp'] :
+    null
+  return <PaidRoute user={user} allowedPlans={allowedPlans}>{children}</PaidRoute>
 }
 
 /* ── ScreenGuard wrapper — only for content pages ─────────────── */
@@ -55,16 +88,16 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/login' element={<LoginPage />} />
           <Route path='/auth' element={<Navigate to='/login' replace />} />
           <Route path='/' element={<ProtectedRoute user={user}><Home /></ProtectedRoute>} />
-          <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
-          <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />
-          <Route path='/flashcards' element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
-          <Route path='/gems'       element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
-          <Route path='/flashcards/:track' element={<ProtectedRoute user={user}><FlashcardsTrack /></ProtectedRoute>} />
-          <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
+          <Route path='/specialist' element={<PaidRoute user={user} allowedPlans={['specialist']}><SpecialistQuiz /></PaidRoute>} />
+          <Route path='/gp' element={<PaidRoute user={user} allowedPlans={['gp']}><GPQuiz /></PaidRoute>} />
+          <Route path='/flashcards' element={<PaidRoute user={user}><FlashcardsHome /></PaidRoute>} />
+          <Route path='/gems'       element={<PaidRoute user={user}><FlashcardsHome /></PaidRoute>} />
+          <Route path='/flashcards/:track' element={<FlashcardsTrackGuard user={user}><FlashcardsTrack /></FlashcardsTrackGuard>} />
+          <Route path='/flashcards/:track/:system' element={<FlashcardsTrackGuard user={user}><FlashcardSystem userId={user?.id} /></FlashcardsTrackGuard>} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
-          <Route path='/analytics' element={<ProtectedRoute user={user}><Analytics /></ProtectedRoute>} />
-          <Route path='/mock-exam' element={<ProtectedRoute user={user}><MockExam /></ProtectedRoute>} />
+          <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
+          <Route path='/mock-exam' element={<PaidRoute user={user}><MockExam /></PaidRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

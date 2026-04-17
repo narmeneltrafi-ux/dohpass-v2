@@ -1,4 +1,4 @@
-import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
+import Stripe from "https://esm.sh/stripe@14?target=denonext";
 
 // Price ID → plan name mapping
 const PRICE_TO_PLAN: Record<string, string> = {
@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SB_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
 
-  const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
+  const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
 
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");

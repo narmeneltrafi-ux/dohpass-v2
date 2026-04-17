@@ -1,32 +1,49 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { getProfile } from '../lib/supabase'
 
+const POLL_INTERVAL_MS = 1500
+const MAX_ATTEMPTS = 14 // ~21s total
+
+const planLabel = {
+  gp: 'GP',
+  specialist: 'Specialist',
+  all_access: 'All Access',
+  free: 'Free',
+}
+
 export default function PaymentSuccess() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+
   const [profile, setProfile] = useState(null)
+  const [status, setStatus] = useState('polling') // 'polling' | 'active' | 'timeout'
 
   useEffect(() => {
-    // Poll profile a couple times in case webhook hasn't fired yet
+    let cancelled = false
     let attempts = 0
-    const check = async () => {
+
+    const tick = async () => {
+      if (cancelled) return
       const p = await getProfile()
-      if (p?.is_paid || attempts >= 5) {
-        setProfile(p)
+      if (cancelled) return
+      setProfile(p)
+      if (p?.is_paid) {
+        setStatus('active')
         return
       }
       attempts++
-      setTimeout(check, 2000)
+      if (attempts >= MAX_ATTEMPTS) {
+        setStatus('timeout')
+        return
+      }
+      setTimeout(tick, POLL_INTERVAL_MS)
     }
-    check()
-  }, [])
+    tick()
 
-  const planLabel = {
-    gp: 'GP Plan',
-    specialist: 'Specialist Plan',
-    all_access: 'All Access',
-    free: 'Free',
-  }
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className="ps">
@@ -36,17 +53,34 @@ export default function PaymentSuccess() {
       <div className="ps-card">
         <div className="ps-icon">✓</div>
         <h1 className="ps-title">Payment Successful!</h1>
-        <p className="ps-sub">
-          {profile?.is_paid
-            ? `You're now on the ${planLabel[profile.plan] || profile.plan} plan.`
-            : 'Processing your subscription...'}
-        </p>
-        {profile && !profile.is_paid && (
-          <p className="ps-note">This may take a moment. You can refresh or continue to the dashboard.</p>
+
+        {status === 'polling' && (
+          <p className="ps-sub">Processing your subscription...</p>
         )}
-        <button className="ps-cta" onClick={() => navigate('/')}>
+        {status === 'active' && (
+          <p className="ps-sub">
+            Subscription active! Plan: {planLabel[profile?.plan] || profile?.plan}
+          </p>
+        )}
+        {status === 'timeout' && (
+          <p className="ps-sub">
+            Payment received — if you don't see access in a minute, please refresh or contact support.
+          </p>
+        )}
+
+        <button
+          className="ps-cta"
+          onClick={() => navigate('/')}
+          disabled={status === 'polling'}
+        >
           Go to Dashboard
         </button>
+
+        {sessionId && (
+          <p className="ps-note" style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '1rem' }}>
+            Ref: {sessionId}
+          </p>
+        )}
       </div>
     </div>
   )

@@ -1,3 +1,5 @@
+import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
+
 export default function QuestionCard({
   question, index, total, correct, wrong,
   selectedOption, submitted, onSelect, onSubmit, onNext, feedback, track,
@@ -5,14 +7,8 @@ export default function QuestionCard({
   if (!question) return null
   const options = question.options || []
 
-  const correctIdx = (() => {
-    if (!question.answer) return -1
-    const prefixMatch = question.options.findIndex(opt =>
-      opt.trim().toUpperCase().startsWith(question.answer.trim().toUpperCase() + '.')
-    )
-    if (prefixMatch !== -1) return prefixMatch
-    return question.answer.trim().toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0)
-  })()
+  const correctIdx = resolveCorrectIndex(options, question.answer)
+  const dataIssue = submitted && correctIdx === -1
 
   const accentColor = track === 'gold' ? 'var(--gold)' : 'var(--blue)'
   const btnClass = `btn-primary ${track === 'blue' ? 'blue' : 'gold'}`
@@ -23,6 +19,8 @@ export default function QuestionCard({
     let cls = 'option'
     if (!submitted) {
       if (selectedOption === i) cls += ' selected'
+    } else if (dataIssue) {
+      cls += ' dimmed'
     } else {
       if (i === correctIdx) cls += ' correct'
       else if (i === selectedOption && i !== correctIdx) cls += ' incorrect'
@@ -92,7 +90,7 @@ export default function QuestionCard({
       {submitted && (
         <div className={`explanation ${feedback?.correct ? 'expl-correct' : 'expl-incorrect'}`}>
           <strong>{feedback?.msg}</strong>
-          {question.explanation && <p>{question.explanation}</p>}
+          {question.explanation && !feedback?.dataIssue && <p>{question.explanation}</p>}
         </div>
       )}
 

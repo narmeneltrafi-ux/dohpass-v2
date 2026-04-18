@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchSpecialistQuestions, fetchSpecialistTopics, saveProgress, getProfile } from '../lib/supabase'
+import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 
@@ -83,11 +84,19 @@ export default function SpecialistQuiz() {
 
   async function handleSubmit() {
     if (selected === null) return
-    setSubmitted(true)
     const q = bank[index]
-    const correctIdx = q.options.findIndex(opt =>
-      opt.trim().toUpperCase().startsWith(q.answer.trim().toUpperCase() + '.')
-    )
+    const correctIdx = resolveCorrectIndex(q.options, q.answer)
+    if (correctIdx === -1) {
+      console.error('Unresolvable answer for question', q.id, q.answer)
+      setSubmitted(true)
+      setFeedback({
+        correct: false,
+        dataIssue: true,
+        msg: 'This question has a data issue on our end — skipping it. Thanks for your patience.',
+      })
+      return
+    }
+    setSubmitted(true)
     const isCorrect = selected === correctIdx
     if (isCorrect) {
       setCorrect(c => c + 1)
@@ -96,6 +105,8 @@ export default function SpecialistQuiz() {
       setWrong(w => w + 1)
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })
     }
+    // TODO: backfill progress rows written during the
+    // handleSubmit/QuestionCard disagreement window — see [issue link].
     await saveProgress('specialist', q.id, isCorrect)
 
     const newCount = sessionCount + 1

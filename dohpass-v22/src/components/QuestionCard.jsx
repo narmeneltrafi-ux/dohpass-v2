@@ -73,13 +73,20 @@ export default function QuestionCard({
             </span>
           )}
         </div>
-        <p className="question-text">{question.q}</p>
+        <p className="question-text" data-testid="question-text">{question.q}</p>
       </div>
 
       {/* Options */}
       <div className="options-list">
         {options.map((opt, i) => (
-          <button key={i} className={getOptionClass(i)} onClick={() => onSelect(i)} disabled={submitted}>
+          <button
+            key={i}
+            className={getOptionClass(i)}
+            onClick={() => onSelect(i)}
+            disabled={submitted}
+            data-testid="option"
+            data-option-index={i}
+          >
             <span className="option-letter">{String.fromCharCode(65 + i)}</span>
             <span className="option-text">{opt}</span>
           </button>
@@ -88,7 +95,11 @@ export default function QuestionCard({
 
       {/* Explanation */}
       {submitted && (
-        <div className={`explanation ${feedback?.correct ? 'expl-correct' : 'expl-incorrect'}`}>
+        <div
+          className={`explanation ${feedback?.correct ? 'expl-correct' : 'expl-incorrect'}`}
+          data-testid="feedback"
+          data-feedback-correct={feedback?.correct ? 'true' : 'false'}
+        >
           <strong>{feedback?.msg}</strong>
           {question.explanation && !feedback?.dataIssue && <p>{question.explanation}</p>}
         </div>

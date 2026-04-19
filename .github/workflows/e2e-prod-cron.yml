@@ -1,0 +1,48 @@
+name: E2E (production smoke)
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-shared-user
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Playwright against production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dohpass-v22
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dohpass-v22/package-lock.json
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright
+        env:
+          E2E_BASE_URL: https://dohpass.com
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: npx playwright test
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-prod-${{ github.run_id }}
+          path: dohpass-v22/playwright-report
+          retention-days: 14

@@ -148,10 +148,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Stripe API 2025-02-24+ moved current_period_end from the Subscription
+    // root onto each subscription item; read from whichever is present so
+    // we survive either API version pinned on the webhook endpoint.
+    const subAny = sub as unknown as {
+      current_period_end?: number;
+      items?: { data?: Array<{ current_period_end?: number }> };
+    };
+    const currentPeriodEndUnix =
+      subAny.current_period_end ?? subAny.items?.data?.[0]?.current_period_end ?? null;
+    if (currentPeriodEndUnix === null) {
+      console.warn(
+        `customer.subscription.updated: no current_period_end found on sub=${sub.id} — leaving NULL`,
+      );
+    }
+
     const patch: ProfilePatch = {
       stripe_subscription_id: sub.id,
       stripe_price_id: priceId,
-      current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      current_period_end: currentPeriodEndUnix
+        ? new Date(currentPeriodEndUnix * 1000).toISOString()
+        : null,
       cancel_at_period_end: sub.cancel_at_period_end,
     };
 

@@ -101,9 +101,13 @@ Deno.serve(async (req) => {
       return new Response("No price ID", { status: 400 });
     }
 
-    const plan = PRICE_TO_PLAN[priceId] ?? null;
-    if (plan === null) {
-      console.warn(`checkout.session.completed: unknown priceId=${priceId} — plan left null`);
+    // profiles.plan is NOT NULL (default 'free'); an unmapped priceId falls
+    // back to 'free' to avoid violating the constraint on PATCH.
+    const plan = PRICE_TO_PLAN[priceId] ?? "free";
+    if (!(priceId in PRICE_TO_PLAN)) {
+      console.warn(
+        `checkout.session.completed: unknown priceId=${priceId} — defaulting plan='free'`,
+      );
     }
 
     const customerId =
@@ -141,10 +145,12 @@ Deno.serve(async (req) => {
     }
 
     const priceId = sub.items.data[0]?.price?.id ?? null;
-    const plan = priceId ? PRICE_TO_PLAN[priceId] ?? null : null;
-    if (priceId && plan === null) {
+    // profiles.plan is NOT NULL (default 'free'); default to 'free' whenever
+    // the lookup can't resolve (missing priceId or unmapped one).
+    const plan = priceId && PRICE_TO_PLAN[priceId] ? PRICE_TO_PLAN[priceId] : "free";
+    if (priceId && !(priceId in PRICE_TO_PLAN)) {
       console.warn(
-        `customer.subscription.updated: unknown priceId=${priceId} user=${userId}`,
+        `customer.subscription.updated: unknown priceId=${priceId} user=${userId} — defaulting plan='free'`,
       );
     }
 
@@ -192,14 +198,14 @@ Deno.serve(async (req) => {
       case "canceled":
       case "incomplete_expired":
         patch.is_paid = false;
-        patch.plan = null;
+        patch.plan = "free";
         break;
 
       case "incomplete":
       case "paused":
         // Payment not captured — no access.
         patch.is_paid = false;
-        patch.plan = null;
+        patch.plan = "free";
         break;
 
       default:
@@ -227,7 +233,7 @@ Deno.serve(async (req) => {
 
     await updateProfileById(userId, {
       is_paid: false,
-      plan: null,
+      plan: "free",
       stripe_subscription_id: null,
       stripe_price_id: null,
       current_period_end: null,

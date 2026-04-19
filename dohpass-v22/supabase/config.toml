@@ -1,2 +1,14 @@
 [functions.stripe-webhook]
 verify_jwt = false
+
+# create-checkout verifies the caller's JWT in-function via GoTrue
+# (supabase.auth.getUser) rather than at the gateway. Reason: the
+# Edge Functions gateway currently rejects both ES256
+# (UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM) and HS256
+# (UNAUTHORIZED_LEGACY_JWT) tokens on this project, leaving no
+# gateway-compatible algorithm. In-function verification calls
+# GoTrue directly, which accepts the current HS256 signing key.
+# See: https://github.com/narmeneltrafi-ux/dohpass-v2/issues (Supabase
+# support ticket pending).
+[functions.create-checkout]
+verify_jwt = false

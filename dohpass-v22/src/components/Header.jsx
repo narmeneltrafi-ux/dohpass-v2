@@ -118,7 +118,15 @@ export default function Header() {
           {isLoggedIn ? (
             <>
               {badge && (
-                <span className={`hdr-badge ${badge.cls}`}>{badge.label}</span>
+                <button
+                  type="button"
+                  className={`hdr-badge hdr-badge--link ${badge.cls}`}
+                  onClick={() => navigate('/account')}
+                  aria-label={`${badge.label} plan — open account`}
+                  title="Account"
+                >
+                  {badge.label}
+                </button>
               )}
               <button className="site-header__logout" onClick={handleLogout}>
                 <IconLogOut /> Log Out
@@ -164,8 +172,22 @@ export default function Header() {
           {isLoggedIn ? (
             <>
               {badge && (
-                <span className={`hdr-badge ${badge.cls}`} style={{ alignSelf: 'flex-start' }}>{badge.label}</span>
+                <button
+                  type="button"
+                  className={`hdr-badge hdr-badge--link ${badge.cls}`}
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => navigate('/account')}
+                  aria-label={`${badge.label} plan — open account`}
+                >
+                  {badge.label}
+                </button>
               )}
+              <button
+                className="site-header__mobile-link"
+                onClick={() => navigate('/account')}
+              >
+                Account
+              </button>
               <button className="site-header__logout" onClick={handleLogout}>
                 <IconLogOut /> Log Out
               </button>

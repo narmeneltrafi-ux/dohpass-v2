@@ -12,3 +12,8 @@ verify_jwt = false
 # support ticket pending).
 [functions.create-checkout]
 verify_jwt = false
+
+# create-portal-session uses the same in-function GoTrue verification
+# as create-checkout; same gateway algorithm-rejection workaround applies.
+[functions.create-portal-session]
+verify_jwt = false

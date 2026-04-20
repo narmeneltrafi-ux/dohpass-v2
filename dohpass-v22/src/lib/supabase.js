@@ -134,6 +134,24 @@ export async function createCheckoutSession(priceId, userId, userEmail) {
   return { url: data.url, error: null }
 }
 
+// Open the Stripe Customer Portal for the current user. Caller redirects
+// to the returned URL. On 404 ("No active subscription") returns a
+// user-friendly error message instead of a generic one.
+export async function createPortalSession() {
+  const { data, error } = await supabase.functions.invoke('create-portal-session', {
+    body: {},
+  })
+  if (error) {
+    // supabase.functions.invoke wraps all non-2xx as a single error; surface
+    // the 404 case specifically so the UI can prompt the user to subscribe.
+    const msg = /non-2xx/i.test(error.message ?? '') || /404/.test(error.message ?? '')
+      ? 'No active subscription. Subscribe on the Pricing page before managing it here.'
+      : error.message
+    return { url: null, error: msg }
+  }
+  return { url: data.url, error: null }
+}
+
 // ── PROFILES ──────────────────────────────────────────────────────────────────
 
 // Upsert a profile row for the given user. Call once on sign-in.
@@ -146,15 +164,17 @@ export async function ensureProfile(user) {
   if (error) console.error('ensureProfile error:', error.message)
 }
 
-// Returns the current user's profile: { plan, is_paid, email, full_name }
+// Returns the current user's profile: { plan, is_paid, email, full_name,
+// stripe_customer_id, current_period_end, cancel_at_period_end }.
 // Returns null if unauthenticated or profiles table not yet available.
+// stripe_* columns are nullable for free-tier users who haven't subscribed.
 export async function getProfile() {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan, is_paid, email, full_name')
+      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end')
       .eq('id', user.id)
       .single()
     if (error || !data) return null

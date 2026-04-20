@@ -15,6 +15,7 @@ import FlashcardsTrack from './pages/FlashcardsTrack.jsx'
 import FlashcardSystem from './components/FlashcardSystem.jsx'
 import Pricing from './pages/Pricing.jsx'
 import PaymentSuccess from './pages/PaymentSuccess.jsx'
+import Account from './pages/Account.jsx'
 import Analytics from './pages/Analytics.jsx'
 import MockExam from './pages/MockExam.jsx'
 
@@ -96,6 +97,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/flashcards/:track/:system' element={<FlashcardsTrackGuard user={user}><FlashcardSystem userId={user?.id} /></FlashcardsTrackGuard>} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
+          <Route path='/account' element={<ProtectedRoute user={user}><Account /></ProtectedRoute>} />
           <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
           <Route path='/mock-exam' element={<PaidRoute user={user}><MockExam /></PaidRoute>} />
         </Routes>

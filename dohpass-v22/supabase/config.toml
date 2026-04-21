@@ -17,3 +17,19 @@ verify_jwt = false
 # as create-checkout; same gateway algorithm-rejection workaround applies.
 [functions.create-portal-session]
 verify_jwt = false
+
+# The three content-generation functions below are invoked by pg_cron
+# with a service-role bearer (HS256). The Edge Functions gateway
+# currently rejects HS256 as UNAUTHORIZED_LEGACY_JWT on this project,
+# so JWT verification must stay off at the gateway or the cron calls
+# will 401. These rows pin the setting so a CLI redeploy doesn't
+# silently re-enable verification. Source pulled from deployed state
+# on 2026-04-21 — see PR notes.
+[functions.generate-questions]
+verify_jwt = false
+
+[functions.review-questions]
+verify_jwt = false
+
+[functions.generate-flashcards]
+verify_jwt = false

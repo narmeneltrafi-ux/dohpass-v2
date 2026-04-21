@@ -15,7 +15,89 @@ async function log(status: string, message: string) {
   });
 }
 
-async function reviewQuestion(q: any, table: string): Promise<void> {
+type ClaudeOk = { ok: true; data: any };
+type ClaudeErr = {
+  ok: false;
+  errorType: string;
+  status: number | null;
+  requestId: string | null;
+  message: string;
+  attempts: number;
+};
+
+async function callClaude(prompt: string): Promise<ClaudeOk | ClaudeErr> {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+    } catch (err) {
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+        continue;
+      }
+      return { ok: false, errorType: "network_error", status: null, requestId: null, message: String(err), attempts: attempt };
+    }
+
+    const requestId = res.headers.get("request-id") ?? res.headers.get("x-request-id");
+
+    if ((res.status === 429 || res.status === 529) && attempt < maxAttempts) {
+      const retryAfter = parseInt(res.headers.get("retry-after") ?? "");
+      const backoffMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1);
+      await new Promise((r) => setTimeout(r, backoffMs));
+      continue;
+    }
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      let errorType = `http_${res.status}`;
+      let message = body.slice(0, 200);
+      try {
+        const parsed = JSON.parse(body);
+        errorType = parsed?.error?.type ?? errorType;
+        message = parsed?.error?.message ?? message;
+      } catch { /* leave raw */ }
+      return { ok: false, errorType, status: res.status, requestId, message, attempts: attempt };
+    }
+
+    const body = await res.json().catch(() => null);
+    const text = body?.content?.[0]?.text;
+    if (typeof text !== "string") {
+      return {
+        ok: false,
+        errorType: "malformed_response",
+        status: res.status,
+        requestId,
+        message: JSON.stringify(body ?? {}).slice(0, 200),
+        attempts: attempt,
+      };
+    }
+    try {
+      return { ok: true, data: JSON.parse(text.trim()) };
+    } catch (err) {
+      return { ok: false, errorType: "json_parse_error", status: res.status, requestId, message: String(err), attempts: attempt };
+    }
+  }
+  return { ok: false, errorType: "retries_exhausted", status: null, requestId: null, message: "", attempts: maxAttempts };
+}
+
+type ReviewOutcome =
+  | { status: "ok"; updated: boolean; flagged: boolean }
+  | { status: "error"; errorType: string; requestId: string | null; attempts: number };
+
+async function reviewQuestion(q: any, table: string): Promise<ReviewOutcome> {
   const prompt = `You are a senior medical educator reviewing exam questions for the UAE DOH licensing exam.
 
 Review this question and return a corrected version if needed:
@@ -41,24 +123,25 @@ Respond ONLY with a valid JSON object, no preamble, no markdown:
   "changes_made": true or false
 }`;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  const claude = await callClaude(prompt);
 
-  const data = await response.json();
-  const result = JSON.parse(data.content[0].text.trim());
+  if (!claude.ok) {
+    await log("error", JSON.stringify({
+      table,
+      questionId: q.id,
+      errorType: claude.errorType,
+      status: claude.status,
+      requestId: claude.requestId,
+      attempts: claude.attempts,
+      message: claude.message,
+    }));
+    return { status: "error", errorType: claude.errorType, requestId: claude.requestId, attempts: claude.attempts };
+  }
 
-  if (!result.changes_made && !result.answer_flagged) return;
+  const result = claude.data;
+  if (!result.changes_made && !result.answer_flagged) {
+    return { status: "ok", updated: false, flagged: false };
+  }
 
   const update: any = {};
 
@@ -79,14 +162,18 @@ Respond ONLY with a valid JSON object, no preamble, no markdown:
     .eq("id", q.id);
 
   if (error) {
-    await log("error", `Update failed for id ${q.id}: ${error.message}`);
-  } else {
-    await log("success", `Updated id ${q.id} in ${table} — flagged: ${result.answer_flagged}`);
+    await log("error", JSON.stringify({ table, questionId: q.id, errorType: "db_update_error", message: error.message }));
+    return { status: "error", errorType: "db_update_error", requestId: null, attempts: 0 };
   }
+
+  await log("success", `Updated id ${q.id} in ${table} — flagged: ${result.answer_flagged}`);
+  return { status: "ok", updated: result.changes_made, flagged: result.answer_flagged };
 }
 
 serve(async (req) => {
   await log("started", "Review function triggered");
+  const outcomes: Array<{ table: string; questionId: any; status: "ok" | "error"; errorType?: string }> = [];
+
   try {
     const tables = ["specialist_questions", "gp_questions"];
     const BATCH_SIZE = 10;
@@ -99,26 +186,50 @@ serve(async (req) => {
         .limit(BATCH_SIZE);
 
       if (error) {
-        await log("error", `Fetch failed for ${table}: ${error.message}`);
+        await log("error", JSON.stringify({ table, errorType: "db_fetch_error", message: error.message }));
+        outcomes.push({ table, questionId: null, status: "error", errorType: "db_fetch_error" });
         continue;
       }
 
       for (const q of questions || []) {
-        await reviewQuestion(q, table);
+        const outcome = await reviewQuestion(q, table);
+        outcomes.push({
+          table,
+          questionId: q.id,
+          status: outcome.status,
+          errorType: outcome.status === "error" ? outcome.errorType : undefined,
+        });
       }
 
-      await log("completed", `Reviewed ${questions?.length || 0} questions from ${table}`);
+      await log("completed", `Processed ${questions?.length || 0} questions from ${table}`);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    const reviewed = outcomes.filter((o) => o.status === "ok").length;
+    const failed = outcomes.length - reviewed;
+    const errorTypes = [...new Set(outcomes.filter((o) => o.status === "error" && o.errorType).map((o) => o.errorType!))];
+    const apiOutage = failed > 0 && reviewed === 0;
 
+    const summary = apiOutage
+      ? `0 questions reviewed due to API error (${errorTypes.join(", ") || "unknown"})`
+      : `${reviewed}/${outcomes.length} questions reviewed`;
+
+    await log("completed", summary);
+
+    return new Response(
+      JSON.stringify({
+        success: failed === 0,
+        reviewed,
+        failed,
+        errorTypes,
+        summary,
+      }),
+      { headers: { "Content-Type": "application/json" } },
+    );
   } catch (err) {
-    await log("error", `Top level crash: ${String(err)}`);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    await log("error", JSON.stringify({ errorType: "top_level_crash", message: String(err) }));
+    return new Response(
+      JSON.stringify({ success: false, reviewed: 0, summary: "0 questions reviewed due to top-level crash", error: String(err) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
   }
 });

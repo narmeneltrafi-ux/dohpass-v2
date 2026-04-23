@@ -48,6 +48,7 @@ function planInfo(profile) {
 const NAV_LINKS = [
   { label: 'Home', path: '/' },
   { label: 'Specialist Track', path: '/specialist' },
+  { label: 'Oncology', path: '/oncology' },
   { label: 'GP Track', path: '/gp' },
   { label: 'Flashcards', path: '/gems' },
   { label: 'Pricing', path: '/pricing' },

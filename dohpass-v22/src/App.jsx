@@ -18,6 +18,7 @@ import PaymentSuccess from './pages/PaymentSuccess.jsx'
 import Account from './pages/Account.jsx'
 import Analytics from './pages/Analytics.jsx'
 import MockExam from './pages/MockExam.jsx'
+import OncologyPage from './pages/OncologyPage.jsx'
 
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
@@ -95,6 +96,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/gems'       element={<PaidRoute user={user}><FlashcardsHome /></PaidRoute>} />
           <Route path='/flashcards/:track' element={<FlashcardsTrackGuard user={user}><FlashcardsTrack /></FlashcardsTrackGuard>} />
           <Route path='/flashcards/:track/:system' element={<FlashcardsTrackGuard user={user}><FlashcardSystem userId={user?.id} /></FlashcardsTrackGuard>} />
+          <Route path='/oncology' element={<OncologyPage />} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
           <Route path='/account' element={<ProtectedRoute user={user}><Account /></ProtectedRoute>} />

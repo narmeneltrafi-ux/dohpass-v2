@@ -230,9 +230,9 @@ export default function OncologyPage() {
           <p style={{ color: AMBER, fontWeight: 600, marginBottom: '16px' }}>Filter Questions</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             {[
-              { label: 'Difficulty', key: 'difficulty', options: ['all', 'easy', 'medium', 'hard'] },
-              { label: 'Category', key: 'broad_topic', options: ['all', 'Emergencies', 'Staging', 'Diagnosis', 'Management'] },
-              { label: 'Guideline', key: 'source', options: ['all', 'ASCO 2023', 'NCCN 2024', 'ESMO 2024', 'UICC TNM 8th edition', 'FIGO 2014', 'ATA 2015'] },
+              { label: 'Difficulty', pluralLabel: 'Difficulties', key: 'difficulty', options: ['all', 'easy', 'medium', 'hard'] },
+              { label: 'Category', pluralLabel: 'Categories', key: 'broad_topic', options: ['all', 'Emergencies', 'Staging', 'Diagnosis', 'Management'] },
+              { label: 'Guideline', pluralLabel: 'Guidelines', key: 'source', options: ['all', 'ASCO 2023', 'NCCN 2024', 'ESMO 2024', 'UICC TNM 8th edition', 'FIGO 2014', 'ATA 2015'] },
             ].map((f) => (
               <div key={f.key}>
                 <label style={{ display: 'block', fontSize: '0.875rem', color: '#D1D5DB', marginBottom: '8px' }}>{f.label}</label>
@@ -242,7 +242,7 @@ export default function OncologyPage() {
                   style={{ width: '100%', background: '#1F2937', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', padding: '8px 12px', color: '#F9FAFB' }}
                 >
                   {f.options.map((o) => (
-                    <option key={o} value={o}>{o === 'all' ? `All ${f.label}s` : o}</option>
+                    <option key={o} value={o}>{o === 'all' ? `All ${f.pluralLabel}` : o}</option>
                   ))}
                 </select>
               </div>

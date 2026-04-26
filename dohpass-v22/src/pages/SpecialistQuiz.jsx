@@ -107,7 +107,7 @@ export default function SpecialistQuiz() {
     }
     // TODO: backfill progress rows written during the
     // handleSubmit/QuestionCard disagreement window — see [issue link].
-    await saveProgress('specialist', q.id, isCorrect)
+    await saveProgress('specialist', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
 
     const newCount = sessionCount + 1
     setSessionCount(newCount)

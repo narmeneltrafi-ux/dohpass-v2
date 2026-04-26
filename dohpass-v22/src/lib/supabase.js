@@ -185,7 +185,7 @@ export async function getProfile() {
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
-export async function saveProgress(track, questionId, isCorrect) {
+export async function saveProgress(track, questionId, isCorrect, topic = null, selectedAnswer = null, correctAnswer = null) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
   const { error } = await supabase.from('user_progress').upsert({
@@ -193,6 +193,9 @@ export async function saveProgress(track, questionId, isCorrect) {
     track,
     question_id: questionId,
     is_correct: isCorrect,
+    topic,
+    selected_answer: selectedAnswer,
+    correct_answer: correctAnswer,
   }, { onConflict: 'user_id,question_id' })
   if (error) console.error('saveProgress error:', error.message)
 }

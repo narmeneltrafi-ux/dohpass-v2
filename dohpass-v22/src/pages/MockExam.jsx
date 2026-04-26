@@ -265,7 +265,7 @@ export default function MockExam() {
       return next
     })
 
-    saveProgress(examTrack, q.id, isCorrect)
+    saveProgress(examTrack, q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
   }
 
   function handleNext() {

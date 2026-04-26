@@ -4,6 +4,8 @@ import { fetchGPQuestions, fetchGPSystems, fetchGPQuestionsBySystem, saveProgres
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
+import { BookmarkButton } from '../components/BookmarkButton'
+import { useBookmarks } from '../hooks/useBookmarks'
 
 const FREE_LIMIT = 10
 const SESSION_KEY = 'dohpass_free_gp'
@@ -31,6 +33,7 @@ function PaywallGate() {
 
 export default function GPQuiz() {
   const navigate = useNavigate()
+  const { bookmarks, toggle } = useBookmarks('gp')
   const [systems, setSystems] = useState(['All'])
   const [activeSystem, setActiveSystem] = useState('All')
   const [bank, setBank] = useState([])
@@ -163,20 +166,32 @@ export default function GPQuiz() {
         {!loading && !error && !done && bank.length > 0 && (
           hitLimit
             ? <PaywallGate />
-            : <QuestionCard
-                question={bank[index]}
-                index={index}
-                total={bank.length}
-                correct={correct}
-                wrong={wrong}
-                selectedOption={selected}
-                submitted={submitted}
-                onSelect={handleSelect}
-                onSubmit={handleSubmit}
-                onNext={handleNext}
-                feedback={feedback}
-                track="blue"
-              />
+            : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '720px', margin: '0 auto', padding: '0 16px' }}>
+                  <BookmarkButton
+                    questionId={bank[index].id}
+                    topic={bank[index].topic}
+                    bookmarks={bookmarks}
+                    toggle={toggle}
+                  />
+                </div>
+                <QuestionCard
+                  question={bank[index]}
+                  index={index}
+                  total={bank.length}
+                  correct={correct}
+                  wrong={wrong}
+                  selectedOption={selected}
+                  submitted={submitted}
+                  onSelect={handleSelect}
+                  onSubmit={handleSubmit}
+                  onNext={handleNext}
+                  feedback={feedback}
+                  track="blue"
+                />
+              </>
+            )
         )}
 
         {!loading && !error && bank.length === 0 && (

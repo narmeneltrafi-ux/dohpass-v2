@@ -51,6 +51,7 @@ const NAV_LINKS = [
   { label: 'Oncology', path: '/oncology' },
   { label: 'GP Track', path: '/gp' },
   { label: 'Flashcards', path: '/gems' },
+  { label: 'Progress', path: '/progress' },
   { label: 'Pricing', path: '/pricing' },
 ]
 

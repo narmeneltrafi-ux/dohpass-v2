@@ -274,7 +274,7 @@ body::before {
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 500;
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition: color 0.2s, background 0.2s;

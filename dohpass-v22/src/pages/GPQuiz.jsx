@@ -6,6 +6,7 @@ import {
   fetchGPQuestionsBySystem,
   saveProgress,
   getProfile,
+  hasAccess,
   fetchTrialQuestions,
   fetchTrialStatus,
 } from '../lib/supabase'
@@ -60,7 +61,7 @@ export default function GPQuiz() {
     ;(async () => {
       const p = await getProfile()
       if (cancelled) return
-      const paid = p?.is_paid === true
+      const paid = hasAccess(p)
       setIsPaid(paid)
       setPlan(p?.plan ?? 'free')
       if (!paid) {

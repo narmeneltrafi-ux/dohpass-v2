@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase, ensureProfile, getProfile } from './lib/supabase'
+import { supabase, ensureProfile, getProfile, hasAccess } from './lib/supabase'
 import { registerDeviceSession, startSessionPolling, stopSessionPolling, clearDeviceSession } from './lib/deviceSession'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
@@ -41,7 +41,7 @@ function PaidRoute({ user, allowedPlans, children }) {
   if (user === undefined) return null
   if (profile === undefined) return null
 
-  if (!profile?.is_paid) return <Navigate to='/pricing' replace />
+  if (!hasAccess(profile)) return <Navigate to='/pricing' replace />
 
   if (allowedPlans) {
     const allowed = [...allowedPlans, 'all_access'].includes(profile.plan)

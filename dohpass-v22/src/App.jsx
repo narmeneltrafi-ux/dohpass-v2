@@ -51,15 +51,6 @@ function PaidRoute({ user, allowedPlans, children }) {
   return children
 }
 
-function FlashcardsTrackGuard({ user, children }) {
-  const { track } = useParams()
-  const allowedPlans =
-    track === 'specialist' ? ['specialist'] :
-    track === 'gp' ? ['gp'] :
-    null
-  return <PaidRoute user={user} allowedPlans={allowedPlans}>{children}</PaidRoute>
-}
-
 /* ── ScreenGuard wrapper — only for content pages ─────────────── */
 const GUARDED_PATHS = ['/specialist', '/gp', '/gems', '/flashcards', '/mock-exam']
 
@@ -91,12 +82,12 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/login' element={<LoginPage />} />
           <Route path='/auth' element={<Navigate to='/login' replace />} />
           <Route path='/' element={<ProtectedRoute user={user}><Home /></ProtectedRoute>} />
-          <Route path='/specialist' element={<PaidRoute user={user} allowedPlans={['specialist']}><SpecialistQuiz /></PaidRoute>} />
-          <Route path='/gp' element={<PaidRoute user={user} allowedPlans={['gp']}><GPQuiz /></PaidRoute>} />
-          <Route path='/flashcards' element={<PaidRoute user={user}><FlashcardsHome /></PaidRoute>} />
-          <Route path='/gems'       element={<PaidRoute user={user}><FlashcardsHome /></PaidRoute>} />
-          <Route path='/flashcards/:track' element={<FlashcardsTrackGuard user={user}><FlashcardsTrack /></FlashcardsTrackGuard>} />
-          <Route path='/flashcards/:track/:system' element={<FlashcardsTrackGuard user={user}><FlashcardSystem userId={user?.id} /></FlashcardsTrackGuard>} />
+          <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
+          <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />
+          <Route path='/flashcards' element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
+          <Route path='/gems'       element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
+          <Route path='/flashcards/:track' element={<ProtectedRoute user={user}><FlashcardsTrack /></ProtectedRoute>} />
+          <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
           <Route path='/oncology' element={<OncologyPage />} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />

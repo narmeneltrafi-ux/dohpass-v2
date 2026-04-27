@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase, getProfile } from "../lib/supabase";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
@@ -182,6 +182,16 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const [loading,     setLoading]     = useState(true);
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState(null);
+  // null = loading, true = paid, false = free
+  const [isPaid,      setIsPaid]      = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProfile()
+      .then(p => { if (!cancelled) setIsPaid(p?.is_paid === true); })
+      .catch(() => { if (!cancelled) setIsPaid(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     async function fetchCards() {
@@ -308,6 +318,49 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* FLASHCARDS TAB */}
       {activeTab === "flashcards" && (
         <div style={{ padding: "24px", maxWidth: 680, margin: "0 auto" }}>
+          {isPaid === false && (
+            <div style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              marginBottom: 20,
+              padding: "12px 16px",
+              background: "linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%)",
+              border: "1px solid rgba(251, 191, 36, 0.4)",
+              borderRadius: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              backdropFilter: "blur(6px)",
+            }}>
+              <div style={{
+                fontSize: 13,
+                color: "#FBBF24",
+                fontFamily: "'IBM Plex Mono',monospace",
+                flex: 1,
+                minWidth: 200,
+              }}>
+                🔒 Free preview mode. Upgrade to unlock all flashcards in this system.
+              </div>
+              <button onClick={() => navigate('/pricing')} style={{
+                padding: "8px 18px",
+                borderRadius: 8,
+                background: "#FBBF24",
+                border: "none",
+                color: "#0F172A",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "'IBM Plex Mono',monospace",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}>
+                Upgrade
+              </button>
+            </div>
+          )}
           {error && (
             <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#FCA5A5", fontSize: 13, fontFamily: "'IBM Plex Mono',monospace" }}>
               ⚠ {error}
@@ -350,6 +403,42 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                   </button>
                 ))}
               </div>
+
+              {isPaid === false && safeIdx === filtered.length - 1 && filtered.length > 0 && (
+                <div style={{
+                  marginTop: 24,
+                  padding: "18px 20px",
+                  background: "linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.06) 100%)",
+                  border: "1px solid rgba(251, 191, 36, 0.5)",
+                  borderRadius: 12,
+                  textAlign: "center",
+                }}>
+                  <div style={{
+                    fontSize: 13,
+                    color: "#FBBF24",
+                    fontFamily: "'IBM Plex Mono',monospace",
+                    marginBottom: 12,
+                    letterSpacing: "0.04em",
+                  }}>
+                    That's the end of the free preview.
+                  </div>
+                  <button onClick={() => navigate('/pricing')} style={{
+                    padding: "10px 24px",
+                    borderRadius: 8,
+                    background: "#FBBF24",
+                    border: "none",
+                    color: "#0F172A",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontFamily: "'IBM Plex Mono',monospace",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}>
+                    Upgrade to see the full deck
+                  </button>
+                </div>
+              )}
 
               <div style={{ marginTop: 28 }}>
                 <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>

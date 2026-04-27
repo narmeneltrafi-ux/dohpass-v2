@@ -1,30 +1,32 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchGPQuestions, fetchGPSystems, fetchGPQuestionsBySystem, saveProgress, getProfile } from '../lib/supabase'
+import {
+  fetchGPQuestions,
+  fetchGPSystems,
+  fetchGPQuestionsBySystem,
+  saveProgress,
+  getProfile,
+  fetchTrialQuestions,
+  fetchTrialStatus,
+} from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 import { BookmarkButton } from '../components/BookmarkButton'
 import { useBookmarks } from '../hooks/useBookmarks'
 
-const FREE_LIMIT = 10
-const SESSION_KEY = 'dohpass_free_gp'
-
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
-function PaywallGate() {
+function PaywallGate({ title, body, ctaLabel }) {
   const navigate = useNavigate()
   return (
     <div className="paywall-wrap">
       <div className="paywall-card">
         <div className="paywall-icon">🔒</div>
-        <h2 className="paywall-title">Free limit reached</h2>
-        <p className="paywall-body">
-          You've answered {FREE_LIMIT} free questions this session.<br />
-          Upgrade for unlimited access to all questions.
-        </p>
+        <h2 className="paywall-title">{title}</h2>
+        <p className="paywall-body">{body}</p>
         <button className="btn-primary blue paywall-cta" onClick={() => navigate('/pricing')}>
-          Upgrade to Unlimited
+          {ctaLabel}
         </button>
       </div>
     </div>
@@ -51,30 +53,48 @@ export default function GPQuiz() {
   // null = loading, true = paid, false = free
   const [isPaid, setIsPaid] = useState(null)
   const [plan, setPlan] = useState(null)
-  const [sessionCount, setSessionCount] = useState(
-    () => parseInt(sessionStorage.getItem(SESSION_KEY) || '0', 10)
-  )
+  const [trialStatus, setTrialStatus] = useState(null) // { used, limit, remaining }
 
   useEffect(() => {
-    getProfile().then(p => {
-      setIsPaid(p?.is_paid === true)
+    let cancelled = false
+    ;(async () => {
+      const p = await getProfile()
+      if (cancelled) return
+      const paid = p?.is_paid === true
+      setIsPaid(paid)
       setPlan(p?.plan ?? 'free')
-    })
+      if (!paid) {
+        const status = await fetchTrialStatus()
+        if (!cancelled) setTrialStatus(status)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
 
+  const planAllowed = isPaid === true && (plan === 'gp' || plan === 'all_access')
+  const trialActive = isPaid === false && trialStatus !== null && trialStatus.remaining > 0
+  const trialExhausted = isPaid === false && trialStatus !== null && trialStatus.remaining === 0
+  const wrongPlan = isPaid === true && plan !== 'gp' && plan !== 'all_access'
+
   useEffect(() => {
+    if (!planAllowed) return
     fetchGPSystems().then(map => {
       setSystems(['All', ...Object.keys(map)])
     }).catch(console.error)
-  }, [])
+  }, [planAllowed])
 
-  const loadQuestions = useCallback(async (system) => {
+  const loadQuestions = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = system === 'All'
-        ? await fetchGPQuestions(null)
-        : await fetchGPQuestionsBySystem(system)
+      let data = []
+      if (planAllowed) {
+        data = activeSystem === 'All'
+          ? await fetchGPQuestions(null)
+          : await fetchGPQuestionsBySystem(activeSystem)
+      } else if (trialActive) {
+        data = await fetchTrialQuestions('gp')
+      }
       setBank(shuffle(data))
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
@@ -83,9 +103,14 @@ export default function GPQuiz() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [planAllowed, trialActive, activeSystem])
 
-  useEffect(() => { loadQuestions(activeSystem) }, [activeSystem, loadQuestions])
+  useEffect(() => {
+    if (isPaid === null) return
+    if (isPaid === false && trialStatus === null) return
+    if (planAllowed || trialActive) loadQuestions()
+    else setLoading(false)
+  }, [isPaid, trialStatus, planAllowed, trialActive, loadQuestions])
 
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
@@ -112,13 +137,7 @@ export default function GPQuiz() {
       setWrong(w => w + 1)
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })
     }
-    // TODO: backfill progress rows written during the
-    // handleSubmit/QuestionCard disagreement window — see [issue link].
     await saveProgress('gp', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
-
-    const newCount = sessionCount + 1
-    setSessionCount(newCount)
-    sessionStorage.setItem(SESSION_KEY, newCount)
   }
 
   function handleNext() {
@@ -127,21 +146,87 @@ export default function GPQuiz() {
     setSelected(null); setSubmitted(false); setFeedback(null)
   }
 
-  function handleRestart() {
-    setBank(b => shuffle(b))
+  async function handleRestart() {
+    if (isPaid && plan && (plan === 'gp' || plan === 'all_access')) {
+      // Paid user: reshuffle existing bank
+      setBank(b => shuffle(b))
+      setIndex(0); setCorrect(0); setWrong(0)
+      setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
+      return
+    }
+    // Free user: refetch trial status + questions
+    const status = await fetchTrialStatus()
+    setTrialStatus(status)
+    if (status.remaining === 0) {
+      // Component will re-render to PaywallGate based on trialStatus state
+      setDone(false)
+      return
+    }
+    const data = await fetchTrialQuestions('gp')
+    setBank(shuffle(data))
     setIndex(0); setCorrect(0); setWrong(0)
     setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
   }
 
-  const hitLimit = isPaid === false && sessionCount >= FREE_LIMIT
-
-  return (
+  if (wrongPlan) {
+    return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <div className="quiz-header">
           <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
           <div className="quiz-title blue">General Practitioner</div>
         </div>
+        <PaywallGate
+          title="Wrong Plan"
+          body="This track requires the GP plan or All Access."
+          ctaLabel="Upgrade Plan"
+        />
+      </div>
+    )
+  }
 
+  if (trialExhausted) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="quiz-header">
+          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+          <div className="quiz-title blue">General Practitioner</div>
+        </div>
+        <PaywallGate
+          title="Trial used up"
+          body="You've used all 30 free questions. Upgrade to continue practicing."
+          ctaLabel="Upgrade to Unlimited"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="quiz-page" style={{ paddingTop: '62px' }}>
+      <div className="quiz-header">
+        <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+        <div className="quiz-title blue">General Practitioner</div>
+      </div>
+
+      {trialActive && (
+        <div
+          className="trial-banner"
+          style={{
+            maxWidth: '720px',
+            margin: '0 auto 12px',
+            padding: '12px 16px',
+            textAlign: 'center',
+            background: 'rgba(56, 132, 255, 0.1)',
+            border: '1px solid rgba(56, 132, 255, 0.3)',
+            borderRadius: '8px',
+            color: '#3884ff',
+            fontWeight: 500,
+          }}
+        >
+          Free trial: {trialStatus.remaining} of {trialStatus.limit} questions left
+        </div>
+      )}
+
+      {planAllowed && (
         <div className="filter-pills-scroll">
           <div className="filter-pills">
             {systems.map(s => (
@@ -155,48 +240,45 @@ export default function GPQuiz() {
             ))}
           </div>
         </div>
+      )}
 
-        {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
-        {error && <div className="loading error">{error}</div>}
+      {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
+      {error && <div className="loading error">{error}</div>}
 
-        {!loading && !error && done && (
-          <ResultsScreen correct={correct} wrong={wrong} track="blue" onRestart={handleRestart} />
-        )}
+      {!loading && !error && done && (
+        <ResultsScreen correct={correct} wrong={wrong} track="blue" onRestart={handleRestart} />
+      )}
 
-        {!loading && !error && !done && bank.length > 0 && (
-          hitLimit
-            ? <PaywallGate />
-            : (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '720px', margin: '0 auto', padding: '0 16px' }}>
-                  <BookmarkButton
-                    questionId={bank[index].id}
-                    topic={bank[index].topic}
-                    bookmarks={bookmarks}
-                    toggle={toggle}
-                  />
-                </div>
-                <QuestionCard
-                  question={bank[index]}
-                  index={index}
-                  total={bank.length}
-                  correct={correct}
-                  wrong={wrong}
-                  selectedOption={selected}
-                  submitted={submitted}
-                  onSelect={handleSelect}
-                  onSubmit={handleSubmit}
-                  onNext={handleNext}
-                  feedback={feedback}
-                  track="blue"
-                />
-              </>
-            )
-        )}
+      {!loading && !error && !done && bank.length > 0 && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '720px', margin: '0 auto', padding: '0 16px' }}>
+            <BookmarkButton
+              questionId={bank[index].id}
+              topic={bank[index].topic}
+              bookmarks={bookmarks}
+              toggle={toggle}
+            />
+          </div>
+          <QuestionCard
+            question={bank[index]}
+            index={index}
+            total={bank.length}
+            correct={correct}
+            wrong={wrong}
+            selectedOption={selected}
+            submitted={submitted}
+            onSelect={handleSelect}
+            onSubmit={handleSubmit}
+            onNext={handleNext}
+            feedback={feedback}
+            track="blue"
+          />
+        </>
+      )}
 
-        {!loading && !error && bank.length === 0 && (
-          <div className="loading">No questions found for this system.</div>
-        )}
-      </div>
+      {!loading && !error && bank.length === 0 && (
+        <div className="loading">No questions found for this system.</div>
+      )}
+    </div>
   )
 }

@@ -12,11 +12,13 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY
 const E2E_USER_EMAIL = process.env.E2E_USER_EMAIL
 const E2E_USER_PASSWORD = process.env.E2E_USER_PASSWORD
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 function requireEnv() {
   for (const [name, val] of Object.entries({
     VITE_SUPABASE_URL: SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY,
     E2E_USER_EMAIL,
     E2E_USER_PASSWORD,
   })) {
@@ -33,14 +35,26 @@ function getSupabase() {
   return _supabase
 }
 
+let _serviceSupabase
+function getServiceSupabase() {
+  if (!_serviceSupabase) {
+    requireEnv()
+    _serviceSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  }
+  return _serviceSupabase
+}
+
 async function lookupAnswer(table, questionText) {
-  const { data, error } = await getSupabase()
+  const { data, error } = await getServiceSupabase()
     .from(table)
     .select('id, answer, options')
     .eq('q', questionText)
     .limit(1)
-    .single()
+    .maybeSingle()
   if (error) throw new Error(`Supabase lookup failed for ${table}: ${error.message}`)
+  if (!data) throw new Error(`No row found in ${table} for question: ${questionText.slice(0, 80)}`)
   return data
 }
 

@@ -264,6 +264,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const safeIdx    = Math.min(currentIdx, Math.max(0, filtered.length - 1));
   const knownCount = cards.filter(c => knownIds.has(c.id)).length;
   const pct        = cards.length === 0 ? 0 : Math.round((knownCount / cards.length) * 100);
+  const displaySystem = cards[0]?.system || system;
 
   const handleFilter    = (f) => { setFilter(f); setCurrentIdx(0); };
   const handleTabSwitch = (tab) => {
@@ -285,11 +286,11 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
         <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{track === 'gp' ? 'GP Flashcards' : system}</span>
+          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{track === 'gp' ? 'General Practitioner' : system}</h1>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{track === 'gp' ? 'General Practitioner' : displaySystem}</h1>
             <div style={{ fontSize: 12, color: "#475569", marginTop: 4, fontFamily: "'IBM Plex Mono',monospace" }}>
               {loading ? "Loading..." : `${cards.length} flashcards`}
               {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}

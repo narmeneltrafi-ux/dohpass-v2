@@ -42,42 +42,32 @@ export default function FlashcardsTrack() {
   const trackLabel = isSpecialist ? 'Specialist' : 'General Practitioner'
   const accentColor = isSpecialist ? '#F59E0B' : '#4FC3F7'
   const accentBg = isSpecialist ? 'rgba(245,158,11,0.12)' : 'rgba(79,195,247,0.12)'
-  const trackValue = isSpecialist ? 'Specialist' : 'GP'
+  const trackKey = isSpecialist ? 'specialist' : 'gp'
 
   useEffect(() => {
     async function fetchSystems() {
       setLoading(true)
       setError(null)
       try {
-        const { data, error } = await supabase
-          .from('flashcards')
-          .select('system, card_type')
-          .ilike('track', trackValue)
-          .eq('is_active', true)
+        const { data, error } = await supabase.rpc('flashcard_counts')
 
         if (error) throw error
 
-        // Group by system and count cards
-        const map = {}
-        data.forEach(row => {
-          if (!map[row.system]) map[row.system] = 0
-          map[row.system]++
-        })
-
-        const result = Object.entries(map)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => a.name.localeCompare(b.name))
+        const result = (data || [])
+          .filter(r => r.track === trackKey)
+          .map(r => ({ name: r.system, count: r.total }))
+          .sort((a, b) => b.count - a.count)
 
         setSystems(result)
       } catch (err) {
         setError('Could not load systems.')
-        console.error(err)
+        console.error('flashcard_counts RPC failed:', err)
       } finally {
         setLoading(false)
       }
     }
     fetchSystems()
-  }, [trackValue])
+  }, [trackKey])
 
   return (
       <div className="home-page" style={{ paddingTop: '62px' }}>

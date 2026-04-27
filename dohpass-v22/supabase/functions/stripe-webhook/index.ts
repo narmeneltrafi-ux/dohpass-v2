@@ -1,15 +1,12 @@
 import Stripe from "https://esm.sh/stripe@14?target=denonext";
 
-// Price ID → plan name mapping. Unknown prices resolve to null so a
-// paying user is never silently bucketed as "free".
 const PRICE_TO_PLAN: Record<string, string> = {
   "price_1TMjzp9oYokhs2iDMYKAdc6c": "gp",
   "price_1TMk0W9oYokhs2iDmzZxIyTh": "specialist",
   "price_1TMk1L9oYokhs2iDnwA0yLuX": "all_access",
 };
 
-// TODO: Out-of-order event risk not handled — acceptable for v1; revisit
-// with event dedup or event.created timestamp check before scale.
+const GRACE_PERIOD_DAYS = 3;
 
 type ProfilePatch = {
   plan?: string | null;
@@ -19,7 +16,21 @@ type ProfilePatch = {
   stripe_price_id?: string | null;
   current_period_end?: string | null;
   cancel_at_period_end?: boolean;
+  grace_period_end?: string | null;
 };
+
+function extractPeriodEnd(sub: unknown): string | null {
+  const s = sub as Record<string, unknown>;
+  if (typeof s.current_period_end === "number") {
+    return new Date(s.current_period_end * 1000).toISOString();
+  }
+  const items = s.items as { data?: Array<Record<string, unknown>> } | undefined;
+  const firstItem = items?.data?.[0];
+  if (firstItem && typeof firstItem.current_period_end === "number") {
+    return new Date(firstItem.current_period_end * 1000).toISOString();
+  }
+  return null;
+}
 
 Deno.serve(async (req) => {
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
@@ -44,7 +55,33 @@ Deno.serve(async (req) => {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // ── DB helpers ──────────────────────────────────────────────────
+  // --- Idempotency: skip already-processed events ---
+  const dedupRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/stripe_events`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SB_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SB_SERVICE_ROLE_KEY}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ event_id: event.id }),
+    },
+  );
+  // 409 Conflict = duplicate event, return 200 to Stripe
+  if (dedupRes.status === 409) {
+    console.log(`Duplicate event ignored: ${event.id}`);
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (!dedupRes.ok) {
+    const errText = await dedupRes.text();
+    console.error(`stripe_events INSERT failed: ${errText}`);
+    // Non-fatal: continue processing even if dedup insert fails
+  }
 
   const updateProfileById = async (userId: string, patch: ProfilePatch) => {
     const res = await fetch(
@@ -85,8 +122,6 @@ Deno.serve(async (req) => {
     return rows[0]?.id ?? null;
   };
 
-  // ── Event handlers ──────────────────────────────────────────────
-
   const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
     const userId = session.client_reference_id;
     if (!userId) {
@@ -101,13 +136,9 @@ Deno.serve(async (req) => {
       return new Response("No price ID", { status: 400 });
     }
 
-    // profiles.plan is NOT NULL (default 'free'); an unmapped priceId falls
-    // back to 'free' to avoid violating the constraint on PATCH.
     const plan = PRICE_TO_PLAN[priceId] ?? "free";
     if (!(priceId in PRICE_TO_PLAN)) {
-      console.warn(
-        `checkout.session.completed: unknown priceId=${priceId} — defaulting plan='free'`,
-      );
+      console.warn(`checkout.session.completed: unknown priceId=${priceId} — defaulting plan='free'`);
     }
 
     const customerId =
@@ -117,16 +148,27 @@ Deno.serve(async (req) => {
         ? session.subscription
         : session.subscription?.id ?? null;
 
+    let currentPeriodEnd: string | null = null;
+    if (subscriptionId) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        currentPeriodEnd = extractPeriodEnd(sub);
+      } catch (err) {
+        console.warn(`checkout.session.completed: could not fetch sub ${subscriptionId}: ${err.message}`);
+      }
+    }
+
     await updateProfileById(userId, {
       plan,
       is_paid: true,
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
+      stripe_price_id: priceId,
+      current_period_end: currentPeriodEnd,
+      grace_period_end: null, // clear any leftover grace period on fresh purchase
     });
 
-    console.log(
-      `checkout.session.completed: user=${userId} plan=${plan} customer=${customerId}`,
-    );
+    console.log(`checkout.session.completed: user=${userId} plan=${plan} customer=${customerId} period_end=${currentPeriodEnd}`);
     return null;
   };
 
@@ -134,47 +176,25 @@ Deno.serve(async (req) => {
     const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
     const userId = await findProfileIdByStripeCustomerId(customerId);
     if (!userId) {
-      // Orphan: checkout.session.completed hasn't landed yet, or this is
-      // test-mode noise for a customer we never created. Returning 200
-      // avoids a Stripe retry storm; the next subscription.* event will
-      // catch state up once the customer id is linked.
-      console.warn(
-        `customer.subscription.updated: orphan customer=${customerId} — no matching profile; returning 200`,
-      );
+      console.warn(`customer.subscription.updated: orphan customer=${customerId} — no matching profile; returning 200`);
       return null;
     }
 
     const priceId = sub.items.data[0]?.price?.id ?? null;
-    // profiles.plan is NOT NULL (default 'free'); default to 'free' whenever
-    // the lookup can't resolve (missing priceId or unmapped one).
     const plan = priceId && PRICE_TO_PLAN[priceId] ? PRICE_TO_PLAN[priceId] : "free";
     if (priceId && !(priceId in PRICE_TO_PLAN)) {
-      console.warn(
-        `customer.subscription.updated: unknown priceId=${priceId} user=${userId} — defaulting plan='free'`,
-      );
+      console.warn(`customer.subscription.updated: unknown priceId=${priceId} user=${userId} — defaulting plan='free'`);
     }
 
-    // Stripe API 2025-02-24+ moved current_period_end from the Subscription
-    // root onto each subscription item; read from whichever is present so
-    // we survive either API version pinned on the webhook endpoint.
-    const subAny = sub as unknown as {
-      current_period_end?: number;
-      items?: { data?: Array<{ current_period_end?: number }> };
-    };
-    const currentPeriodEndUnix =
-      subAny.current_period_end ?? subAny.items?.data?.[0]?.current_period_end ?? null;
-    if (currentPeriodEndUnix === null) {
-      console.warn(
-        `customer.subscription.updated: no current_period_end found on sub=${sub.id} — leaving NULL`,
-      );
+    const currentPeriodEnd = extractPeriodEnd(sub);
+    if (currentPeriodEnd === null) {
+      console.warn(`customer.subscription.updated: no current_period_end found on sub=${sub.id} — leaving NULL`);
     }
 
     const patch: ProfilePatch = {
       stripe_subscription_id: sub.id,
       stripe_price_id: priceId,
-      current_period_end: currentPeriodEndUnix
-        ? new Date(currentPeriodEndUnix * 1000).toISOString()
-        : null,
+      current_period_end: currentPeriodEnd,
       cancel_at_period_end: sub.cancel_at_period_end,
     };
 
@@ -183,41 +203,31 @@ Deno.serve(async (req) => {
       case "trialing":
         patch.is_paid = true;
         patch.plan = plan;
+        patch.grace_period_end = null; // payment recovered, clear grace
         break;
-
       case "past_due":
       case "unpaid":
-        // Retry window — keep access until Stripe gives up.
-        console.warn(
-          `customer.subscription.updated: retry state user=${userId} status=${sub.status} sub=${sub.id}`,
-        );
-        patch.is_paid = true;
-        patch.plan = plan;
+        // Grace period is set by invoice.payment_failed — don't override is_paid here
+        console.warn(`customer.subscription.updated: retry state user=${userId} status=${sub.status}`);
         break;
-
       case "canceled":
       case "incomplete_expired":
         patch.is_paid = false;
         patch.plan = "free";
+        patch.grace_period_end = null;
         break;
-
       case "incomplete":
       case "paused":
-        // Payment not captured — no access.
         patch.is_paid = false;
         patch.plan = "free";
+        patch.grace_period_end = null;
         break;
-
       default:
-        console.warn(
-          `customer.subscription.updated: unknown status=${sub.status} user=${userId} — is_paid/plan left untouched`,
-        );
+        console.warn(`customer.subscription.updated: unknown status=${sub.status} user=${userId}`);
     }
 
     await updateProfileById(userId, patch);
-    console.log(
-      `customer.subscription.updated: user=${userId} status=${sub.status} cap=${sub.cancel_at_period_end}`,
-    );
+    console.log(`customer.subscription.updated: user=${userId} status=${sub.status} period_end=${currentPeriodEnd}`);
     return null;
   };
 
@@ -225,12 +235,9 @@ Deno.serve(async (req) => {
     const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
     const userId = await findProfileIdByStripeCustomerId(customerId);
     if (!userId) {
-      console.warn(
-        `customer.subscription.deleted: orphan customer=${customerId} — no matching profile; returning 200`,
-      );
+      console.warn(`customer.subscription.deleted: orphan customer=${customerId} — no matching profile; returning 200`);
       return null;
     }
-
     await updateProfileById(userId, {
       is_paid: false,
       plan: "free",
@@ -238,32 +245,42 @@ Deno.serve(async (req) => {
       stripe_price_id: null,
       current_period_end: null,
       cancel_at_period_end: false,
-      // stripe_customer_id intentionally preserved — the Stripe customer
-      // object survives subscription deletion, and a re-subscribe reuses it.
+      grace_period_end: null, // hard cut — no grace on explicit cancellation
     });
     console.log(`customer.subscription.deleted: user=${userId} sub=${sub.id}`);
     return null;
   };
 
-  const handleInvoicePaymentFailed = (invoice: Stripe.Invoice) => {
-    // Do NOT flip is_paid here. Stripe smart retries run ~3 weeks; the
-    // terminal outcome arrives via customer.subscription.updated
-    // (past_due → canceled) or customer.subscription.deleted.
-    console.error(
-      `invoice.payment_failed: customer=${invoice.customer} invoice=${invoice.id} ` +
-        `amount_due=${invoice.amount_due} attempt_count=${invoice.attempt_count}`,
-    );
-  };
-
-  const handleInvoicePaymentSucceeded = (invoice: Stripe.Invoice) => {
-    // Audit trail only — subscription.updated already reflects active state.
+  const handleInvoicePaymentFailed = async (invoice: Stripe.Invoice) => {
+    const customerId =
+      typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as { id: string })?.id ?? null;
+    if (!customerId) {
+      console.error("invoice.payment_failed: no customer ID on invoice");
+      return;
+    }
+    const userId = await findProfileIdByStripeCustomerId(customerId);
+    if (!userId) {
+      console.warn(`invoice.payment_failed: orphan customer=${customerId} — no matching profile`);
+      return;
+    }
+    const gracePeriodEnd = new Date(Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    await updateProfileById(userId, { grace_period_end: gracePeriodEnd });
     console.log(
-      `invoice.payment_succeeded: customer=${invoice.customer} invoice=${invoice.id} ` +
-        `amount_paid=${invoice.amount_paid}`,
+      `invoice.payment_failed: user=${userId} customer=${customerId} invoice=${invoice.id} ` +
+      `attempt=${invoice.attempt_count} grace_until=${gracePeriodEnd}`,
     );
   };
 
-  // ── Dispatch ────────────────────────────────────────────────────
+  const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice) => {
+    const customerId =
+      typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as { id: string })?.id ?? null;
+    if (!customerId) return;
+    const userId = await findProfileIdByStripeCustomerId(customerId);
+    if (!userId) return;
+    // Payment recovered — clear grace period and ensure is_paid is true
+    await updateProfileById(userId, { grace_period_end: null, is_paid: true });
+    console.log(`invoice.payment_succeeded: user=${userId} customer=${customerId} grace_period cleared`);
+  };
 
   try {
     switch (event.type) {
@@ -281,11 +298,11 @@ Deno.serve(async (req) => {
         break;
       }
       case "invoice.payment_failed": {
-        handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       }
       case "invoice.payment_succeeded": {
-        handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
       }
       default:

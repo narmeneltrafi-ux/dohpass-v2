@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase, getProfile } from '../lib/supabase'
+import { supabase, getProfile, hasAccess } from '../lib/supabase'
 
 const SYSTEM_ICONS = {
   'Neurology':        '🧠',
@@ -46,7 +46,7 @@ export default function FlashcardsTrack() {
   const accentBg = isSpecialist ? 'rgba(245,158,11,0.12)' : 'rgba(79,195,247,0.12)'
 
   const hasFullAccess = Boolean(
-    profile?.is_paid && (profile.plan === 'all_access' || profile.plan === trackKey)
+    hasAccess(profile) && (profile?.plan === 'all_access' || profile?.plan === trackKey)
   )
   const isAnon = profile === null
 

@@ -68,7 +68,7 @@ export async function startSessionPolling(userId, onKicked, intervalMs = 10000) 
         .from('device_sessions')
         .select('session_token')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
       if (error) {
         console.warn('Session poll error:', error.message)

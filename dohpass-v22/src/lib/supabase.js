@@ -164,7 +164,8 @@ export async function ensureProfile(user) {
 }
 
 // Returns the current user's profile: { plan, is_paid, email, full_name,
-// stripe_customer_id, current_period_end, cancel_at_period_end }.
+// stripe_customer_id, current_period_end, cancel_at_period_end,
+// grace_period_end }.
 // Returns null if unauthenticated or profiles table not yet available.
 // stripe_* columns are nullable for free-tier users who haven't subscribed.
 export async function getProfile() {
@@ -173,7 +174,7 @@ export async function getProfile() {
     if (!user) return null
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end')
+      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end')
       .eq('id', user.id)
       .single()
     if (error || !data) return null
@@ -181,6 +182,18 @@ export async function getProfile() {
   } catch {
     return null
   }
+}
+
+// Content access gate. is_paid covers active subscribers; grace_period_end
+// keeps access alive briefly after a failed renewal so we don't yank the
+// user mid-study. Use this anywhere a paid plan unlocks content — never
+// for UI labels (those should still read is_paid directly).
+export function hasAccess(profile) {
+  if (!profile) return false
+  if (profile.is_paid) return true
+  return Boolean(
+    profile.grace_period_end && new Date(profile.grace_period_end) > new Date()
+  )
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
@@ -199,10 +212,10 @@ export async function saveProgress(track, questionId, isCorrect, topic = null, s
   if (error) console.error('saveProgress error:', error.message)
 }
 
-// Returns true if the current user has an active paid plan.
+// Returns true if the current user has content access (paid or in grace period).
 export async function getUserPlan() {
   const profile = await getProfile()
-  return profile?.is_paid === true
+  return hasAccess(profile)
 }
 
 export async function fetchProgress(track) {

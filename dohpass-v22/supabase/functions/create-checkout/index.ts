@@ -1,10 +1,25 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno&no-check";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Lock CORS to the production site origins. Browsers reject responses whose
+// Access-Control-Allow-Origin doesn't echo the request's Origin, so picking
+// a default that doesn't match the caller is what blocks unauthorized
+// origins from invoking the function from a browser context. Server-side
+// callers ignore CORS, so this is a pure browser-trust boundary.
+const ALLOWED_ORIGINS = ["https://dohpass.com", "https://www.dohpass.com"];
+
+function resolveAllowedOrigin(req: Request): string {
+  const origin = req.headers.get("origin") ?? "";
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
+
+function buildCorsHeaders(req: Request): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": resolveAllowedOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // Returns a Response for 401/403, or a verified user id for success.
 // Why this function exists: the Edge Functions gateway on this project
@@ -14,6 +29,7 @@ const corsHeaders = {
 async function verifyCallerAndGetUserId(
   req: Request,
   bodyUserId: string | undefined,
+  corsHeaders: Record<string, string>,
 ): Promise<{ userId: string; email: string | null } | Response> {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SB_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
@@ -99,6 +115,8 @@ function isStripeCustomerMissingError(err: unknown): boolean {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -122,21 +140,23 @@ Deno.serve(async (req) => {
     }
 
     // AUTH — must succeed before any Stripe interaction.
-    const auth = await verifyCallerAndGetUserId(req, bodyUserId);
+    const auth = await verifyCallerAndGetUserId(req, bodyUserId, corsHeaders);
     if (auth instanceof Response) return auth;
     const { userId, email: verifiedEmail } = auth;
     const customerEmail = verifiedEmail ?? bodyEmail;
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
-    const origin = req.headers.get("origin") || "https://dohpass.com";
+    // Use the same allowlist for redirect URLs so a non-browser caller can't
+    // steer Stripe's success_url/cancel_url to an attacker-controlled origin.
+    const redirectOrigin = resolveAllowedOrigin(req);
 
     const baseSession = {
       mode: "subscription" as const,
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: userId,
-      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing`,
+      success_url: `${redirectOrigin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${redirectOrigin}/pricing`,
     };
 
     const existingCustomerId = await lookupStripeCustomerId(userId);

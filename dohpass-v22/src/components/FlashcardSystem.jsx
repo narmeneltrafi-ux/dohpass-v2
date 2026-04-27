@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase, getProfile } from "../lib/supabase";
+import { supabase, getProfile, hasAccess } from "../lib/supabase";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
@@ -188,7 +188,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   useEffect(() => {
     let cancelled = false;
     getProfile()
-      .then(p => { if (!cancelled) setIsPaid(p?.is_paid === true); })
+      .then(p => { if (!cancelled) setIsPaid(hasAccess(p)); })
       .catch(() => { if (!cancelled) setIsPaid(false); });
     return () => { cancelled = true; };
   }, []);

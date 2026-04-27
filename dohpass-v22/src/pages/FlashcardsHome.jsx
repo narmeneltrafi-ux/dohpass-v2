@@ -1,7 +1,27 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function FlashcardsHome() {
   const navigate = useNavigate()
+  const [stats, setStats] = useState({ specialistSystems: 0, gpCards: 0 })
+
+  useEffect(() => {
+    async function loadStats() {
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('track, system')
+        .eq('is_active', true)
+      if (error || !data) return
+      const specialistSystems = new Set(
+        data.filter(r => r.track?.toLowerCase() === 'specialist').map(r => r.system)
+      ).size
+      const gpCards = data.filter(r => r.track?.toLowerCase() === 'gp').length
+      setStats({ specialistSystems, gpCards })
+    }
+    loadStats()
+  }, [])
+
   return (
     <div className="home-page" style={{ paddingTop: '62px' }}>
       <div className="hero">
@@ -17,7 +37,7 @@ export default function FlashcardsHome() {
           <div className="track-info">
             <h2 className="track-title">Specialist</h2>
             <p className="track-desc">Internal Medicine — Neurology, Cardiology, GIT, Haematology & more</p>
-            <span className="track-badge gold">7 Systems</span>
+            <span className="track-badge gold">{stats.specialistSystems} Systems</span>
           </div>
           <div className="track-arrow">→</div>
         </div>
@@ -29,7 +49,7 @@ export default function FlashcardsHome() {
           <div className="track-info">
             <h2 className="track-title">General Practitioner</h2>
             <p className="track-desc">GP track — broad primary care systems</p>
-            <span className="track-badge blue">GP Track</span>
+            <span className="track-badge blue">{stats.gpCards.toLocaleString()} Cards</span>
           </div>
           <div className="track-arrow">→</div>
         </div>

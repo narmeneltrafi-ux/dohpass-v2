@@ -200,7 +200,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       const { data, error } = await supabase
         .from("flashcards")
         .select("*")
-        .eq(track === 'gp' ? "track" : "system", track === 'gp' ? "GP" : system)
+        .ilike("track", track)
+        .ilike("system", systemParam)
         .eq("is_active", true)
         .order("id", { ascending: true });
 

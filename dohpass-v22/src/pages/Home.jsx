@@ -148,7 +148,7 @@ function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, n
 /* ── Page ─────────────────────────────────────────────────────── */
 export default function Home() {
   const navigate = useNavigate()
-  const [counts, setCounts] = useState({ specialist: 0, gp: 0 })
+  const [counts, setCounts] = useState({ specialist: 0, gp: 0, flashcards: 0 })
 
   useEffect(() => {
     fetchQuestionCounts().then(setCounts)
@@ -225,7 +225,7 @@ export default function Home() {
             icon="🗂"
             title="Flashcards"
             desc="Concept, drug & anatomy cards — Specialist & GP tracks"
-            badge="Neurology Live"
+            badge={`${counts.flashcards.toLocaleString()} Cards`}
             variant="teal"
             total={null}
             route="/gems"

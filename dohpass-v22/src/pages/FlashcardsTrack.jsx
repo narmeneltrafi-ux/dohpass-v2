@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, getProfile } from '../lib/supabase'
 
 const SYSTEM_ICONS = {
   'Neurology':        '🧠',
@@ -37,37 +37,58 @@ export default function FlashcardsTrack() {
   const [systems, setSystems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [profile, setProfile] = useState(undefined)
 
-  const isSpecialist = track === 'specialist'
+  const trackKey = (track || '').toLowerCase() === 'specialist' ? 'specialist' : 'gp'
+  const isSpecialist = trackKey === 'specialist'
   const trackLabel = isSpecialist ? 'Specialist' : 'General Practitioner'
   const accentColor = isSpecialist ? '#F59E0B' : '#4FC3F7'
   const accentBg = isSpecialist ? 'rgba(245,158,11,0.12)' : 'rgba(79,195,247,0.12)'
-  const trackKey = isSpecialist ? 'specialist' : 'gp'
+
+  const hasFullAccess = Boolean(
+    profile?.is_paid && (profile.plan === 'all_access' || profile.plan === trackKey)
+  )
+  const isAnon = profile === null
 
   useEffect(() => {
     async function fetchSystems() {
       setLoading(true)
       setError(null)
-      try {
-        const { data, error } = await supabase.rpc('flashcard_counts')
-
-        if (error) throw error
-
-        const result = (data || [])
-          .filter(r => r.track === trackKey)
-          .map(r => ({ name: r.system, count: r.total }))
-          .sort((a, b) => b.count - a.count)
-
-        setSystems(result)
-      } catch (err) {
+      const { data: counts, error } = await supabase.rpc('flashcard_counts')
+      if (error) {
+        console.error('flashcard_counts RPC failed:', error)
         setError('Could not load systems.')
-        console.error('flashcard_counts RPC failed:', err)
-      } finally {
         setLoading(false)
+        return
       }
+      const result = (counts || [])
+        .filter(r => r.track?.toLowerCase() === trackKey)
+        .map(r => ({
+          name: r.system,
+          total: r.total,
+          previewTotal: r.preview_total ?? 0,
+        }))
+        .sort((a, b) => b.total - a.total)
+      setSystems(result)
+      setLoading(false)
     }
     fetchSystems()
   }, [trackKey])
+
+  useEffect(() => {
+    let cancelled = false
+    getProfile().then(p => { if (!cancelled) setProfile(p ?? null) })
+    return () => { cancelled = true }
+  }, [])
+
+  function badgeText(system) {
+    if (hasFullAccess) return `${system.total} cards`
+    if (isAnon) {
+      const locked = Math.max(system.total - system.previewTotal, 0)
+      return `${system.previewTotal} free preview · sign in to unlock ${locked}`
+    }
+    return `${system.previewTotal} free · ${system.total} total`
+  }
 
   return (
       <div className="home-page" style={{ paddingTop: '62px' }}>
@@ -116,9 +137,11 @@ export default function FlashcardsTrack() {
                     background: accentBg,
                     color: accentColor,
                     border: '1px solid ' + accentColor + '30',
+                    opacity: hasFullAccess ? 1 : 0.85,
                   }}
                 >
-                  {system.count} cards
+                  {!hasFullAccess && <span style={{ marginRight: 4 }}>🔒</span>}
+                  {badgeText(system)}
                 </span>
               </div>
               <div className="track-arrow" style={{color: accentColor}}>→</div>

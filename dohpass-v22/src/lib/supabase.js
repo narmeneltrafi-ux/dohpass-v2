@@ -98,15 +98,12 @@ export async function fetchGPQuestionsBySystem(broadTopic) {
 // ── QUESTION COUNTS ──────────────────────────────────────────────────────────
 
 export async function fetchQuestionCounts() {
-  const [specialist, gp, flashcards] = await Promise.all([
-    supabase.from('specialist_questions').select('*', { count: 'exact', head: true }),
-    supabase.from('gp_questions').select('*', { count: 'exact', head: true }),
-    supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-  ])
+  const { data, error } = await supabase.rpc('get_question_counts')
+  if (error || !data) return { specialist: 0, gp: 0, flashcards: 0 }
   return {
-    specialist: specialist.count ?? 0,
-    gp: gp.count ?? 0,
-    flashcards: flashcards.count ?? 0,
+    specialist: data.specialist ?? 0,
+    gp: data.gp ?? 0,
+    flashcards: data.flashcards ?? 0,
   }
 }
 
@@ -221,4 +218,19 @@ export async function fetchProgress(track) {
     answered: data.length,
     correct: data.filter(r => r.is_correct).length,
   }
+}
+
+export async function fetchTrialQuestions(track) {
+  const { data, error } = await supabase.rpc('get_trial_questions', {
+    p_track: track,
+    p_limit: 30,
+  })
+  if (error) { console.error('trial fetch error:', error); return [] }
+  return data || []
+}
+
+export async function fetchTrialStatus() {
+  const { data, error } = await supabase.rpc('get_trial_status')
+  if (error || !data) return { used: 0, limit: 30, remaining: 30 }
+  return data
 }

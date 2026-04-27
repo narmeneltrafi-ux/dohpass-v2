@@ -40,8 +40,9 @@ export default function AuthPage() {
       if (error) setError(error.message)
       else navigate('/')
     } else {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) setError(error.message)
+      else if (data.session) navigate('/')
       else setMessage('Check your email to confirm your account.')
     }
     setLoading(false)

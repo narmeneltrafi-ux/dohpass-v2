@@ -52,8 +52,13 @@ export async function registerDeviceSession(userId) {
   }
 }
 
-export function startSessionPolling(userId, onKicked, intervalMs = 10000) {
+export async function startSessionPolling(userId, onKicked, intervalMs = 10000) {
   stopSessionPolling()
+
+  // Give registerDeviceSession time to settle before we start checking. Avoids a
+  // false-positive kick when a fast user-object reference change re-enters this
+  // function while the previous token write is still in flight.
+  await new Promise(r => setTimeout(r, 2000))
 
   pollInterval = setInterval(async () => {
     if (!currentToken) return
@@ -70,7 +75,11 @@ export function startSessionPolling(userId, onKicked, intervalMs = 10000) {
         return
       }
 
-      if (data && data.session_token !== currentToken) {
+      // Guard rails: if our local token cleared during the fetch, or the row
+      // hasn't been created yet (null session_token), don't kick.
+      if (!currentToken || !data?.session_token) return
+
+      if (data.session_token !== currentToken) {
         stopSessionPolling()
         onKicked()
       }

@@ -1,11 +1,44 @@
+// Constant-time string comparison. Length mismatch returns false up front;
+// equal-length inputs are compared char-by-char with bitwise OR so the
+// loop's runtime depends only on length, not on where the strings differ.
+const constantTimeEqual = (a: string, b: string): boolean => {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+};
+
 Deno.serve(async (req) => {
   const startTime = Date.now();
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SB_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
+  const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
   const FUNCTION_NAME = "generate-questions";
   const MODEL = "claude-opus-4-5";
   const TIMEOUT_MS = 120_000;
+
+  // ---------- CRON SECRET GATE ----------
+  // First check: anything that fails here never touches DB or LLM.
+  // Gateway has verify_jwt: false (HS256 service-role JWTs are rejected
+  // by this project's gateway as UNAUTHORIZED_LEGACY_JWT — see config.toml).
+  // The shared secret is the authentication mechanism instead.
+  if (!CRON_SECRET) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Server misconfigured: CRON_SECRET unset" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  const providedSecret = req.headers.get("x-cron-secret") ?? "";
+  if (!constantTimeEqual(CRON_SECRET, providedSecret)) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  // --------------------------------------
 
   let totalTokensIn = 0;
   let totalTokensOut = 0;

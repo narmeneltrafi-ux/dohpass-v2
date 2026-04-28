@@ -118,6 +118,25 @@ export default function Pricing() {
         <p className="pr-sub">Unlock unlimited access to high-yield DOH exam questions</p>
       </div>
 
+      <div
+        role="status"
+        style={{
+          maxWidth: '720px',
+          margin: '0 auto 2.25rem',
+          padding: '14px 22px',
+          background: 'linear-gradient(135deg, rgba(212,175,55,0.10), rgba(212,175,55,0.04))',
+          border: '1px solid rgba(212,175,55,0.28)',
+          borderRadius: '10px',
+          textAlign: 'center',
+          fontFamily: "'Playfair Display', serif",
+          fontSize: '1rem',
+          color: '#D4AF37',
+          letterSpacing: '0.02em',
+        }}
+      >
+        Early access launching shortly.
+      </div>
+
       <div className="pr-grid">
         {PLANS.map((plan) => {
           const isCurrentPlan = currentPlan === plan.id
@@ -145,14 +164,11 @@ export default function Pricing() {
               </ul>
               <button
                 className={`pr-card-cta pr-card-cta--${plan.variant}`}
-                disabled={isCurrentPlan || loading !== null}
-                onClick={() => handleSubscribe(plan)}
+                disabled
+                aria-disabled="true"
+                style={{ opacity: 0.6, cursor: 'not-allowed' }}
               >
-                {loading === plan.id
-                  ? 'Redirecting...'
-                  : isCurrentPlan
-                    ? 'Current Plan'
-                    : 'Subscribe'}
+                {isCurrentPlan ? 'Current Plan' : 'Coming Soon'}
               </button>
             </div>
           )

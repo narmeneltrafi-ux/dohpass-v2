@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
     return { ok: false, errorType: "retries_exhausted", status: null, requestId: null, message: "", attempts: maxAttempts };
   };
 
+  // SPECIALIST_TOPICS values are already valid `system` names — system = subtopic for these.
   const SPECIALIST_TOPICS = [
     "Cardiology",
     "Respiratory",
@@ -143,6 +144,52 @@ Deno.serve(async (req) => {
     "Preventive Medicine","Public Health","Dementia","Osteoarthritis",
   ];
 
+  // Maps a GP topic to its proper `system` (mirrors the SQL redistribution from Apr 27, 2026).
+  // Without this, every new GP card would land in 'Primary Care' and re-create the orphan bucket.
+  const GP_TOPIC_TO_SYSTEM: Record<string, string> = {
+    "Hypertension": "Cardiology",
+    "Dyslipidaemia": "Cardiology",
+    "Ischaemic Heart Disease": "Cardiology",
+    "Heart Failure": "Cardiology",
+    "Atrial Fibrillation": "Cardiology",
+    "Emergency Chest Pain": "Cardiology",
+    "Diabetes Type 2": "Endocrinology",
+    "Thyroid Disorders": "Endocrinology",
+    "Asthma": "Respiratory",
+    "COPD": "Respiratory",
+    "UTI": "Nephrology",
+    "Anaemia": "Haematology",
+    "Depression": "Mental Health",
+    "Anxiety": "Mental Health",
+    "Dementia": "Mental Health",
+    "Psychiatry GP": "Mental Health",
+    "Epilepsy": "Neurology",
+    "Stroke and TIA": "Neurology",
+    "Osteoporosis": "Musculoskeletal",
+    "Rheumatoid Arthritis": "Musculoskeletal",
+    "Orthopaedics and MSK": "Musculoskeletal",
+    "Osteoarthritis": "Musculoskeletal",
+    "Peptic Ulcer Disease": "Gastroenterology",
+    "GERD": "Gastroenterology",
+    "Contraception": "Women's Health",
+    "Antenatal Care": "Women's Health",
+    "Obstetrics and Gynaecology": "Women's Health",
+    "Paediatric Common Illnesses": "Paediatrics",
+    "Paediatrics": "Paediatrics",
+    "Vaccinations": "Public Health",
+    "Preventive Medicine": "Public Health",
+    "Public Health": "Public Health",
+    "Pharmacology and Prescribing": "Pharmacology",
+    "Ophthalmology": "Ophthalmology",
+    "ENT": "ENT",
+    "Dermatology GP": "Dermatology",
+    "Urology": "Urology",
+    "Emergency Medicine GP": "Emergency Medicine",
+    "Geriatrics": "Geriatrics",
+    "Palliative Care": "Palliative Care",
+    "Radiology and Investigations": "Radiology",
+  };
+
   // Rotate: 2 specialist + 2 GP topics per day = 20 cards (5 each)
   const dayOfYear = Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 86400000);
   const todaysSpecialist = [
@@ -158,7 +205,7 @@ Deno.serve(async (req) => {
 
   await log("started", `generate-flashcards triggered. Today: spec=[${todaysSpecialist.join(", ")}] gp=[${todaysGp.join(", ")}]`);
 
-  const runBatch = async (topics: string[], track: "specialist" | "gp", system: string, gpHint: boolean) => {
+  const runBatch = async (topics: string[], track: "specialist" | "gp", gpHint: boolean) => {
     for (const subtopic of topics) {
       const prompt = gpHint
         ? `Return ONLY a JSON array with exactly 5 objects. No explanation, no markdown, no backticks. Just the raw JSON array starting with [ and ending with ]. This is for UAE DOH GP exam. Topic: ${subtopic}. Each object: {"card_type":"concept","front":"question here","back":"answer here","difficulty":"medium","tags":["tag1"]}`
@@ -172,9 +219,15 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Resolve the system field per-card so cards land in the correct tile.
+      // Specialist topics ARE the system names; GP topics map via GP_TOPIC_TO_SYSTEM.
+      const systemForCard = track === "specialist"
+        ? subtopic
+        : (GP_TOPIC_TO_SYSTEM[subtopic] ?? "General Practice");
+
       try {
         const rows = result.data.map((f: any) => ({
-          system,
+          system: systemForCard,
           track,
           subtopic,
           card_type: f.card_type,
@@ -196,7 +249,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify(rows),
         });
 
-        await log("success", `${track}: Done: ${subtopic}`);
+        await log("success", `${track}: Done: ${subtopic} → ${systemForCard}`);
         results.push({ subtopic, track, status: "ok" });
       } catch (err) {
         await log("error", JSON.stringify({ track, subtopic, errorType: "db_or_shape_error", message: String(err) }));
@@ -206,8 +259,8 @@ Deno.serve(async (req) => {
   };
 
   try {
-    await runBatch(todaysSpecialist, "specialist", "Internal Medicine", false);
-    await runBatch(todaysGp, "gp", "Primary Care", true);
+    await runBatch(todaysSpecialist, "specialist", false);
+    await runBatch(todaysGp, "gp", true);
 
     const succeeded = results.filter((r) => r.status === "ok").length;
     const failed = results.length - succeeded;

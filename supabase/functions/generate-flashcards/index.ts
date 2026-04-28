@@ -1,8 +1,21 @@
 Deno.serve(async (req) => {
+  const startTime = Date.now();
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SB_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
   const FUNCTION_NAME = "generate-flashcards";
+  const MODEL = "claude-haiku-4-5-20251001";
+
+  // ---- Step 3 instrumentation (observation only, no behaviour change) ----
+  // Record per-phase wall-clock so we can answer "where is the 31s going?"
+  // without reading function_logs timestamps. There are no embeddings in this
+  // function so we only track LLM + DB. The function does 4 LLM calls and 4
+  // DB writes per invocation (2 specialist topics + 2 GP topics × 1 batch each).
+  const llm_ms: number[] = [];
+  const db_ms: number[] = [];
+  let totalTokensIn = 0;
+  let totalTokensOut = 0;
+  // -----------------------------------------------------------------------
 
   const log = async (status: string, message: string) => {
     await fetch(`${SUPABASE_URL}/rest/v1/function_logs`, {
@@ -15,6 +28,39 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({ function_name: FUNCTION_NAME, status, message }),
     });
+  };
+
+  const summarizePhases = () => {
+    const reduce = (arr: number[]) => ({
+      count: arr.length,
+      total_ms: arr.reduce((a, b) => a + b, 0),
+      max_ms: arr.length ? Math.max(...arr) : 0,
+      avg_ms: arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0,
+    });
+    return { llm: reduce(llm_ms), db: reduce(db_ms) };
+  };
+
+  const writeMetrics = async (statusCode: number, errorMessage: string | null) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/edge_function_metrics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SB_KEY,
+        "Authorization": `Bearer ${SB_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({
+        function_name: FUNCTION_NAME,
+        execution_ms: Date.now() - startTime,
+        batch_size: null,
+        model: MODEL,
+        tokens_in: totalTokensIn,
+        tokens_out: totalTokensOut,
+        status_code: statusCode,
+        error_message: errorMessage,
+        phase_breakdown: summarizePhases(),
+      }),
+    }).catch(() => { /* metrics best-effort */ });
   };
 
   // ---------- RATE LIMIT: once per 24h ----------
@@ -31,6 +77,7 @@ Deno.serve(async (req) => {
   const rlData = await rlRes.json().catch(() => []);
   if (Array.isArray(rlData) && rlData.length > 0) {
     await log("rate_limited", `Skipped: last run at ${rlData[0].created_at}`);
+    await writeMetrics(429, `Rate limited: last completed run at ${rlData[0].created_at}`);
     return new Response(
       JSON.stringify({
         success: false,
@@ -66,7 +113,7 @@ Deno.serve(async (req) => {
             "anthropic-version": "2023-06-01",
           },
           body: JSON.stringify({
-            model: "claude-haiku-4-5-20251001",
+            model: MODEL,
             max_tokens: 2000,
             messages: [{ role: "user", content: prompt }],
           }),
@@ -101,6 +148,10 @@ Deno.serve(async (req) => {
       }
 
       const body = await res.json().catch(() => null);
+      if (body?.usage) {
+        totalTokensIn += body.usage.input_tokens ?? 0;
+        totalTokensOut += body.usage.output_tokens ?? 0;
+      }
       const text = body?.content?.[0]?.text;
       if (typeof text !== "string") {
         return { ok: false, errorType: "malformed_response", status: res.status, requestId, message: JSON.stringify(body ?? {}).slice(0, 200), attempts: attempt };
@@ -211,7 +262,10 @@ Deno.serve(async (req) => {
         ? `Return ONLY a JSON array with exactly 5 objects. No explanation, no markdown, no backticks. Just the raw JSON array starting with [ and ending with ]. This is for UAE DOH GP exam. Topic: ${subtopic}. Each object: {"card_type":"concept","front":"question here","back":"answer here","difficulty":"medium","tags":["tag1"]}`
         : `Return ONLY a JSON array with exactly 5 objects. No explanation, no markdown, no backticks. Just the raw JSON array starting with [ and ending with ]. This is for UAE DOH Internal Medicine Specialist exam. Topic: ${subtopic}. Each object: {"card_type":"concept","front":"question here","back":"answer here","difficulty":"medium","tags":["tag1"]}`;
 
+      // Time the LLM call (incl. retries inside callClaude). One sample per topic.
+      const llmStart = Date.now();
       const result = await callClaude(prompt);
+      llm_ms.push(Date.now() - llmStart);
 
       if (!result.ok) {
         await log("error", JSON.stringify({ track, subtopic, errorType: result.errorType, status: result.status, requestId: result.requestId, attempts: result.attempts, message: result.message }));
@@ -238,6 +292,8 @@ Deno.serve(async (req) => {
           is_active: true,
         }));
 
+        // Time the DB write (one PostgREST insert per topic).
+        const dbStart = Date.now();
         await fetch(`${SUPABASE_URL}/rest/v1/flashcards`, {
           method: "POST",
           headers: {
@@ -248,6 +304,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify(rows),
         });
+        db_ms.push(Date.now() - dbStart);
 
         await log("success", `${track}: Done: ${subtopic} → ${systemForCard}`);
         results.push({ subtopic, track, status: "ok" });
@@ -271,9 +328,11 @@ Deno.serve(async (req) => {
       : `${succeeded}/${results.length} topics succeeded (${succeeded * 5} cards)`;
 
     await log("completed", summary);
+    await writeMetrics(succeeded > 0 ? 200 : 502, apiOutage ? `API outage: ${errorTypes.join(", ")}` : null);
     return new Response(JSON.stringify({ success: succeeded > 0, generated: succeeded, failed, errorTypes, summary, results }), { headers: { "Content-Type": "application/json" } });
   } catch (err) {
     await log("error", JSON.stringify({ errorType: "top_level_crash", message: String(err) }));
+    await writeMetrics(500, String(err).slice(0, 500));
     return new Response(JSON.stringify({ success: false, generated: 0, summary: "top-level crash", error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 });

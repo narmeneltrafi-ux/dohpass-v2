@@ -5,7 +5,7 @@ const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
 const FUNCTION_NAME = "review-questions";
-const BATCH_SIZE = 50; // 50 per table × 2 tables = 100 questions/day
+const BATCH_SIZE = 50;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -86,8 +86,15 @@ async function callClaude(prompt: string): Promise<ClaudeOk | ClaudeErr> {
         attempts: attempt,
       };
     }
+
+    // Strip markdown fences before parsing — Claude sometimes wraps JSON in ```json ... ```
+    let cleaned = text.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned.replace(/```json?/g, "").replace(/```/g, "").trim();
+    }
+
     try {
-      return { ok: true, data: JSON.parse(text.trim()) };
+      return { ok: true, data: JSON.parse(cleaned) };
     } catch (err) {
       return { ok: false, errorType: "json_parse_error", status: res.status, requestId, message: String(err), attempts: attempt };
     }

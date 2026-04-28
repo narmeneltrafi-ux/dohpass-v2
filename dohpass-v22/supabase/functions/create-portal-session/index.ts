@@ -1,10 +1,18 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno&no-check";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://dohpass.com")
+  .split(",").map(s => s.trim()).filter(Boolean);
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // Same in-function JWT verification pattern as create-checkout: the Edge
 // gateway rejects both ES256 (UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM) and
@@ -20,7 +28,7 @@ async function verifyCallerAndGetUserId(
     console.error("create-portal-session: missing SUPABASE_URL or SB_SERVICE_ROLE_KEY env");
     return new Response(
       JSON.stringify({ error: "Auth misconfigured" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsFor(req), "Content-Type": "application/json" } },
     );
   }
 
@@ -31,7 +39,7 @@ async function verifyCallerAndGetUserId(
   if (!token) {
     return new Response(
       JSON.stringify({ error: "Missing Authorization header" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 401, headers: { ...corsFor(req), "Content-Type": "application/json" } },
     );
   }
 
@@ -40,7 +48,7 @@ async function verifyCallerAndGetUserId(
   if (error || !data?.user) {
     return new Response(
       JSON.stringify({ error: "Invalid or expired session" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 401, headers: { ...corsFor(req), "Content-Type": "application/json" } },
     );
   }
 
@@ -72,7 +80,7 @@ async function lookupStripeCustomerId(userId: string): Promise<string | null> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsFor(req) });
   }
 
   try {
@@ -80,7 +88,7 @@ Deno.serve(async (req) => {
     if (!STRIPE_SECRET_KEY) {
       return new Response(JSON.stringify({ error: "Stripe not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsFor(req), "Content-Type": "application/json" },
       });
     }
 
@@ -93,27 +101,28 @@ Deno.serve(async (req) => {
     if (!stripeCustomerId) {
       return new Response(
         JSON.stringify({ error: "No active subscription" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 404, headers: { ...corsFor(req), "Content-Type": "application/json" } },
       );
     }
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
-    const origin = req.headers.get("origin") || "https://dohpass.com";
+    const reqOrigin = req.headers.get("origin") ?? "";
+    const safeOrigin = ALLOWED_ORIGINS.includes(reqOrigin) ? reqOrigin : ALLOWED_ORIGINS[0];
 
     const session = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
-      return_url: `${origin}/account`,
+      return_url: `${safeOrigin}/account`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsFor(req), "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("create-portal-session error:", err.message);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsFor(req), "Content-Type": "application/json" },
     });
   }
 });

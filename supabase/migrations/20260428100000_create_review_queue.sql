@@ -29,3 +29,23 @@ create index review_queue_pending_idx
   where status = 'pending';
 
 alter table review_queue enable row level security;
+
+-- Atomic enqueue: bumps attempts at the DB, not in the client.
+-- Without this we have a read-then-upsert race where two concurrent invocations
+-- both read attempts=N, both write N+1 → we lose one increment.
+create or replace function enqueue_review_queue(
+  p_table_name text,
+  p_question_id uuid,
+  p_last_error text
+)
+returns void
+language sql
+as $$
+  insert into review_queue (table_name, question_id, status, attempts, last_error, last_attempt_at)
+  values (p_table_name, p_question_id, 'pending', 1, p_last_error, now())
+  on conflict (table_name, question_id) do update set
+    attempts = review_queue.attempts + 1,
+    last_error = excluded.last_error,
+    last_attempt_at = excluded.last_attempt_at,
+    status = 'pending';
+$$;

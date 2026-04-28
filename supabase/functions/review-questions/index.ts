@@ -5,9 +5,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // CRON DRAINER FOR review_queue — NOT YET DEPLOYED.
 // Document only; review and deploy separately.
 //
-// Goal: every 15 min, drain up to 10 'pending' rows, retry the LLM review,
-// flip to 'succeeded' or back to 'pending' (with attempts++) on retryable
-// failure, or 'failed' once attempts >= 5.
+// Goal: every 15 min, claim up to 10 'pending' rows, retry the LLM review,
+// flip status based on outcome.
+//
+// MAX_ATTEMPTS = 5. After the 5th failure the row terminates at status='failed'
+// and the drainer stops retrying it (rows can be inspected manually or reaped).
 //
 // Pattern is the standard PG queue claim: SELECT ... FOR UPDATE SKIP LOCKED
 // + atomic flip to 'in_progress' so an overlapping run can't double-process
@@ -28,7 +30,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 //   with picked as (
 //     select id, table_name, question_id
 //     from review_queue
-//     where status = 'pending' and attempts < 5
+//     where status = 'pending' and attempts < 5   -- MAX_ATTEMPTS = 5
 //     order by last_attempt_at nulls first
 //     limit 10
 //     for update skip locked
@@ -39,9 +41,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 //    where rq.id = p.id
 //   returning rq.id, rq.table_name, rq.question_id;
 //
-// On per-row outcome: success → status='succeeded'; failure → status='pending',
-// attempts = attempts + 1, last_error = ..., last_attempt_at = now(); when
-// attempts reaches 5 set status='failed' and stop retrying.
+// Per-row outcome from the drainer:
+//   - success:                      status='succeeded'
+//   - retryable failure, attempts<5: status='pending', attempts=attempts+1,
+//                                    last_error=..., last_attempt_at=now()
+//   - retryable failure, attempts>=5: status='failed' (terminal — drainer
+//                                    will never pick it up again)
+//   - non-retryable failure:        status='failed' immediately
 //
 // Skipping orphans (question hard-deleted from source table):
 //   left join specialist_questions sq on rq.table_name='specialist_questions' and sq.id=rq.question_id
@@ -146,30 +152,14 @@ async function callWithBackoff<T>(fn: () => Promise<T>, attempts = 3): Promise<T
 }
 
 async function enqueueDLQ(tableName: string, questionId: string, lastError: string): Promise<boolean> {
-  // Read-then-upsert is racy under concurrent writers, but the only writer
-  // is this function (cron drainer flips status, doesn't insert). Acceptable.
-  const { data: existing } = await supabase
-    .from("review_queue")
-    .select("attempts")
-    .eq("table_name", tableName)
-    .eq("question_id", questionId)
-    .maybeSingle();
-
-  const attempts = (existing?.attempts ?? 0) + 1;
-
-  const { error } = await supabase
-    .from("review_queue")
-    .upsert(
-      {
-        table_name: tableName,
-        question_id: questionId,
-        status: "pending",
-        attempts,
-        last_error: lastError.slice(0, 1000),
-        last_attempt_at: new Date().toISOString(),
-      },
-      { onConflict: "table_name,question_id" },
-    );
+  // Atomic at the DB via enqueue_review_queue() — single statement, attempts
+  // bumped in SQL with INSERT ... ON CONFLICT DO UPDATE SET attempts = ... + 1.
+  // Avoids the read-then-upsert race when concurrency > 1.
+  const { error } = await supabase.rpc("enqueue_review_queue", {
+    p_table_name: tableName,
+    p_question_id: questionId,
+    p_last_error: lastError.slice(0, 1000),
+  });
 
   if (error) {
     await log("error", JSON.stringify({ table: tableName, questionId, errorType: "dlq_insert_failed", message: error.message }));

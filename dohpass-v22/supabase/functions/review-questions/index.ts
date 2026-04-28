@@ -58,11 +58,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const FUNCTION_NAME = "review-questions";
 const BATCH_SIZE = 50;
 const CONCURRENCY = 3;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Constant-time string comparison. Length mismatch returns false up front;
+// equal-length inputs are compared char-by-char with bitwise OR so the
+// loop's runtime depends only on length, not on where the strings differ.
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 async function log(status: string, message: string) {
   await supabase.from("function_logs").insert({
@@ -96,7 +109,11 @@ async function callClaudeOnce(prompt: string): Promise<any> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1000,
+        // Bumped 1000 → 2000 after Step 2 smoke test surfaced 4× json_parse_error
+        // when haiku truncated mid-JSON at max_tokens=1000. Review prompts emit
+        // a 6-key JSON object whose worst-case length is ~1100 tokens; 2000
+        // gives enough headroom without doubling output cost in the common case.
+        max_tokens: 2000,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -252,6 +269,26 @@ async function processWithConcurrency<T>(items: T[], n: number, fn: (item: T) =>
 }
 
 serve(async (req) => {
+  // ---------- CRON SECRET GATE ----------
+  // First check: anything that fails here never touches DB or LLM.
+  // Gateway has verify_jwt: false (HS256 service-role JWTs are rejected
+  // by this project's gateway as UNAUTHORIZED_LEGACY_JWT — see config.toml).
+  // The shared secret is the authentication mechanism instead.
+  if (!CRON_SECRET) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Server misconfigured: CRON_SECRET unset" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  const providedSecret = req.headers.get("x-cron-secret") ?? "";
+  if (!constantTimeEqual(CRON_SECRET, providedSecret)) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  // --------------------------------------
+
   // ---------- RATE LIMIT: once per 24h ----------
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: recent } = await supabase

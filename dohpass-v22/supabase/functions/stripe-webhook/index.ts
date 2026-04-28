@@ -1,10 +1,15 @@
 import Stripe from "https://esm.sh/stripe@14?target=denonext";
 
-const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1TMjzp9oYokhs2iDMYKAdc6c": "gp",
-  "price_1TMk0W9oYokhs2iDmzZxIyTh": "specialist",
-  "price_1TMk1L9oYokhs2iDnwA0yLuX": "all_access",
-};
+function loadPriceMap(): Record<string, string> {
+  const gp         = Deno.env.get("STRIPE_PRICE_GP");
+  const specialist = Deno.env.get("STRIPE_PRICE_SPECIALIST");
+  const allAccess  = Deno.env.get("STRIPE_PRICE_ALL_ACCESS");
+  if (!gp || !specialist || !allAccess) {
+    throw new Error("stripe-webhook: missing STRIPE_PRICE_* env vars");
+  }
+  return { [gp]: "gp", [specialist]: "specialist", [allAccess]: "all_access" };
+}
+const PRICE_TO_PLAN = loadPriceMap();
 
 const GRACE_PERIOD_DAYS = 3;
 
@@ -136,9 +141,10 @@ Deno.serve(async (req) => {
       return new Response("No price ID", { status: 400 });
     }
 
-    const plan = PRICE_TO_PLAN[priceId] ?? "free";
-    if (!(priceId in PRICE_TO_PLAN)) {
-      console.warn(`checkout.session.completed: unknown priceId=${priceId} — defaulting plan='free'`);
+    const plan = PRICE_TO_PLAN[priceId];
+    if (!plan) {
+      console.error(`checkout.session.completed: unmapped priceId=${priceId} user=${userId} — refusing to downgrade`);
+      throw new Error(`Unmapped Stripe price: ${priceId}`);
     }
 
     const customerId =
@@ -181,9 +187,14 @@ Deno.serve(async (req) => {
     }
 
     const priceId = sub.items.data[0]?.price?.id ?? null;
-    const plan = priceId && PRICE_TO_PLAN[priceId] ? PRICE_TO_PLAN[priceId] : "free";
-    if (priceId && !(priceId in PRICE_TO_PLAN)) {
-      console.warn(`customer.subscription.updated: unknown priceId=${priceId} user=${userId} — defaulting plan='free'`);
+    if (!priceId) {
+      console.error(`customer.subscription.updated: no priceId on sub=${sub.id} user=${userId}`);
+      throw new Error(`Missing priceId on subscription ${sub.id}`);
+    }
+    const plan = PRICE_TO_PLAN[priceId];
+    if (!plan) {
+      console.error(`customer.subscription.updated: unmapped priceId=${priceId} user=${userId}`);
+      throw new Error(`Unmapped Stripe price: ${priceId}`);
     }
 
     const currentPeriodEnd = extractPeriodEnd(sub);

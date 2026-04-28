@@ -2,6 +2,13 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase, getProfile, createCheckoutSession, fetchQuestionCounts } from '../lib/supabase'
 
+const PRICE_GP         = import.meta.env.VITE_STRIPE_PRICE_GP;
+const PRICE_SPECIALIST = import.meta.env.VITE_STRIPE_PRICE_SPECIALIST;
+const PRICE_ALL_ACCESS = import.meta.env.VITE_STRIPE_PRICE_ALL_ACCESS;
+if (!PRICE_GP || !PRICE_SPECIALIST || !PRICE_ALL_ACCESS) {
+  console.error("Pricing: missing VITE_STRIPE_PRICE_* env vars");
+}
+
 function buildPlans(counts) {
   return [
     {
@@ -10,7 +17,7 @@ function buildPlans(counts) {
       price: '49',
       currency: 'AED',
       period: '/month',
-      priceId: 'price_1TMjzp9oYokhs2iDMYKAdc6c',
+      priceId: PRICE_GP,
       features: [
         `Full GP question bank (${counts.gp.toLocaleString()} questions)`,
         'Unlimited practice sessions',
@@ -26,7 +33,7 @@ function buildPlans(counts) {
       price: '69',
       currency: 'AED',
       period: '/month',
-      priceId: 'price_1TMk0W9oYokhs2iDmzZxIyTh',
+      priceId: PRICE_SPECIALIST,
       features: [
         `Full Specialist question bank (${counts.specialist.toLocaleString()} questions)`,
         'Unlimited practice sessions',
@@ -43,7 +50,7 @@ function buildPlans(counts) {
       price: '89',
       currency: 'AED',
       period: '/month',
-      priceId: 'price_1TMk1L9oYokhs2iDnwA0yLuX',
+      priceId: PRICE_ALL_ACCESS,
       features: [
         'Both GP & Specialist question banks',
         'Unlimited practice sessions',

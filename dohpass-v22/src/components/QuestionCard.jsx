@@ -265,7 +265,11 @@ export default function QuestionCard({
             data-feedback-correct={feedback?.correct ? 'true' : 'false'}
           >
             <div className="qui-expl__head">
-              <span className={`qui-expl__pill${feedback?.correct ? ' qui-expl__pill--ok' : ' qui-expl__pill--bad'}`}>
+              {/* This pill announces the correct answer (information) — NOT
+                  the user's outcome. It must always be green, regardless of
+                  whether the user got it right. The only red case is a true
+                  data-loading fault ("Data issue"). */}
+              <span className={`qui-expl__pill${dataIssue ? ' qui-expl__pill--bad' : ' qui-expl__pill--ok'}`}>
                 {dataIssue
                   ? 'Data issue'
                   : feedback?.correct

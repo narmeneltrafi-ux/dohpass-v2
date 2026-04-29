@@ -7,6 +7,7 @@ import Footer from './components/Footer.jsx'
 import ScreenGuard from './components/ScreenGuard.jsx'
 import SessionKicked from './components/SessionKicked.jsx'
 import Home from './pages/Home.jsx'
+import Dashboard from './pages/Dashboard.jsx'
 import SpecialistQuiz from './pages/SpecialistQuiz.jsx'
 import GPQuiz from './pages/GPQuiz.jsx'
 import LoginPage from './pages/AuthPage.jsx'
@@ -61,12 +62,26 @@ function GuardedContent({ children }) {
   return children
 }
 
-/* Footer is hidden on /login and /signup */
+/* Header is hidden on the public landing page (it has its own glass nav) */
+function ConditionalHeader() {
+  const location = useLocation()
+  if (location.pathname === '/') return null
+  return <Header />
+}
+
+/* Footer is hidden on /login, /signup, /auth, and the public landing page */
 function ConditionalFooter() {
   const location = useLocation()
-  const hide = ['/login', '/signup', '/auth'].includes(location.pathname)
+  const hide = ['/login', '/signup', '/auth', '/'].includes(location.pathname)
   if (hide) return null
   return <Footer />
+}
+
+/* Public landing for / — logged-in users get redirected to /dashboard */
+function HomeRoot({ user }) {
+  if (user === undefined) return <Home />
+  if (user) return <Navigate to='/dashboard' replace />
+  return <Home />
 }
 
 function AppRoutes({ user, kicked, onKickedLogin }) {
@@ -76,12 +91,13 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
 
   return (
     <>
-      <Header />
+      <ConditionalHeader />
       <GuardedContent>
         <Routes>
           <Route path='/login' element={<LoginPage />} />
           <Route path='/auth' element={<Navigate to='/login' replace />} />
-          <Route path='/' element={<ProtectedRoute user={user}><Home /></ProtectedRoute>} />
+          <Route path='/' element={<HomeRoot user={user} />} />
+          <Route path='/dashboard' element={<ProtectedRoute user={user}><Dashboard /></ProtectedRoute>} />
           <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
           <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />
           <Route path='/flashcards' element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />

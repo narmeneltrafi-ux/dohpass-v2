@@ -424,7 +424,7 @@ function buildTeaserPlans(stats) {
   ]
 }
 
-function PricingTeaser({ stats }) {
+function PricingTeaser({ stats, navigate }) {
   const plans = buildTeaserPlans(stats)
   return (
     <section className="lp-pricing" id="pricing">
@@ -466,6 +466,17 @@ function PricingTeaser({ stats }) {
           </article>
         ))}
       </div>
+
+      {/* Active gold pill below the cards. The card CTAs themselves stay
+          disabled (Lemon Squeezy migration), so this is the only path out
+          of the teaser into /pricing — keeps the section navigable. */}
+      <button
+        type="button"
+        className="lp-pricing__seeAll"
+        onClick={() => navigate('/pricing')}
+      >
+        See all plan details <IconArrow size={14} />
+      </button>
     </section>
   )
 }
@@ -637,7 +648,7 @@ export default function Home() {
 
       <CredibilityBar />
 
-      <PricingTeaser stats={stats} />
+      <PricingTeaser stats={stats} navigate={navigate} />
 
       <Testimonials />
 

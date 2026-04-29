@@ -201,34 +201,44 @@ export default function GPQuiz() {
     )
   }
 
-  return (
-    <div className="quiz-page" style={{ paddingTop: '62px' }}>
-      <div className="quiz-header">
-        <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-        <div className="quiz-title blue">General Practitioner</div>
+  if (loading) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="loading"><div className="spinner blue" />Loading questions...</div>
       </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="loading error">{error}</div>
+      </div>
+    )
+  }
+  if (done) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <ResultsScreen correct={correct} wrong={wrong} track="blue" onRestart={handleRestart} />
+      </div>
+    )
+  }
+  if (bank.length === 0) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="loading">No questions found for this system.</div>
+      </div>
+    )
+  }
 
+  const chromeTop = (
+    <>
       {trialActive && (
-        <div
-          className="trial-banner"
-          style={{
-            maxWidth: '720px',
-            margin: '0 auto 12px',
-            padding: '12px 16px',
-            textAlign: 'center',
-            background: 'rgba(56, 132, 255, 0.1)',
-            border: '1px solid rgba(56, 132, 255, 0.3)',
-            borderRadius: '8px',
-            color: '#3884ff',
-            fontWeight: 500,
-          }}
-        >
-          Free trial: {trialStatus.remaining} of {trialStatus.limit} questions left
+        <div className="qui-trial qui-trial--blue" role="status">
+          Free trial · {trialStatus.remaining} of {trialStatus.limit} questions left
         </div>
       )}
-
-      {planAllowed && (
-        <div className="filter-pills-scroll">
+      {planAllowed && systems.length > 1 && (
+        <div className="filter-pills-scroll" aria-label="Filter by system">
           <div className="filter-pills">
             {systems.map(s => (
               <button
@@ -242,44 +252,35 @@ export default function GPQuiz() {
           </div>
         </div>
       )}
+    </>
+  )
 
-      {loading && <div className="loading"><div className="spinner blue" />Loading questions...</div>}
-      {error && <div className="loading error">{error}</div>}
+  const chromeBookmark = (
+    <BookmarkButton
+      questionId={bank[index].id}
+      topic={bank[index].topic}
+      bookmarks={bookmarks}
+      toggle={toggle}
+    />
+  )
 
-      {!loading && !error && done && (
-        <ResultsScreen correct={correct} wrong={wrong} track="blue" onRestart={handleRestart} />
-      )}
-
-      {!loading && !error && !done && bank.length > 0 && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '720px', margin: '0 auto', padding: '0 16px' }}>
-            <BookmarkButton
-              questionId={bank[index].id}
-              topic={bank[index].topic}
-              bookmarks={bookmarks}
-              toggle={toggle}
-            />
-          </div>
-          <QuestionCard
-            question={bank[index]}
-            index={index}
-            total={bank.length}
-            correct={correct}
-            wrong={wrong}
-            selectedOption={selected}
-            submitted={submitted}
-            onSelect={handleSelect}
-            onSubmit={handleSubmit}
-            onNext={handleNext}
-            feedback={feedback}
-            track="blue"
-          />
-        </>
-      )}
-
-      {!loading && !error && bank.length === 0 && (
-        <div className="loading">No questions found for this system.</div>
-      )}
-    </div>
+  return (
+    <QuestionCard
+      question={bank[index]}
+      index={index}
+      total={bank.length}
+      correct={correct}
+      wrong={wrong}
+      selectedOption={selected}
+      submitted={submitted}
+      onSelect={handleSelect}
+      onSubmit={handleSubmit}
+      onNext={handleNext}
+      feedback={feedback}
+      track="blue"
+      mode="tutor"
+      chromeTop={chromeTop}
+      chromeBookmark={chromeBookmark}
+    />
   )
 }

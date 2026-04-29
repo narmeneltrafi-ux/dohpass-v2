@@ -290,7 +290,9 @@ serve(async (req) => {
   // --------------------------------------
 
   // ---------- RATE LIMIT: once per 24h ----------
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const todayStartUtc = new Date();
+  todayStartUtc.setUTCHours(0, 0, 0, 0);
+  const since = todayStartUtc.toISOString();
   const { data: recent } = await supabase
     .from("function_logs")
     .select("created_at")
@@ -306,7 +308,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         rateLimited: true,
-        message: `${FUNCTION_NAME} already ran in last 24h`,
+        message: `${FUNCTION_NAME} already ran today (UTC)`,
         lastRun: recent[0].created_at,
       }),
       { status: 429, headers: { "Content-Type": "application/json" } },

@@ -107,9 +107,21 @@ export async function fetchQuestionCounts() {
   }
 }
 
-// Landing-page hero stats. Tries direct table reads for specialties + last
-// updated; falls back gracefully (null) if anon RLS blocks the table or the
-// query errors. Total questions always derived from the existing public RPC.
+// Anonymous fallback for the SPECIALTIES cell on the landing hero.
+// RLS on specialist_questions / gp_questions only allows authenticated paid
+// users to SELECT, so the direct-query path below returns nothing for
+// anonymous visitors and the cell renders an em-dash. Until a SECURITY
+// DEFINER RPC is added (follow-up PR), unauthenticated visitors see this
+// hardcoded floor instead. The real value at the time of writing is ~10
+// primary topics across both tracks; "10+" is a conservative public floor.
+const SPECIALTIES_ANON_FLOOR = 10
+
+// Landing-page hero stats. The QUESTIONS and FLASHCARDS counts come from the
+// existing get_question_counts RPC (anon-callable). SPECIALTIES and
+// last-updated try direct table reads — these succeed for paid authenticated
+// users, but RLS blocks them for anonymous visitors. On RLS-block / error,
+// SPECIALTIES falls back to SPECIALTIES_ANON_FLOOR (never em-dash); last
+// updated falls back to "today" downstream.
 export async function fetchLandingStats() {
   const counts = await fetchQuestionCounts()
   const totalQuestions = (counts.specialist || 0) + (counts.gp || 0)
@@ -132,7 +144,9 @@ export async function fetchLandingStats() {
       )
       if (uniq.size > 0) specialties = uniq.size
     }
-  } catch { /* anon RLS may block — keep specialties null */ }
+  } catch { /* keep specialties null — fallback applied below */ }
+
+  if (specialties == null) specialties = SPECIALTIES_ANON_FLOOR
 
   try {
     const [s, g] = await Promise.all([
@@ -151,12 +165,16 @@ export async function fetchLandingStats() {
     if (candidates.length) {
       lastUpdated = new Date(Math.max(...candidates.map(d => d.getTime())))
     }
-  } catch { /* keep lastUpdated null */ }
+  } catch { /* keep lastUpdated null → "today" downstream */ }
 
   return {
     questions: totalQuestions,
-    explanations: totalQuestions,
     specialties,
+    flashcards: counts.flashcards || 0,
+    // Per-track counts so the home pricing teaser can render live numbers
+    // without making its own RPC call (kept in sync with /pricing)
+    gp:         counts.gp || 0,
+    specialist: counts.specialist || 0,
     lastUpdated,
   }
 }

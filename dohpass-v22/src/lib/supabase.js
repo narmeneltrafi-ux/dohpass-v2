@@ -107,6 +107,60 @@ export async function fetchQuestionCounts() {
   }
 }
 
+// Landing-page hero stats. Tries direct table reads for specialties + last
+// updated; falls back gracefully (null) if anon RLS blocks the table or the
+// query errors. Total questions always derived from the existing public RPC.
+export async function fetchLandingStats() {
+  const counts = await fetchQuestionCounts()
+  const totalQuestions = (counts.specialist || 0) + (counts.gp || 0)
+
+  let specialties = null
+  let lastUpdated = null
+
+  try {
+    const [specialistTopics, gpTopics] = await Promise.all([
+      supabase.from('specialist_questions').select('topic').limit(5000),
+      supabase.from('gp_questions').select('topic').limit(5000),
+    ])
+    if (!specialistTopics.error && !gpTopics.error) {
+      const all = [
+        ...(specialistTopics.data || []),
+        ...(gpTopics.data || []),
+      ]
+      const uniq = new Set(
+        all.map(r => primaryTopic(r.topic)).filter(Boolean)
+      )
+      if (uniq.size > 0) specialties = uniq.size
+    }
+  } catch { /* anon RLS may block — keep specialties null */ }
+
+  try {
+    const [s, g] = await Promise.all([
+      supabase.from('specialist_questions')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1),
+      supabase.from('gp_questions')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1),
+    ])
+    const candidates = []
+    if (!s.error && s.data?.[0]?.created_at) candidates.push(new Date(s.data[0].created_at))
+    if (!g.error && g.data?.[0]?.created_at) candidates.push(new Date(g.data[0].created_at))
+    if (candidates.length) {
+      lastUpdated = new Date(Math.max(...candidates.map(d => d.getTime())))
+    }
+  } catch { /* keep lastUpdated null */ }
+
+  return {
+    questions: totalQuestions,
+    explanations: totalQuestions,
+    specialties,
+    lastUpdated,
+  }
+}
+
 // ── ANALYTICS ────────────────────────────────────────────────────────────────
 
 export async function fetchFullProgress(track) {

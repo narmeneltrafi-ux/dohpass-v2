@@ -1,251 +1,766 @@
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { fetchProgress, getProfile, fetchQuestionCounts } from '../lib/supabase'
+import { fetchLandingStats } from '../lib/supabase'
 
-/* ── 3-D tilt hook ──────────────────────────────────────────────── */
-function useTilt() {
-  const ref = useRef(null)
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
-  const frame = useRef(null)
-
-  const onMove = useCallback((e) => {
-    if (frame.current) cancelAnimationFrame(frame.current)
-    frame.current = requestAnimationFrame(() => {
-      const el = ref.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const px = (e.clientX - r.left) / r.width
-      const py = (e.clientY - r.top) / r.height
-      setTilt({ x: (py - 0.5) * 14, y: (0.5 - px) * 14 })
-    })
-  }, [])
-
-  const onLeave = useCallback(() => {
-    if (frame.current) cancelAnimationFrame(frame.current)
-    setTilt({ x: 0, y: 0 })
-  }, [])
-
-  return { ref, tilt, onMove, onLeave }
-}
-
-/* ── Inline SVG icons ─────────────────────────────────────────── */
-const IconPulse = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+/* ───────────────────────────────────────────────────────────────
+   ICONS
+   ─────────────────────────────────────────────────────────────── */
+const IconCross = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="9" y="2" width="6" height="20" rx="2" />
+    <rect x="2" y="9" width="20" height="6" rx="2" />
   </svg>
 )
-const IconHelpCircle = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-  </svg>
-)
-const IconMonitor = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-)
-const IconShield = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-)
-const IconArrow = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+const IconArrow = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 )
+const IconCheck = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+const IconChevron = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
 
-/* ── Animated stat badge ────────────────────────────────────────── */
-const STAT_ICONS = {
-  questions: <IconHelpCircle />,
-  tracks:    <IconMonitor />,
-  format:    <IconShield />,
-}
+/* ───────────────────────────────────────────────────────────────
+   PRIMITIVES
+   ─────────────────────────────────────────────────────────────── */
 
-function AnimatedStatBadge({ type, value, label, delay }) {
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(t)
-  }, [delay])
-
+/* Hand-drawn underline SVG, sits behind a word in the headline */
+function HandUnderline() {
   return (
-    <div className={`hero-stat${visible ? ' hero-stat--visible' : ''}`} style={{ transitionDelay: `${delay}ms` }}>
-      <div className="hero-stat__icon">{STAT_ICONS[type]}</div>
-      <div className="hero-stat__text">
-        <span className="hero-stat__value">{value}</span>
-        <span className="hero-stat__label">{label}</span>
-      </div>
-    </div>
+    <svg className="lp-underline" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        d="M5 14 Q 70 4 150 11 T 295 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
 
-/* ── Track card (3D tilt) ────────────────────────────────────────── */
-function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, navigate }) {
-  const { ref, tilt, onMove, onLeave } = useTilt()
-  const [progress, setProgress] = useState(null)
+/* Gold conic-gradient border that spins continuously */
+function ShinyBorderButton({ children, onClick, className = '', as: Tag = 'button', ...props }) {
+  return (
+    <Tag
+      className={`lp-shiny ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      <span className="lp-shiny__inner">{children}</span>
+    </Tag>
+  )
+}
+
+/* Animated number counter, fires when scrolled into view */
+function CountUp({ value, durationMs = 1400, suffix = '' }) {
+  const [display, setDisplay] = useState(0)
+  const ref = useRef(null)
+  const startedRef = useRef(false)
 
   useEffect(() => {
-    if (!trackId) return
-    fetchProgress(trackId).then(p => {
-      if (p && p.answered > 0) setProgress(p)
-    })
-  }, [trackId])
-
-  const pct = progress ? Math.round((progress.answered / total) * 100) : 0
+    if (value == null) return
+    const node = ref.current
+    if (!node) return
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting && !startedRef.current) {
+          startedRef.current = true
+          const start = performance.now()
+          const target = Number(value) || 0
+          const tick = (now) => {
+            const t = Math.min(1, (now - start) / durationMs)
+            // ease-out cubic
+            const eased = 1 - Math.pow(1 - t, 3)
+            setDisplay(Math.round(eased * target))
+            if (t < 1) requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }
+      })
+    }, { threshold: 0.4 })
+    obs.observe(node)
+    return () => obs.disconnect()
+  }, [value, durationMs])
 
   return (
-    <div
-      ref={ref}
-      className={`tc tc--${variant}`}
-      style={{ transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      onClick={() => navigate(route)}
-    >
-      <div className={`tc-hd tc-hd--${variant}`}>
-        <div className="tc-hd-icon">{icon}</div>
-        <span className={`tc-hd-badge tc-hd-badge--${variant}`}>{badge}</span>
-        <div className="tc-hd-shimmer" />
+    <span ref={ref} className="lp-countup">
+      {value == null ? '—' : `${display.toLocaleString()}${suffix}`}
+    </span>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   1. STICKY GLASS NAVBAR
+   ─────────────────────────────────────────────────────────────── */
+function NavBar({ navigate }) {
+  const links = [
+    { label: 'Tracks', href: '#features' },
+    { label: 'Pricing', href: '#pricing' },
+    { label: 'About', href: '#credibility' },
+  ]
+  return (
+    <nav className="lp-nav" aria-label="Primary">
+      <div className="lp-nav__brand" onClick={() => navigate('/')}>
+        <span className="lp-nav__cross"><IconCross /></span>
+        <span className="lp-nav__name">
+          <span className="lp-nav__doh">DOH</span>
+          <span className="lp-nav__pass">Pass</span>
+        </span>
       </div>
-
-      <div className="tc-body">
-        <h3 className="tc-title">{title}</h3>
-        <p className="tc-desc">{desc}</p>
-
-        {progress && (
-          <div className="tc-progress">
-            <div className="tc-progress-row">
-              <span className="tc-progress-answered" style={{ color: `var(--${variant})` }}>
-                {progress.answered} answered
-              </span>
-              <span className="tc-progress-pct">{pct}%</span>
-            </div>
-            <div className="tc-progress-rail">
-              <div
-                className="tc-progress-fill"
-                style={{ width: `${pct}%`, background: `var(--${variant})` }}
-              />
-            </div>
-          </div>
-        )}
-
-        <button className={`tc-cta tc-cta--${variant}`}>
-          {progress ? 'Continue' : 'Begin'}
-          <span className="tc-cta-icon"><IconArrow /></span>
+      <div className="lp-nav__links">
+        {links.map(l => (
+          <a key={l.href} href={l.href} className="lp-nav__link">{l.label}</a>
+        ))}
+      </div>
+      <div className="lp-nav__right">
+        <button className="lp-nav__signin" onClick={() => navigate('/login')}>Sign In</button>
+        <button className="lp-nav__cta" onClick={() => navigate('/pricing')}>
+          Start Free Trial
         </button>
       </div>
+    </nav>
+  )
+}
 
-      <div className={`tc-glow tc-glow--${variant}`} />
+/* ───────────────────────────────────────────────────────────────
+   2. HERO
+   ─────────────────────────────────────────────────────────────── */
+function Hero({ navigate, scrollToFeatures }) {
+  return (
+    <section className="lp-hero" id="hero">
+      <div className="lp-hero__grid" aria-hidden="true" />
+
+      <div className="lp-hero__inner">
+        <div className="lp-hero__badge">
+          <span className="lp-hero__pulse" />
+          DOH 2026 exam ready · Updated weekly
+        </div>
+
+        <h1 className="lp-hero__h1">
+          Pass your DOH exam with
+          <br />
+          <span className="lp-hero__h1-gold">
+            confidence
+            <HandUnderline />
+          </span>
+        </h1>
+
+        <p className="lp-hero__sub">
+          3,000+ specialist questions. 1,000+ GP questions. Written and reviewed by UAE physicians,
+          mapped to the current DOH blueprint.
+        </p>
+
+        <div className="lp-hero__ctas">
+          <ShinyBorderButton onClick={() => navigate('/pricing')}>
+            Start Free Trial <IconArrow />
+          </ShinyBorderButton>
+          <button className="lp-ghost" onClick={scrollToFeatures}>
+            See a sample question <IconArrow />
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   3. LIVE STATS BAR
+   ─────────────────────────────────────────────────────────────── */
+function StatsBar({ stats }) {
+  function formatUpdated(d) {
+    if (!d) return 'today'
+    const now = new Date()
+    const sameDay = d.toDateString() === now.toDateString()
+    if (sameDay) return 'today'
+    const diffDays = Math.floor((now - d) / 86400000)
+    if (diffDays <= 6) return `${diffDays}d ago`
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }
+
+  const cells = [
+    { label: 'Questions Live', value: stats?.questions, suffix: '+' },
+    { label: 'Specialties',    value: stats?.specialties },
+    { label: 'Explanations',   value: stats?.explanations, suffix: '+' },
+  ]
+
+  return (
+    <div className="lp-stats" role="region" aria-label="Live question bank stats">
+      {cells.map((c, i) => (
+        <div className="lp-stats__cell" key={i}>
+          <span className="lp-stats__label">{c.label}</span>
+          <span className="lp-stats__num">
+            <CountUp value={c.value ?? null} suffix={c.suffix || ''} />
+          </span>
+        </div>
+      ))}
+      <div className="lp-stats__cell">
+        <span className="lp-stats__label">Updated</span>
+        <span className="lp-stats__num lp-stats__num--word">
+          {formatUpdated(stats?.lastUpdated)}
+        </span>
+      </div>
     </div>
   )
 }
 
-/* ── Page ─────────────────────────────────────────────────────── */
-export default function Home() {
-  const navigate = useNavigate()
-  const [counts, setCounts] = useState({ specialist: 0, gp: 0, flashcards: 0 })
+/* ───────────────────────────────────────────────────────────────
+   4. FEATURES — SCROLL-SPY (LIGHT)
+   ─────────────────────────────────────────────────────────────── */
+const FEATURES = [
+  {
+    id: 'tracks',
+    eyebrow: 'Two tracks, one path',
+    title: 'GP and Specialist — pick the track that matches your exam.',
+    body: 'Each bank is mapped to its own DOH blueprint, so you never waste time on questions that won\'t be tested.',
+    Mock: MockTracks,
+  },
+  {
+    id: 'realistic',
+    eyebrow: 'Real exam-style questions',
+    title: 'Pearson-VUE-style vignettes, single best answer.',
+    body: 'No filler MCQs. Each question is a clinical scenario built to match the format and pacing of the live DOH exam.',
+    Mock: MockQuestion,
+  },
+  {
+    id: 'explanations',
+    eyebrow: 'In-depth explanations',
+    title: 'Every answer comes with a guideline-cited rationale.',
+    body: 'Why the right answer is right, why each distractor is wrong, and which guideline it traces back to.',
+    Mock: MockExplanation,
+  },
+  {
+    id: 'mobile',
+    eyebrow: 'Mobile-first',
+    title: 'Practice on call, on the metro, between cases.',
+    body: 'The whole interface is built for one-handed use on phones, with a desktop view that scales up cleanly.',
+    Mock: MockMobile,
+  },
+  {
+    id: 'daily',
+    eyebrow: 'Daily new questions',
+    title: 'Fresh questions added weekly, reviewed by physicians.',
+    body: 'A live queue of new vignettes — written, peer-reviewed, and pushed to the bank without you having to refresh.',
+    Mock: MockDaily,
+  },
+]
+
+function FeaturesSection() {
+  const [activeIdx, setActiveIdx] = useState(0)
+  const sectionRefs = useRef([])
 
   useEffect(() => {
-    fetchQuestionCounts().then(setCounts)
+    const obs = new IntersectionObserver((entries) => {
+      // pick the entry whose center is closest to the viewport center
+      const visible = entries.filter(e => e.isIntersecting)
+      if (visible.length === 0) return
+      const winMid = window.innerHeight / 2
+      let best = visible[0]
+      let bestDist = Infinity
+      visible.forEach((e) => {
+        const r = e.target.getBoundingClientRect()
+        const mid = r.top + r.height / 2
+        const dist = Math.abs(mid - winMid)
+        if (dist < bestDist) { bestDist = dist; best = e }
+      })
+      const idx = Number(best.target.dataset.idx)
+      if (!Number.isNaN(idx)) setActiveIdx(idx)
+    }, { threshold: [0.3, 0.5, 0.7] })
+
+    sectionRefs.current.forEach((el) => el && obs.observe(el))
+    return () => obs.disconnect()
   }, [])
 
   return (
-    <div className="hw" style={{ paddingTop: '62px' }}>
-      {/* Floating orbs */}
-      <div className="hw-orb hw-orb--1" />
-      <div className="hw-orb hw-orb--2" />
-      <div className="hw-orb hw-orb--3" />
+    <section className="lp-features" id="features" aria-label="Features">
+      <div className="lp-features__inner">
+        <aside className="lp-spy" aria-hidden="true">
+          <ul>
+            {FEATURES.map((f, i) => (
+              <li
+                key={f.id}
+                className={`lp-spy__item${i === activeIdx ? ' lp-spy__item--active' : ''}`}
+              >
+                <span className="lp-spy__dot" />
+                <span className="lp-spy__label">{f.eyebrow}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-      {/* Hero — Animated stat badges */}
-      <div className="hw-hero">
-        <div className="hw-eyebrow">
-          <IconPulse />
-          UAE Medical Licensing
-        </div>
-
-        <h1 className="hw-h1">
-          <span className="hw-h1-top">Master Your</span>
-          <br />
-          <span className="hw-h1-bot">Medical Exams</span>
-        </h1>
-
-        <p className="hw-sub">
-          High-yield questions. Real exam format. UAE-focused.
-        </p>
-
-        <div className="hero-stats-row">
-          <AnimatedStatBadge type="questions" value={(counts.specialist + counts.gp).toLocaleString()} label="Questions" delay={200} />
-          <AnimatedStatBadge type="tracks"    value="2"     label="Exam Tracks" delay={400} />
-          <AnimatedStatBadge type="format"    value="UAE"   label="DOH Format" delay={600} />
-        </div>
-
-        <div className="hw-hero-ctas">
-          <button className="hw-hero-cta hw-hero-cta--primary" onClick={() => navigate('/specialist')}>
-            Start Specialist <IconArrow />
-          </button>
-          <button className="hw-hero-cta hw-hero-cta--secondary" onClick={() => navigate('/gp')}>
-            Start GP Track <IconArrow />
-          </button>
-        </div>
-      </div>
-
-      {/* Track cards */}
-      <div className="hw-section">
-        <h2 className="hw-section-title">Your Exam Tracks</h2>
-        <div className="hw-grid">
-          <TrackCard
-            trackId="specialist"
-            icon="🏅"
-            title="Internal Medicine Specialist"
-            desc="DOH Specialist track — Cardiology, Respiratory, Nephrology & more"
-            badge={`${counts.specialist.toLocaleString()} Questions`}
-            variant="gold"
-            total={counts.specialist}
-            route="/specialist"
-            navigate={navigate}
-          />
-          <TrackCard
-            trackId="gp"
-            icon="🩺"
-            title="General Practitioner"
-            desc="DOH GP track — broad primary care question bank"
-            badge={`${counts.gp.toLocaleString()} Questions`}
-            variant="blue"
-            total={counts.gp}
-            route="/gp"
-            navigate={navigate}
-          />
-          <TrackCard
-            trackId={null}
-            icon="🗂"
-            title="Flashcards"
-            desc="Concept, drug & anatomy cards — Specialist & GP tracks"
-            badge={`${counts.flashcards.toLocaleString()} Cards`}
-            variant="teal"
-            total={null}
-            route="/gems"
-            navigate={navigate}
-          />
+        <div className="lp-features__col">
+          {FEATURES.map((f, i) => {
+            const Mock = f.Mock
+            return (
+              <article
+                key={f.id}
+                ref={(el) => (sectionRefs.current[i] = el)}
+                data-idx={i}
+                className="lp-feature"
+              >
+                <div className="lp-feature__text">
+                  <span className="lp-feature__eyebrow">{f.eyebrow}</span>
+                  <h3 className="lp-feature__title">{f.title}</h3>
+                  <p className="lp-feature__body">{f.body}</p>
+                </div>
+                <div className="lp-feature__visual">
+                  <Mock />
+                </div>
+              </article>
+            )
+          })}
         </div>
       </div>
+    </section>
+  )
+}
 
-      {/* Mock Exam */}
-      <div className="hw-section">
-        <h2 className="hw-section-title">Mock Exam</h2>
-        <div className="hw-mock-banner" onClick={() => navigate('/mock-exam')}>
-          <span className="hw-mock-icon">📝</span>
-          <div className="hw-mock-text">
-            <h3>Timed Mock Exam</h3>
-            <p>100 questions, 150 minutes. Simulates the real DOH exam. Pass mark: 60%.</p>
+/* ── Static JSX mockups for the feature visuals ───────────────── */
+function MockTracks() {
+  return (
+    <div className="lp-mock lp-mock--tracks">
+      <div className="lp-mock__card lp-mock__card--gold">
+        <div className="lp-mock__cardTop">
+          <span className="lp-mock__pill lp-mock__pill--gold">Specialist</span>
+          <span className="lp-mock__count">3,000+ Q</span>
+        </div>
+        <div className="lp-mock__rows">
+          <span>Cardiology</span><span>Respiratory</span><span>Nephrology</span>
+        </div>
+      </div>
+      <div className="lp-mock__card lp-mock__card--blue">
+        <div className="lp-mock__cardTop">
+          <span className="lp-mock__pill lp-mock__pill--blue">GP</span>
+          <span className="lp-mock__count">1,000+ Q</span>
+        </div>
+        <div className="lp-mock__rows">
+          <span>Primary Care</span><span>Pediatrics</span><span>Women&apos;s Health</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MockQuestion() {
+  return (
+    <div className="lp-mock lp-mock--question">
+      <div className="lp-mock__qTop">
+        <span className="lp-mock__pill lp-mock__pill--soft">Cardiology · Vignette</span>
+        <span className="lp-mock__qIdx">Q 14 / 50</span>
+      </div>
+      <p className="lp-mock__stem">
+        A 68-year-old man with hypertension presents with central chest pain radiating to the left arm
+        for 40 minutes. ECG shows ST elevation in leads II, III, and aVF. What is the single best
+        next step?
+      </p>
+      <ul className="lp-mock__opts">
+        <li><span className="lp-mock__opt-key">A</span>Aspirin 300mg only</li>
+        <li className="is-correct"><span className="lp-mock__opt-key">B</span>Primary PCI within 90 minutes</li>
+        <li><span className="lp-mock__opt-key">C</span>Thrombolysis with streptokinase</li>
+        <li><span className="lp-mock__opt-key">D</span>CT pulmonary angiogram</li>
+      </ul>
+    </div>
+  )
+}
+
+function MockExplanation() {
+  return (
+    <div className="lp-mock lp-mock--exp">
+      <div className="lp-mock__expHead">
+        <span className="lp-mock__expBadge">Correct: B</span>
+        <span className="lp-mock__expSrc">ESC STEMI Guidelines 2023</span>
+      </div>
+      <p className="lp-mock__expBody">
+        Inferior STEMI within the 12-hour window mandates primary PCI as the reperfusion strategy of
+        choice when available within 120 minutes of first medical contact. Thrombolysis is reserved
+        for centres without timely PCI access.
+      </p>
+      <ul className="lp-mock__expWhy">
+        <li><b>A</b> — antiplatelet alone does not reperfuse.</li>
+        <li><b>C</b> — only if PCI not available in window.</li>
+        <li><b>D</b> — wrong vascular territory.</li>
+      </ul>
+    </div>
+  )
+}
+
+function MockMobile() {
+  return (
+    <div className="lp-mock lp-mock--mobile">
+      <div className="lp-phone">
+        <div className="lp-phone__notch" />
+        <div className="lp-phone__screen">
+          <div className="lp-phone__bar">
+            <span>Q 27</span><span>4 / 5 streak</span>
           </div>
-          <span className="hw-mock-arrow"><IconArrow /></span>
+          <p className="lp-phone__q">Which antibiotic is first-line for uncomplicated UTI in a non-pregnant adult?</p>
+          <div className="lp-phone__opts">
+            <span>Nitrofurantoin</span>
+            <span>Amoxicillin</span>
+            <span>Ciprofloxacin</span>
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MockDaily() {
+  return (
+    <div className="lp-mock lp-mock--daily">
+      <div className="lp-mock__feed">
+        {[
+          { tag: 'New', topic: 'Endocrine', when: 'Today' },
+          { tag: 'New', topic: 'Renal',     when: 'Today' },
+          { tag: 'Reviewed', topic: 'GI',   when: 'Yesterday' },
+          { tag: 'Reviewed', topic: 'Cardio', when: '2d ago' },
+        ].map((r, i) => (
+          <div className="lp-mock__feedRow" key={i}>
+            <span className={`lp-mock__feedTag${r.tag === 'New' ? ' is-new' : ''}`}>{r.tag}</span>
+            <span className="lp-mock__feedTopic">{r.topic}</span>
+            <span className="lp-mock__feedWhen">{r.when}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   5. CREDIBILITY BAR
+   ─────────────────────────────────────────────────────────────── */
+function CredibilityBar() {
+  return (
+    <section className="lp-cred" id="credibility">
+      <h2 className="lp-cred__h2">Built by UAE physicians, for UAE physicians</h2>
+      <div className="lp-cred__card">
+        <div className="lp-cred__avatar" aria-label="Founder portrait placeholder">HG</div>
+        <div className="lp-cred__body">
+          <div className="lp-cred__name">Dr. Huzaifa Gorashy</div>
+          <div className="lp-cred__title">
+            Oncology &amp; Palliative Care SHO · Tawam Hospital, Al Ain
+          </div>
+          <p className="lp-cred__quote">
+            &ldquo;Built from the questions I wished I&apos;d had during my own DOH prep.&rdquo;
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   6. PRICING TEASER
+   ─────────────────────────────────────────────────────────────── */
+const PRICING = [
+  {
+    id: 'gp',
+    name: 'GP',
+    price: '49',
+    features: [
+      '1,000+ GP questions',
+      'Full DOH GP blueprint',
+      'Detailed explanations',
+      'Cancel anytime',
+    ],
+  },
+  {
+    id: 'specialist',
+    name: 'Specialist',
+    price: '69',
+    features: [
+      '3,000+ Specialist questions',
+      'Full DOH Specialist blueprint',
+      'Detailed explanations',
+      'Cancel anytime',
+    ],
+  },
+  {
+    id: 'all',
+    name: 'All Access',
+    price: '89',
+    recommended: true,
+    features: [
+      'Both GP & Specialist banks',
+      'Flashcards included',
+      'All future content',
+      'Priority new questions',
+    ],
+  },
+]
+
+function PricingTeaser({ navigate }) {
+  return (
+    <section className="lp-pricing" id="pricing">
+      <h2 className="lp-pricing__h2">Simple pricing. Real results.</h2>
+      <p className="lp-pricing__sub">All plans monthly. Cancel anytime.</p>
+      <div className="lp-pricing__grid">
+        {PRICING.map((p) => (
+          <article
+            key={p.id}
+            className={`lp-plan${p.recommended ? ' lp-plan--rec' : ''}`}
+          >
+            {p.recommended && <span className="lp-plan__rec">Recommended</span>}
+            <h3 className="lp-plan__name">{p.name}</h3>
+            <div className="lp-plan__price">
+              <span className="lp-plan__cur">AED</span>
+              <span className="lp-plan__num">{p.price}</span>
+              <span className="lp-plan__per">/mo</span>
+            </div>
+            <ul className="lp-plan__feats">
+              {p.features.map((f) => (
+                <li key={f}>
+                  <span className="lp-plan__check"><IconCheck /></span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              className={`lp-plan__cta${p.recommended ? ' lp-plan__cta--gold' : ''}`}
+              onClick={() => navigate('/pricing')}
+            >
+              Choose {p.name}
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   7. TESTIMONIALS — placeholder (do not fabricate)
+   ─────────────────────────────────────────────────────────────── */
+const SHOW_TESTIMONIALS = false  // flip to true once real quotes arrive
+
+function Testimonials() {
+  if (!SHOW_TESTIMONIALS) {
+    return (
+      <section className="lp-tm" id="testimonials" aria-label="Testimonials placeholder">
+        <h2 className="lp-tm__h2">What physicians are saying</h2>
+        <p className="lp-tm__pending">
+          Real testimonials from candidates currently using DOHPass — coming soon.
+        </p>
+        <div className="lp-tm__skeleton">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="lp-tm__sk">
+              <div className="lp-tm__sk-line" style={{ width: '92%' }} />
+              <div className="lp-tm__sk-line" style={{ width: '78%' }} />
+              <div className="lp-tm__sk-line" style={{ width: '64%' }} />
+              <div className="lp-tm__sk-foot">
+                <span className="lp-tm__sk-avatar" />
+                <div>
+                  <div className="lp-tm__sk-name" />
+                  <div className="lp-tm__sk-role" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+  return null
+}
+
+/* ───────────────────────────────────────────────────────────────
+   8. FAQ
+   ─────────────────────────────────────────────────────────────── */
+const FAQS = [
+  {
+    q: 'Is DOHPass aligned with the latest DOH blueprint?',
+    a: 'Yes. Every question is mapped to the current DOH-HAAD blueprint and reviewed when the framework is updated.',
+  },
+  {
+    q: 'How often are questions updated?',
+    a: 'New vignettes are added weekly. Existing questions are revised whenever a guideline changes or a reviewer flags an update.',
+  },
+  {
+    q: 'Can I cancel anytime?',
+    a: 'Yes. Plans are billed monthly and you can cancel from your account page in one click. Access continues until the end of your billing period.',
+  },
+  {
+    q: 'Is there a free trial?',
+    a: 'You can sample questions before subscribing. The full bank unlocks after you choose a plan.',
+  },
+  {
+    q: 'GP vs Specialist track — which one?',
+    a: 'Pick the bank that matches the exam you are sitting. If you are taking both, All Access bundles them at a lower combined price.',
+  },
+]
+
+function AccordionItem({ q, a, isOpen, onToggle, idx }) {
+  const id = `lp-faq-${idx}`
+  return (
+    <div className={`lp-faq__item${isOpen ? ' is-open' : ''}`}>
+      <button
+        className="lp-faq__btn"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={`${id}-panel`}
+        id={`${id}-btn`}
+      >
+        <span>{q}</span>
+        <span className="lp-faq__chev"><IconChevron /></span>
+      </button>
+      <div
+        id={`${id}-panel`}
+        role="region"
+        aria-labelledby={`${id}-btn`}
+        className="lp-faq__panelWrap"
+      >
+        <div className="lp-faq__panel">
+          <p>{a}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FAQ() {
+  const [open, setOpen] = useState(0)
+  return (
+    <section className="lp-faq" id="faq">
+      <h2 className="lp-faq__h2">Questions, answered.</h2>
+      <div className="lp-faq__list">
+        {FAQS.map((f, i) => (
+          <AccordionItem
+            key={i}
+            q={f.q}
+            a={f.a}
+            idx={i}
+            isOpen={open === i}
+            onToggle={() => setOpen(open === i ? -1 : i)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   9. CTA CLOSER
+   ─────────────────────────────────────────────────────────────── */
+function CTACloser({ navigate }) {
+  return (
+    <section className="lp-closer" id="cta">
+      <div className="lp-closer__glow" aria-hidden="true" />
+      <h2 className="lp-closer__h2">Ready to pass?</h2>
+      <p className="lp-closer__sub">Start your free trial. No card required.</p>
+      <ShinyBorderButton
+        className="lp-closer__btn"
+        onClick={() => navigate('/pricing')}
+      >
+        Start Free Trial <IconArrow size={18} />
+      </ShinyBorderButton>
+      <p className="lp-closer__small">Join physicians preparing across the UAE.</p>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   10. FOOTER
+   ─────────────────────────────────────────────────────────────── */
+function FooterLanding({ navigate }) {
+  return (
+    <footer className="lp-foot" aria-label="Site footer">
+      <div className="lp-foot__cols">
+        <div className="lp-foot__brand">
+          <div className="lp-foot__logo" onClick={() => navigate('/')}>
+            <span className="lp-foot__cross"><IconCross /></span>
+            <span className="lp-foot__name">
+              <span className="lp-foot__doh">DOH</span>
+              <span className="lp-foot__pass">Pass</span>
+            </span>
+          </div>
+          <p className="lp-foot__tag">UAE medical licensing prep, written by physicians.</p>
+        </div>
+        <div className="lp-foot__col">
+          <h4>Platform</h4>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <button onClick={() => navigate('/login')}>Sign In</button>
+        </div>
+        <div className="lp-foot__col">
+          <h4>Resources</h4>
+          <a href="#faq">FAQ</a>
+          <a href="#credibility">About</a>
+          <button onClick={() => navigate('/pricing')}>Start trial</button>
+        </div>
+        <div className="lp-foot__col">
+          <h4>Legal</h4>
+          <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Contact</a>
+        </div>
+      </div>
+
+      <div className="lp-foot__stroke" aria-hidden="true">DOHPASS</div>
+
+      <div className="lp-foot__bottom">
+        <span>&copy; {new Date().getFullYear()} DOHPass. All rights reserved.</span>
+        <span className="lp-foot__status">
+          <span className="lp-foot__statusDot" />
+          All systems operational
+        </span>
+      </div>
+    </footer>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   PAGE
+   ─────────────────────────────────────────────────────────────── */
+export default function Home() {
+  const navigate = useNavigate()
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchLandingStats().then((s) => { if (!cancelled) setStats(s) })
+    return () => { cancelled = true }
+  }, [])
+
+  const scrollToFeatures = useCallback(() => {
+    const el = document.getElementById('features')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
+  return (
+    <div className="lp-root">
+      {/* Floating orbs (kept from existing brand, opacity dialed down) */}
+      <div className="hw-orb hw-orb--1 lp-orb-dim" />
+      <div className="hw-orb hw-orb--2 lp-orb-dim" />
+      <div className="hw-orb hw-orb--3 lp-orb-dim" />
+
+      <NavBar navigate={navigate} />
+
+      <Hero navigate={navigate} scrollToFeatures={scrollToFeatures} />
+
+      <div className="lp-statswrap">
+        <StatsBar stats={stats} />
+      </div>
+
+      <FeaturesSection />
+
+      <CredibilityBar />
+
+      <PricingTeaser navigate={navigate} />
+
+      <Testimonials />
+
+      <FAQ />
+
+      <CTACloser navigate={navigate} />
+
+      <FooterLanding navigate={navigate} />
     </div>
   )
 }

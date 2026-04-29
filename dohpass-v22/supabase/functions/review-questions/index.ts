@@ -289,7 +289,7 @@ serve(async (req) => {
   }
   // --------------------------------------
 
-  // ---------- RATE LIMIT: once per 24h ----------
+  // ---------- RATE LIMIT: once per UTC day ----------
   const todayStartUtc = new Date();
   todayStartUtc.setUTCHours(0, 0, 0, 0);
   const since = todayStartUtc.toISOString();

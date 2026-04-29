@@ -375,52 +375,63 @@ function CredibilityBar() {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   6. PRICING TEASER
+   6. PRICING TEASER — strict subset of /pricing
+   Aligned with Pricing.jsx so users see the same plan story on both
+   pages: same plan names, same recommended tier (Specialist), same
+   disabled-CTA discipline during the Lemon Squeezy migration window.
+   Bullets are a tighter 3-each subset; full feature list lives on /pricing.
    ─────────────────────────────────────────────────────────────── */
-const PRICING = [
-  {
-    id: 'gp',
-    name: 'GP',
-    price: '49',
-    features: [
-      '1,000+ GP questions',
-      'Full DOH GP blueprint',
-      'Detailed explanations',
-      'Cancel anytime',
-    ],
-  },
-  {
-    id: 'specialist',
-    name: 'Specialist',
-    price: '69',
-    features: [
-      '3,000+ Specialist questions',
-      'Full DOH Specialist blueprint',
-      'Detailed explanations',
-      'Cancel anytime',
-    ],
-  },
-  {
-    id: 'all',
-    name: 'All Access',
-    price: '89',
-    recommended: true,
-    features: [
-      'Both GP & Specialist banks',
-      'Flashcards included',
-      'All future content',
-      'Priority new questions',
-    ],
-  },
-]
+function liveCount(n) {
+  return n != null ? `${n.toLocaleString()}+` : '—'
+}
 
-function PricingTeaser({ navigate }) {
+function buildTeaserPlans(stats) {
+  return [
+    {
+      id: 'gp',
+      name: 'GP Track',
+      price: '49',
+      ctaLabel: 'Start GP Track',
+      features: [
+        `${liveCount(stats?.gp)} GP questions`,
+        'DOH GP blueprint',
+        'Cancel anytime',
+      ],
+    },
+    {
+      id: 'specialist',
+      name: 'Specialist Track',
+      price: '69',
+      recommended: true,
+      ctaLabel: 'Start Specialist',
+      features: [
+        `${liveCount(stats?.specialist)} specialist questions`,
+        'Full DOH Specialist blueprint',
+        'Detailed clinical explanations',
+      ],
+    },
+    {
+      id: 'all',
+      name: 'All Access',
+      price: '89',
+      ctaLabel: 'Get All Access',
+      features: [
+        'Both GP & Specialist banks',
+        'Flashcards included',
+        'All future content',
+      ],
+    },
+  ]
+}
+
+function PricingTeaser({ stats }) {
+  const plans = buildTeaserPlans(stats)
   return (
     <section className="lp-pricing" id="pricing">
       <h2 className="lp-pricing__h2">Simple pricing. Real results.</h2>
       <p className="lp-pricing__sub">All plans monthly. Cancel anytime.</p>
       <div className="lp-pricing__grid">
-        {PRICING.map((p) => (
+        {plans.map((p) => (
           <article
             key={p.id}
             className={`lp-plan${p.recommended ? ' lp-plan--rec' : ''}`}
@@ -440,12 +451,18 @@ function PricingTeaser({ navigate }) {
                 </li>
               ))}
             </ul>
+            {/* Disabled ghost CTA — exactly the same class as /pricing so
+                no plan card on the site shows an active gold pill while
+                checkout is off (Lemon Squeezy migration window). */}
             <button
-              className={`lp-plan__cta${p.recommended ? ' lp-plan__cta--gold' : ''}`}
-              onClick={() => navigate('/pricing')}
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="lp-pp-plan__cta lp-pp-plan__cta--ghost"
             >
-              Choose {p.name}
+              {p.ctaLabel}
             </button>
+            <div className="lp-pp-plan__soon">Coming soon</div>
           </article>
         ))}
       </div>
@@ -620,7 +637,7 @@ export default function Home() {
 
       <CredibilityBar />
 
-      <PricingTeaser navigate={navigate} />
+      <PricingTeaser stats={stats} />
 
       <Testimonials />
 

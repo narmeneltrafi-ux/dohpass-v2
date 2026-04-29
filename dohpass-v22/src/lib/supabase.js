@@ -171,6 +171,10 @@ export async function fetchLandingStats() {
     questions: totalQuestions,
     specialties,
     flashcards: counts.flashcards || 0,
+    // Per-track counts so the home pricing teaser can render live numbers
+    // without making its own RPC call (kept in sync with /pricing)
+    gp:         counts.gp || 0,
+    specialist: counts.specialist || 0,
     lastUpdated,
   }
 }

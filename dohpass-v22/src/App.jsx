@@ -62,18 +62,20 @@ function GuardedContent({ children }) {
   return children
 }
 
-/* Header is hidden on the public landing page (it has its own glass nav) */
+/* Routes that ship their own glass nav/footer — global chrome is suppressed */
+const SELF_CHROMED_PATHS = new Set(['/', '/dashboard'])
+
 function ConditionalHeader() {
   const location = useLocation()
-  if (location.pathname === '/') return null
+  if (SELF_CHROMED_PATHS.has(location.pathname)) return null
   return <Header />
 }
 
-/* Footer is hidden on /login, /signup, /auth, and the public landing page */
+/* Footer is hidden on /login, /signup, /auth, and any self-chromed route */
 function ConditionalFooter() {
   const location = useLocation()
-  const hide = ['/login', '/signup', '/auth', '/'].includes(location.pathname)
-  if (hide) return null
+  if (['/login', '/signup', '/auth'].includes(location.pathname)) return null
+  if (SELF_CHROMED_PATHS.has(location.pathname)) return null
   return <Footer />
 }
 

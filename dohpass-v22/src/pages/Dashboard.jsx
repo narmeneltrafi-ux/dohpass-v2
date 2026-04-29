@@ -80,15 +80,30 @@ function deriveInitials(profile, user) {
   return src.slice(0, 2).toUpperCase()
 }
 
+function titleCase(s) {
+  if (!s) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+}
+
+// Fallback chain: full_name first word → first_name (forward-compat, column
+// not in current schema but read defensively) → email local-part split on
+// ./_/- → friendly "there". All segments are title-cased so we never render
+// a lowercase greeting like "huzaifa".
 function deriveFirstName(profile, user) {
   const full = profile?.full_name?.trim()
-  if (full) return full.split(/\s+/)[0]
+  if (full) return titleCase(full.split(/\s+/)[0])
+
+  const first = profile?.first_name?.trim()
+  if (first) return titleCase(first)
+
   const email = user?.email
   if (email) {
     const local = email.split('@')[0]
-    return local.charAt(0).toUpperCase() + local.slice(1)
+    const segment = local.split(/[._-]/)[0]
+    if (segment) return titleCase(segment)
   }
-  return ''
+
+  return 'there'
 }
 
 /* ───────────────────────────────────────────────────────────────
@@ -284,7 +299,7 @@ export default function Dashboard() {
 
       <header className="lp-dash__hero">
         <h1 className="lp-dash__h1">
-          Welcome back{firstName ? <>, <span className="lp-dash__h1-name">{firstName}</span></> : ''}
+          Welcome back, <span className="lp-dash__h1-name">{firstName}</span>
         </h1>
         <p className="lp-dash__sub">{subhead}</p>
       </header>

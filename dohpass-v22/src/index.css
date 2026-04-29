@@ -4917,6 +4917,9 @@ nav {
   font-size: 0.9rem;
   cursor: pointer;
   align-self: flex-start;
+  /* Pin to card bottom regardless of whether the progress rail is rendered,
+     so CTAs line up across cards in the same row. */
+  margin-top: auto;
   transition: background 0.3s var(--lp-ease), border-color 0.3s var(--lp-ease), color 0.3s var(--lp-ease);
 }
 .lp-track:hover .lp-track__cta,

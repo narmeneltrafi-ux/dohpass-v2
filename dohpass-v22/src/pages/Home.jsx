@@ -74,7 +74,7 @@ function Hero({ navigate, scrollToFeatures }) {
 
         <div className="lp-hero__ctas">
           <ShinyBorderButton onClick={() => navigate('/pricing')}>
-            Start Free Trial <IconArrow />
+            See Plans <IconArrow />
           </ShinyBorderButton>
           <button className="lp-ghost" onClick={scrollToFeatures}>
             See a sample question <IconArrow />
@@ -506,7 +506,7 @@ const FAQS = [
   },
   {
     q: 'Is there a free trial?',
-    a: 'You can sample questions before subscribing. The full bank unlocks after you choose a plan.',
+    a: 'There\u2019s no free trial. Plans are billed monthly with cancel-anytime, and the 7-day money-back guarantee covers buyer\u2019s remorse \u2014 if it\u2019s not for you, we refund.',
   },
   {
     q: 'GP vs Specialist track — which one?',
@@ -571,12 +571,12 @@ function CTACloser({ navigate }) {
     <section className="lp-closer" id="cta">
       <div className="lp-closer__glow" aria-hidden="true" />
       <h2 className="lp-closer__h2">Ready to pass?</h2>
-      <p className="lp-closer__sub">Start your free trial. No card required.</p>
+      <p className="lp-closer__sub">View plans and pricing. Cancel anytime within 7 days for a full refund.</p>
       <ShinyBorderButton
         className="lp-closer__btn"
         onClick={() => navigate('/pricing')}
       >
-        Start Free Trial <IconArrow size={18} />
+        See Plans <IconArrow size={18} />
       </ShinyBorderButton>
       <p className="lp-closer__small">Join physicians preparing across the UAE.</p>
     </section>

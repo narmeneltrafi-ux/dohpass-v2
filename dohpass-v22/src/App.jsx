@@ -63,7 +63,7 @@ function GuardedContent({ children }) {
 }
 
 /* Routes that ship their own glass nav/footer — global chrome is suppressed */
-const SELF_CHROMED_PATHS = new Set(['/', '/dashboard'])
+const SELF_CHROMED_PATHS = new Set(['/', '/dashboard', '/pricing'])
 
 function ConditionalHeader() {
   const location = useLocation()

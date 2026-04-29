@@ -4989,3 +4989,266 @@ nav {
   .lp-mockx { flex-direction: column; align-items: flex-start; text-align: left; }
   .lp-mockx__arrow { align-self: flex-end; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRICING PAGE (.lp-pp, .lp-pp-*)
+   Reuses .lp-root, .lp-nav, .lp-hero, .lp-plan, .lp-faq, .lp-foot.
+   ═══════════════════════════════════════════════════════════════ */
+
+.lp-pp {
+  /* fixed nav lives at top: 24px, ~56px tall — give the hero clean breathing room */
+  padding-top: 0;
+}
+
+/* ── ShinyBorderButton disabled state ────────────────────────── */
+/* Locked-not-broken: spinner stops, gradient mutes, cursor not-allowed.
+   Shape stays gold-pill so the visual hierarchy of "this is the primary
+   action" still reads clearly during the migration window. */
+.lp-shiny--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: saturate(0.85);
+}
+.lp-shiny--disabled::before { animation: none; opacity: 0.35; }
+.lp-shiny--disabled:hover { transform: none; box-shadow: none; }
+
+/* ── 2. PLAN CARDS (extends .lp-plan from Home pricing teaser) ── */
+.lp-pp-plans {
+  max-width: 1200px;
+  margin: -2.5rem auto 0;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+.lp-pp-plans__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+@media (max-width: 960px) {
+  .lp-pp-plans__grid { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; }
+}
+
+/* Pricing-page plan card — bigger, more breathing room than the teaser */
+.lp-pp-plan {
+  padding: 2.5rem;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.lp-pp-plan__eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #71717a;
+  margin-bottom: 0.85rem;
+  min-height: 1.1em;
+}
+.lp-pp-plan__name {
+  font-size: 1.85rem;
+  margin-bottom: 1.25rem;
+}
+.lp-pp-plan__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+.lp-pp-plan__num {
+  font-size: clamp(2.75rem, 6vw, 3.75rem);
+  letter-spacing: -0.02em;
+}
+.lp-pp-plan__cur {
+  font-size: 0.95rem;
+  color: #a1a1aa;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.lp-pp-plan__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  margin-top: auto;       /* pin to bottom regardless of feature-list length */
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 999px;
+}
+.lp-pp-plan__cta--gold {
+  /* The button itself becomes the ShinyBorderButton; this class only adds a
+     small bottom margin so the "Coming soon" label sits cleanly under it. */
+  width: 100%;
+}
+.lp-pp-plan__cta--gold .lp-shiny__inner {
+  width: 100%;
+  justify-content: center;
+  padding: 0.95rem 1.6rem;
+}
+.lp-pp-plan__cta--ghost {
+  padding: 0.95rem 1.6rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--text);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.lp-pp-plan__cta--ghost:hover { background: rgba(255,255,255,0.04); }
+
+.lp-pp-plan__soon {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+/* ── 3. TRUST ROW ────────────────────────────────────────────── */
+.lp-pp-trust {
+  max-width: 880px;
+  margin: 4rem auto 0;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+.lp-pp-trust__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1rem;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.lp-pp-trust__cell:last-child { border-right: none; }
+.lp-pp-trust__icon {
+  display: inline-flex;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.lp-pp-trust__label {
+  font-size: 0.85rem;
+  color: #d4d4d8;
+}
+@media (max-width: 720px) {
+  .lp-pp-trust { grid-template-columns: 1fr; gap: 0.5rem; padding: 0.85rem; }
+  .lp-pp-trust__cell { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0.65rem 0.5rem; }
+  .lp-pp-trust__cell:last-child { border-bottom: none; }
+}
+
+/* ── 4. COMPARISON TABLE ─────────────────────────────────────── */
+.lp-pp-cmp {
+  max-width: 960px;
+  margin: 3rem auto 0;
+  padding: 0 1.5rem;
+}
+.lp-pp-cmp__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.15rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s var(--lp-ease), border-color 0.3s var(--lp-ease);
+  margin: 0 auto;
+}
+.lp-pp-cmp { text-align: center; }
+.lp-pp-cmp__toggle:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.20); }
+.lp-pp-cmp__chev {
+  display: inline-flex;
+  color: #a1a1aa;
+  transition: transform 0.4s var(--lp-ease), color 0.4s var(--lp-ease);
+}
+.lp-pp-cmp__toggle.is-open .lp-pp-cmp__chev {
+  transform: rotate(180deg);
+  color: var(--gold);
+}
+
+.lp-pp-cmp__panelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s var(--lp-ease);
+  text-align: left;
+}
+.lp-pp-cmp__panelWrap.is-open {
+  grid-template-rows: 1fr;
+}
+.lp-pp-cmp__panel {
+  overflow: hidden;
+  min-height: 0;
+}
+.lp-pp-cmp__scroll {
+  margin-top: 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.lp-pp-cmp__table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.lp-pp-cmp__table th,
+.lp-pp-cmp__table td {
+  padding: 0.85rem 1.15rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: #d4d4d8;
+}
+.lp-pp-cmp__table thead th {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+  background: rgba(255,255,255,0.02);
+}
+.lp-pp-cmp__table tbody tr:last-child th,
+.lp-pp-cmp__table tbody tr:last-child td { border-bottom: none; }
+.lp-pp-cmp__feat {
+  text-align: left !important;
+  font-weight: 500;
+  color: var(--text);
+}
+.lp-pp-cmp__rec {
+  background: rgba(201,168,76,0.06);
+  color: var(--text);
+}
+.lp-pp-cmp__table thead .lp-pp-cmp__rec {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold);
+}
+.lp-pp-cmp__yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+.lp-pp-cmp__no { color: #52525b; font-weight: 500; }
+.lp-pp-cmp__val { color: var(--text); }
+
+/* ── 6. FINAL CTA spacing tweaks (extends .lp-closer) ────────── */
+.lp-pp-finale { padding: 6rem 1.5rem 7rem; }
+.lp-pp-finale__soon { margin-top: 0.85rem; }
+
+/* ── Page-level rhythm: faqs sit between cmp table and final CTA */
+.lp-pp .lp-faq { margin-top: 4rem; }

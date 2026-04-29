@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchLandingStats } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
+import ShinyBorderButton from '../components/ShinyBorderButton.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS
@@ -44,19 +45,6 @@ function HandUnderline() {
         strokeLinecap="round"
       />
     </svg>
-  )
-}
-
-/* Gold conic-gradient border that spins continuously */
-function ShinyBorderButton({ children, onClick, className = '', as: Tag = 'button', ...props }) {
-  return (
-    <Tag
-      className={`lp-shiny ${className}`}
-      onClick={onClick}
-      {...props}
-    >
-      <span className="lp-shiny__inner">{children}</span>
-    </Tag>
   )
 }
 

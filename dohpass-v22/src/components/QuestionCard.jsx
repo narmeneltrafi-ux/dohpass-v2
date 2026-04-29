@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
-import ShinyBorderButton from './ShinyBorderButton'
 
 /* ───────────────────────────────────────────────────────────────
    Premium question-taking interface.
@@ -243,13 +242,15 @@ export default function QuestionCard({
                 Select an answer
               </button>
             ) : (
-              <ShinyBorderButton
+              <button
+                type="button"
+                className="qui-cta qui-cta--gold"
                 onClick={handleSubmitInternal}
                 disabled={submitting}
                 aria-label="Submit Answer"
               >
                 {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
-              </ShinyBorderButton>
+              </button>
             )}
           </div>
         )}
@@ -285,9 +286,13 @@ export default function QuestionCard({
             )}
 
             <div className="qui-actions qui-actions--inline">
-              <ShinyBorderButton onClick={onNext}>
+              <button
+                type="button"
+                className="qui-cta qui-cta--gold"
+                onClick={onNext}
+              >
                 {index + 1 >= total ? 'Finish Session' : 'Next Question'} <IconArrowRight />
-              </ShinyBorderButton>
+              </button>
             </div>
           </div>
         )}

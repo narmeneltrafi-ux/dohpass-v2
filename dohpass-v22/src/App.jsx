@@ -71,6 +71,7 @@ function GuardedContent({ children }) {
 const SELF_CHROMED_PATHS = new Set([
   '/', '/dashboard', '/pricing',
   '/terms', '/privacy', '/contact', '/about', '/features',
+  '/specialist', '/gp',
 ])
 
 function ConditionalHeader() {

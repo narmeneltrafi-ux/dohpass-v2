@@ -5077,25 +5077,24 @@ nav {
   font-size: 0.95rem;
   border-radius: 999px;
 }
-.lp-pp-plan__cta--gold {
-  /* The button itself becomes the ShinyBorderButton; this class only adds a
-     small bottom margin so the "Coming soon" label sits cleanly under it. */
-  width: 100%;
-}
-.lp-pp-plan__cta--gold .lp-shiny__inner {
-  width: 100%;
-  justify-content: center;
-  padding: 0.95rem 1.6rem;
-}
+/* Disabled ghost — applied uniformly to every plan CTA during the migration.
+   No solid gold pill survives anywhere checkout is wired, so users never see
+   a button that looks active but does nothing. The recommended-plan signal
+   stays at the CARD level (gold border + glow + tint + RECOMMENDED pill). */
 .lp-pp-plan__cta--ghost {
   padding: 0.95rem 1.6rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: var(--text);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.40);
   cursor: not-allowed;
-  opacity: 0.7;
 }
-.lp-pp-plan__cta--ghost:hover { background: rgba(255,255,255,0.04); }
+.lp-pp-plan__cta--ghost:hover,
+.lp-pp-plan__cta--ghost:focus-visible {
+  background: transparent;
+  border-color: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.40);
+  cursor: not-allowed;
+}
 
 .lp-pp-plan__soon {
   margin-top: 0.85rem;
@@ -5249,6 +5248,14 @@ nav {
 /* ── 6. FINAL CTA spacing tweaks (extends .lp-closer) ────────── */
 .lp-pp-finale { padding: 6rem 1.5rem 7rem; }
 .lp-pp-finale__soon { margin-top: 0.85rem; }
+/* Final-CTA button isn't inside a card — give it standalone sizing instead
+   of the card-CTA's width:100% / margin-top:auto. */
+.lp-pp-finale__cta {
+  width: auto;
+  margin-top: 0;
+  padding: 1.05rem 2rem;
+  font-size: 1rem;
+}
 
 /* ── Page-level rhythm: faqs sit between cmp table and final CTA */
 .lp-pp .lp-faq { margin-top: 4rem; }

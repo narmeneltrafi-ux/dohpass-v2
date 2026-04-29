@@ -6,7 +6,6 @@ import {
   createCheckoutSession,
   fetchQuestionCounts,
 } from '../lib/supabase'
-import ShinyBorderButton from '../components/ShinyBorderButton.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    STRIPE PRICE IDs — preserved per "do not change checkout logic".
@@ -268,25 +267,20 @@ function PlanCard({ plan, currentPlan }) {
         ))}
       </ul>
 
-      {/* Disabled CTA — Stripe is intentionally off while migrating to Lemon Squeezy.
-          The shape stays gold-pill (premium feel), only opacity / cursor signal locked. */}
-      {plan.variant === 'gold' ? (
-        <ShinyBorderButton
-          disabled
-          className="lp-pp-plan__cta lp-pp-plan__cta--gold"
-        >
-          {isCurrent ? 'Current plan' : plan.ctaLabel}
-        </ShinyBorderButton>
-      ) : (
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          className="lp-pp-plan__cta lp-pp-plan__cta--ghost"
-        >
-          {isCurrent ? 'Current plan' : plan.ctaLabel}
-        </button>
-      )}
+      {/* All plan CTAs render in identical ghost state while Stripe is off and
+          Lemon Squeezy isn't wired yet. Showing a single solid gold pill on the
+          recommended plan would mislead users into thinking checkout works.
+          Recommended treatment lives at the CARD level (gold border, glow, tint)
+          and the RECOMMENDED pill — never on the disabled CTA. When the new
+          checkout lands, the recommended plan returns to a primary gold pill. */}
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="lp-pp-plan__cta lp-pp-plan__cta--ghost"
+      >
+        {isCurrent ? 'Current plan' : plan.ctaLabel}
+      </button>
 
       <div className="lp-pp-plan__soon" aria-live="polite">Coming soon</div>
     </article>
@@ -496,7 +490,17 @@ function FinalCTA() {
       <p className="lp-closer__sub">
         Start with the Specialist plan. Cancel any time within 7 days for a full refund.
       </p>
-      <ShinyBorderButton disabled className="lp-closer__btn">Start Specialist</ShinyBorderButton>
+      {/* Same rule as the plan-card CTAs: no solid gold pill while checkout is
+          off. The final CTA matches the disabled ghost treatment until Lemon
+          Squeezy ships, then can come back as a primary gold pill. */}
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="lp-pp-plan__cta lp-pp-plan__cta--ghost lp-pp-finale__cta"
+      >
+        Start Specialist
+      </button>
       <p className="lp-pp-plan__soon lp-pp-finale__soon">Coming soon</p>
     </section>
   )

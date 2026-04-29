@@ -1,251 +1,374 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { fetchProgress, getProfile, fetchQuestionCounts } from '../lib/supabase'
+import {
+  supabase,
+  getProfile,
+  fetchProgress,
+  fetchOverallProgress,
+  fetchWeeklyAnswered,
+  fetchQuestionCounts,
+} from '../lib/supabase'
+import CountUp from '../components/CountUp.jsx'
 
-/* ── 3-D tilt hook ──────────────────────────────────────────────── */
-function useTilt() {
-  const ref = useRef(null)
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
-  const frame = useRef(null)
-
-  const onMove = useCallback((e) => {
-    if (frame.current) cancelAnimationFrame(frame.current)
-    frame.current = requestAnimationFrame(() => {
-      const el = ref.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const px = (e.clientX - r.left) / r.width
-      const py = (e.clientY - r.top) / r.height
-      setTilt({ x: (py - 0.5) * 14, y: (0.5 - px) * 14 })
-    })
-  }, [])
-
-  const onLeave = useCallback(() => {
-    if (frame.current) cancelAnimationFrame(frame.current)
-    setTilt({ x: 0, y: 0 })
-  }, [])
-
-  return { ref, tilt, onMove, onLeave }
-}
-
-/* ── Inline SVG icons ─────────────────────────────────────────── */
-const IconPulse = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+/* ───────────────────────────────────────────────────────────────
+   ICONS (monochrome line, gold-tinted via currentColor)
+   ─────────────────────────────────────────────────────────────── */
+const IconCross = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="9" y="2" width="6" height="20" rx="2" />
+    <rect x="2" y="9" width="20" height="6" rx="2" />
   </svg>
 )
-const IconHelpCircle = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-  </svg>
-)
-const IconMonitor = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-)
-const IconShield = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-)
-const IconArrow = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+const IconArrow = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 )
+/* Specialist track — stethoscope */
+const IconStethoscope = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 3v6a4 4 0 0 0 8 0V3" />
+    <path d="M5 3H3M13 3h2" />
+    <path d="M9 13v2a5 5 0 0 0 5 5 5 5 0 0 0 5-5v-1" />
+    <circle cx="19" cy="11" r="2" />
+  </svg>
+)
+/* GP track — heart pulse */
+const IconHeartPulse = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3.5 12h3.5l2-4 4 8 2-4h5.5" />
+    <path d="M21 12.5a5 5 0 0 0-9-3 5 5 0 0 0-9 3 5 5 0 0 0 1.5 3.5L12 21l7.5-5a5 5 0 0 0 1.5-3.5z" opacity=".25" />
+  </svg>
+)
+/* Flashcards — layered cards */
+const IconLayers = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="7" width="14" height="12" rx="2" />
+    <path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2" />
+  </svg>
+)
+/* Mock exam — clipboard */
+const IconClipboard = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="6" y="4" width="12" height="17" rx="2" />
+    <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+    <path d="M9 11h6M9 15h4" />
+  </svg>
+)
 
-/* ── Animated stat badge ────────────────────────────────────────── */
-const STAT_ICONS = {
-  questions: <IconHelpCircle />,
-  tracks:    <IconMonitor />,
-  format:    <IconShield />,
+/* ───────────────────────────────────────────────────────────────
+   PLAN BADGE
+   ─────────────────────────────────────────────────────────────── */
+function planBadge(profile) {
+  if (!profile) return null
+  const { plan, is_paid } = profile
+  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
+    return 'All Access'
+  if (plan === 'specialist') return 'Specialist'
+  if (plan === 'gp') return 'GP'
+  return 'Free'
+}
+const PAID_BADGES = new Set(['All Access', 'Specialist', 'GP'])
+
+function deriveInitials(profile, user) {
+  const src = profile?.full_name?.trim() || user?.email || ''
+  if (!src) return '?'
+  if (profile?.full_name) {
+    const parts = src.split(/\s+/).filter(Boolean)
+    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
+  }
+  return src.slice(0, 2).toUpperCase()
 }
 
-function AnimatedStatBadge({ type, value, label, delay }) {
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(t)
-  }, [delay])
-
-  return (
-    <div className={`hero-stat${visible ? ' hero-stat--visible' : ''}`} style={{ transitionDelay: `${delay}ms` }}>
-      <div className="hero-stat__icon">{STAT_ICONS[type]}</div>
-      <div className="hero-stat__text">
-        <span className="hero-stat__value">{value}</span>
-        <span className="hero-stat__label">{label}</span>
-      </div>
-    </div>
-  )
+function titleCase(s) {
+  if (!s) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
 }
 
-/* ── Track card (3D tilt) ────────────────────────────────────────── */
-function TrackCard({ trackId, icon, title, desc, badge, variant, total, route, navigate }) {
-  const { ref, tilt, onMove, onLeave } = useTilt()
-  const [progress, setProgress] = useState(null)
+// Fallback chain: full_name first word → first_name (forward-compat, column
+// not in current schema but read defensively) → email local-part split on
+// ./_/- → friendly "there". All segments are title-cased so we never render
+// a lowercase greeting like "huzaifa".
+function deriveFirstName(profile, user) {
+  const full = profile?.full_name?.trim()
+  if (full) return titleCase(full.split(/\s+/)[0])
 
-  useEffect(() => {
-    if (!trackId) return
-    fetchProgress(trackId).then(p => {
-      if (p && p.answered > 0) setProgress(p)
-    })
-  }, [trackId])
+  const first = profile?.first_name?.trim()
+  if (first) return titleCase(first)
 
-  const pct = progress ? Math.round((progress.answered / total) * 100) : 0
+  const email = user?.email
+  if (email) {
+    const local = email.split('@')[0]
+    const segment = local.split(/[._-]/)[0]
+    if (segment) return titleCase(segment)
+  }
+
+  return 'there'
+}
+
+/* ───────────────────────────────────────────────────────────────
+   AUTHED NAVBAR
+   ─────────────────────────────────────────────────────────────── */
+function AuthNavBar({ navigate, profile, user, currentPath }) {
+  const links = [
+    { label: 'Dashboard',  path: '/dashboard' },
+    { label: 'Specialist', path: '/specialist' },
+    { label: 'GP',         path: '/gp' },
+    { label: 'Flashcards', path: '/gems' },
+    { label: 'Progress',   path: '/progress' },
+  ]
+  const badge = planBadge(profile)
+  const initials = deriveInitials(profile, user)
+  const isPaid = PAID_BADGES.has(badge)
 
   return (
-    <div
-      ref={ref}
-      className={`tc tc--${variant}`}
-      style={{ transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      onClick={() => navigate(route)}
-    >
-      <div className={`tc-hd tc-hd--${variant}`}>
-        <div className="tc-hd-icon">{icon}</div>
-        <span className={`tc-hd-badge tc-hd-badge--${variant}`}>{badge}</span>
-        <div className="tc-hd-shimmer" />
+    <nav className="lp-nav lp-nav--auth" aria-label="Primary">
+      <div className="lp-nav__brand" onClick={() => navigate('/dashboard')}>
+        <span className="lp-nav__cross"><IconCross /></span>
+        <span className="lp-nav__name">
+          <span className="lp-nav__doh">DOH</span>
+          <span className="lp-nav__pass">Pass</span>
+        </span>
       </div>
-
-      <div className="tc-body">
-        <h3 className="tc-title">{title}</h3>
-        <p className="tc-desc">{desc}</p>
-
-        {progress && (
-          <div className="tc-progress">
-            <div className="tc-progress-row">
-              <span className="tc-progress-answered" style={{ color: `var(--${variant})` }}>
-                {progress.answered} answered
-              </span>
-              <span className="tc-progress-pct">{pct}%</span>
-            </div>
-            <div className="tc-progress-rail">
-              <div
-                className="tc-progress-fill"
-                style={{ width: `${pct}%`, background: `var(--${variant})` }}
-              />
-            </div>
-          </div>
+      <div className="lp-nav__links">
+        {links.map(l => (
+          <button
+            key={l.path}
+            className={`lp-nav__link${currentPath === l.path ? ' lp-nav__link--active' : ''}`}
+            onClick={() => navigate(l.path)}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+      <div className="lp-nav__right">
+        {badge && (
+          <button
+            type="button"
+            className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
+            onClick={() => navigate('/account')}
+            title={`${badge} plan — open account`}
+            aria-label={`${badge} plan, open account`}
+          >
+            {badge}
+          </button>
         )}
-
-        <button className={`tc-cta tc-cta--${variant}`}>
-          {progress ? 'Continue' : 'Begin'}
-          <span className="tc-cta-icon"><IconArrow /></span>
+        <button
+          type="button"
+          className="lp-nav__avatar"
+          onClick={() => navigate('/account')}
+          aria-label="Open account"
+          title="Account"
+        >
+          {initials}
         </button>
       </div>
+    </nav>
+  )
+}
 
-      <div className={`tc-glow tc-glow--${variant}`} />
+/* ───────────────────────────────────────────────────────────────
+   STATS BAR — same shape as the landing-page stats
+   ─────────────────────────────────────────────────────────────── */
+function DashStatsBar({ weekly, totalAnswered, accuracy, bankSize }) {
+  const cells = [
+    { label: 'This Week',      value: weekly,        suffix: '' },
+    { label: 'Total Answered', value: totalAnswered, suffix: '' },
+    { label: 'Accuracy',       value: accuracy,      suffix: '%' },
+    { label: 'Bank Size',      value: bankSize,      suffix: '+' },
+  ]
+  return (
+    <div className="lp-stats" role="region" aria-label="Your progress at a glance">
+      {cells.map((c, i) => (
+        <div className="lp-stats__cell" key={i}>
+          <span className="lp-stats__label">{c.label}</span>
+          <span className="lp-stats__num">
+            <CountUp value={c.value ?? null} suffix={c.suffix} />
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
 
-/* ── Page ─────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────
+   GLASS TRACK CARD
+   ─────────────────────────────────────────────────────────────── */
+function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progress, total }) {
+  const pct = (progress && total > 0) ? Math.round((progress.answered / total) * 100) : 0
+  const hasProgress = progress && progress.answered > 0
+  return (
+    <article
+      className="lp-track"
+      onClick={() => navigate(route)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(route) } }}
+    >
+      <div className="lp-track__top">
+        <span className="lp-track__icon"><Icon /></span>
+        <span className="lp-track__eyebrow">{eyebrow}</span>
+      </div>
+      <h3 className="lp-track__title">{title}</h3>
+      <p className="lp-track__desc">{desc}</p>
+
+      <div className="lp-track__meta">
+        <span className="lp-track__count">{count != null ? count.toLocaleString() : '—'} questions</span>
+        {hasProgress && <span className="lp-track__pct">{pct}%</span>}
+      </div>
+      {hasProgress && (
+        <div className="lp-track__rail">
+          <div className="lp-track__fill" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+
+      <button className="lp-track__cta" type="button">
+        {hasProgress ? 'Continue' : 'Start'}
+        <IconArrow />
+      </button>
+    </article>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   PAGE
+   ─────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
+  const [user, setUser] = useState(null)
   const [counts, setCounts] = useState({ specialist: 0, gp: 0, flashcards: 0 })
+  const [weekly, setWeekly] = useState(null)
+  const [overall, setOverall] = useState(null)
+  const [progSpecialist, setProgSpecialist] = useState(null)
+  const [progGP, setProgGP] = useState(null)
 
   useEffect(() => {
-    fetchQuestionCounts().then(setCounts)
+    let cancelled = false
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return
+      setUser(data?.user ?? null)
+    })
+    Promise.all([
+      getProfile(),
+      fetchQuestionCounts(),
+      fetchOverallProgress(),
+      fetchWeeklyAnswered(),
+      fetchProgress('specialist'),
+      fetchProgress('gp'),
+    ]).then(([p, c, o, w, ps, pg]) => {
+      if (cancelled) return
+      setProfile(p)
+      setCounts(c)
+      setOverall(o)
+      setWeekly(w)
+      setProgSpecialist(ps)
+      setProgGP(pg)
+    })
+    return () => { cancelled = true }
   }, [])
 
+  const firstName = deriveFirstName(profile, user)
+  const accuracy = overall && overall.answered > 0
+    ? Math.round((overall.correct / overall.answered) * 100)
+    : null
+  const bankSize = (counts.specialist || 0) + (counts.gp || 0)
+  const totalAnswered = overall?.answered ?? null
+
+  let subhead
+  if (weekly == null) {
+    subhead = 'Loading your weekly progress…'
+  } else if (weekly === 0) {
+    subhead = 'No questions answered this week — pick up where you left off.'
+  } else {
+    subhead = `You've answered ${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} this week.`
+  }
+
   return (
-    <div className="hw" style={{ paddingTop: '62px' }}>
-      {/* Floating orbs */}
-      <div className="hw-orb hw-orb--1" />
-      <div className="hw-orb hw-orb--2" />
-      <div className="hw-orb hw-orb--3" />
+    <div className="lp-root lp-dash">
+      <div className="hw-orb hw-orb--1 lp-orb-dim" />
+      <div className="hw-orb hw-orb--2 lp-orb-dim" />
+      <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      {/* Hero — Animated stat badges */}
-      <div className="hw-hero">
-        <div className="hw-eyebrow">
-          <IconPulse />
-          UAE Medical Licensing
-        </div>
+      <AuthNavBar
+        navigate={navigate}
+        profile={profile}
+        user={user}
+        currentPath="/dashboard"
+      />
 
-        <h1 className="hw-h1">
-          <span className="hw-h1-top">Master Your</span>
-          <br />
-          <span className="hw-h1-bot">Medical Exams</span>
+      <header className="lp-dash__hero">
+        <h1 className="lp-dash__h1">
+          Welcome back, <span className="lp-dash__h1-name">{firstName}</span>
         </h1>
+        <p className="lp-dash__sub">{subhead}</p>
+      </header>
 
-        <p className="hw-sub">
-          High-yield questions. Real exam format. UAE-focused.
-        </p>
-
-        <div className="hero-stats-row">
-          <AnimatedStatBadge type="questions" value={(counts.specialist + counts.gp).toLocaleString()} label="Questions" delay={200} />
-          <AnimatedStatBadge type="tracks"    value="2"     label="Exam Tracks" delay={400} />
-          <AnimatedStatBadge type="format"    value="UAE"   label="DOH Format" delay={600} />
-        </div>
-
-        <div className="hw-hero-ctas">
-          <button className="hw-hero-cta hw-hero-cta--primary" onClick={() => navigate('/specialist')}>
-            Start Specialist <IconArrow />
-          </button>
-          <button className="hw-hero-cta hw-hero-cta--secondary" onClick={() => navigate('/gp')}>
-            Start GP Track <IconArrow />
-          </button>
-        </div>
+      <div className="lp-statswrap lp-dash__statswrap">
+        <DashStatsBar
+          weekly={weekly}
+          totalAnswered={totalAnswered}
+          accuracy={accuracy}
+          bankSize={bankSize > 0 ? bankSize : null}
+        />
       </div>
 
-      {/* Track cards */}
-      <div className="hw-section">
-        <h2 className="hw-section-title">Your Exam Tracks</h2>
-        <div className="hw-grid">
+      <section className="lp-dash__section" aria-labelledby="lp-tracks-h">
+        <h2 className="lp-dash__h2" id="lp-tracks-h">Your tracks</h2>
+        <div className="lp-track-grid">
           <TrackCard
-            trackId="specialist"
-            icon="🏅"
+            Icon={IconStethoscope}
+            eyebrow="Specialist"
             title="Internal Medicine Specialist"
-            desc="DOH Specialist track — Cardiology, Respiratory, Nephrology & more"
-            badge={`${counts.specialist.toLocaleString()} Questions`}
-            variant="gold"
-            total={counts.specialist}
+            desc="Cardiology, Respiratory, Nephrology and the rest of the specialist blueprint."
+            count={counts.specialist}
             route="/specialist"
             navigate={navigate}
+            progress={progSpecialist}
+            total={counts.specialist}
           />
           <TrackCard
-            trackId="gp"
-            icon="🩺"
-            title="General Practitioner"
-            desc="DOH GP track — broad primary care question bank"
-            badge={`${counts.gp.toLocaleString()} Questions`}
-            variant="blue"
-            total={counts.gp}
+            Icon={IconHeartPulse}
+            eyebrow="GP"
+            title="General Practice"
+            desc="Broad primary-care coverage mapped to the DOH GP blueprint."
+            count={counts.gp}
             route="/gp"
             navigate={navigate}
+            progress={progGP}
+            total={counts.gp}
           />
           <TrackCard
-            trackId={null}
-            icon="🗂"
-            title="Flashcards"
-            desc="Concept, drug & anatomy cards — Specialist & GP tracks"
-            badge={`${counts.flashcards.toLocaleString()} Cards`}
-            variant="teal"
-            total={null}
+            Icon={IconLayers}
+            eyebrow="Flashcards"
+            title="Concept &amp; Drug Cards"
+            desc="High-yield concept, drug and anatomy cards across both tracks."
+            count={counts.flashcards}
             route="/gems"
             navigate={navigate}
+            progress={null}
+            total={null}
           />
         </div>
-      </div>
+      </section>
 
-      {/* Mock Exam */}
-      <div className="hw-section">
-        <h2 className="hw-section-title">Mock Exam</h2>
-        <div className="hw-mock-banner" onClick={() => navigate('/mock-exam')}>
-          <span className="hw-mock-icon">📝</span>
-          <div className="hw-mock-text">
-            <h3>Timed Mock Exam</h3>
-            <p>100 questions, 150 minutes. Simulates the real DOH exam. Pass mark: 60%.</p>
+      <section className="lp-dash__section" aria-labelledby="lp-mock-h">
+        <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>
+        <div
+          className="lp-mockx"
+          onClick={() => navigate('/mock-exam')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/mock-exam') } }}
+        >
+          <span className="lp-mockx__icon"><IconClipboard /></span>
+          <div className="lp-mockx__body">
+            <h3 className="lp-mockx__title">Timed mock exam</h3>
+            <p className="lp-mockx__desc">100 questions · 150 minutes · pass mark 60% — simulates the live DOH exam.</p>
           </div>
-          <span className="hw-mock-arrow"><IconArrow /></span>
+          <span className="lp-mockx__arrow"><IconArrow size={18} /></span>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

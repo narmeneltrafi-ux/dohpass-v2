@@ -287,6 +287,37 @@ export async function fetchProgress(track) {
   }
 }
 
+// All-time progress for the current user across every track. Used by the
+// dashboard stats bar — single round-trip instead of per-track fetches.
+export async function fetchOverallProgress() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { answered: 0, correct: 0 }
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('is_correct')
+    .eq('user_id', user.id)
+  if (error || !data) return { answered: 0, correct: 0 }
+  return {
+    answered: data.length,
+    correct: data.filter(r => r.is_correct).length,
+  }
+}
+
+// Count of questions the current user has answered in the last 7 days.
+// Uses an exact head-only count for speed (no row payload).
+export async function fetchWeeklyAnswered() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { count, error } = await supabase
+    .from('user_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', since)
+  if (error) return 0
+  return count ?? 0
+}
+
 export async function fetchTrialQuestions(track) {
   const { data, error } = await supabase.rpc('get_trial_questions', {
     p_track: track,

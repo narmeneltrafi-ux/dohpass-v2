@@ -4677,3 +4677,315 @@ nav {
   .lp-foot__statusDot,
   .lp-tm__sk-line { animation: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUTHED DASHBOARD (.lp-dash, .lp-track, .lp-mockx)
+   Reuses .lp-root, .lp-nav, .lp-stats from the landing page.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Authed nav variant: avatar + plan badge, no sign-in CTA ── */
+.lp-nav--auth .lp-nav__link {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.25s var(--lp-ease);
+}
+.lp-nav--auth .lp-nav__link:hover { color: #fff; }
+.lp-nav--auth .lp-nav__link--active { color: #fff; }
+
+.lp-nav__planBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #a1a1aa;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.25s var(--lp-ease), border-color 0.25s var(--lp-ease), background 0.25s var(--lp-ease);
+}
+.lp-nav__planBadge:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,0.18);
+}
+.lp-nav__planBadge--paid {
+  color: var(--gold);
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+}
+.lp-nav__planBadge--paid:hover {
+  background: rgba(201,168,76,0.16);
+  border-color: rgba(201,168,76,0.45);
+}
+
+.lp-nav__avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  color: #0b0b14;
+  border: none;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.35s var(--lp-ease), box-shadow 0.35s var(--lp-ease);
+  flex-shrink: 0;
+}
+.lp-nav__avatar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(201,168,76,0.40);
+}
+
+@media (max-width: 880px) {
+  .lp-nav--auth .lp-nav__links { display: none; }
+}
+
+/* ── Dashboard hero ──────────────────────────────────────────── */
+.lp-dash {
+  /* page lives below the fixed nav (top: 24px + ~56px nav height + breathing room) */
+  padding-top: 7rem;
+  padding-bottom: 5rem;
+}
+.lp-dash__hero {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  text-align: left;
+}
+.lp-dash__h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);          /* ~text-5xl */
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0 0 0.65rem;
+}
+.lp-dash__h1-name {
+  color: var(--gold);
+}
+.lp-dash__sub {
+  font-size: 1.0625rem;
+  color: #a1a1aa;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.lp-dash__statswrap {
+  margin-top: 2.5rem;
+  margin-bottom: 4rem;
+}
+
+.lp-dash__section {
+  max-width: 1080px;
+  margin: 0 auto 4rem;
+  padding: 0 1.5rem;
+}
+.lp-dash__h2 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 0 1.5rem;
+}
+
+/* ── Track grid ──────────────────────────────────────────────── */
+.lp-track-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+@media (max-width: 880px) {
+  .lp-track-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Glass track card (no colored gradients, gold mono icon) ── */
+.lp-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.5rem 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  cursor: pointer;
+  transition:
+    transform 0.4s var(--lp-ease),
+    border-color 0.4s var(--lp-ease),
+    background 0.4s var(--lp-ease),
+    box-shadow 0.4s var(--lp-ease);
+}
+.lp-track:hover,
+.lp-track:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--gold-border);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 24px 60px -28px rgba(201,168,76,0.30);
+  outline: none;
+}
+
+.lp-track__top {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+}
+.lp-track__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+}
+.lp-track__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.lp-track__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--text);
+  margin: 0 0 0.55rem;
+  letter-spacing: -0.01em;
+}
+.lp-track__desc {
+  color: #a1a1aa;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+  flex-grow: 1;
+}
+
+.lp-track__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: #d4d4d8;
+  margin-bottom: 0.55rem;
+}
+.lp-track__count { color: #d4d4d8; }
+.lp-track__pct   { color: var(--gold); font-weight: 600; }
+
+.lp-track__rail {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.lp-track__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width 0.6s var(--lp-ease);
+}
+
+.lp-track__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text);
+  border-radius: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  align-self: flex-start;
+  /* Pin to card bottom regardless of whether the progress rail is rendered,
+     so CTAs line up across cards in the same row. */
+  margin-top: auto;
+  transition: background 0.3s var(--lp-ease), border-color 0.3s var(--lp-ease), color 0.3s var(--lp-ease);
+}
+.lp-track:hover .lp-track__cta,
+.lp-track:focus-visible .lp-track__cta {
+  background: var(--gold);
+  color: #0b0b14;
+  border-color: transparent;
+}
+
+/* ── Mock-exam banner ────────────────────────────────────────── */
+.lp-mockx {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.4s var(--lp-ease), border-color 0.4s var(--lp-ease), background 0.4s var(--lp-ease), box-shadow 0.4s var(--lp-ease);
+}
+.lp-mockx:hover,
+.lp-mockx:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--gold-border);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 18px 48px -24px rgba(201,168,76,0.30);
+  outline: none;
+}
+.lp-mockx__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 11px;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  flex-shrink: 0;
+}
+.lp-mockx__body { flex-grow: 1; min-width: 0; }
+.lp-mockx__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text);
+  margin: 0 0 0.2rem;
+}
+.lp-mockx__desc {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+.lp-mockx__arrow {
+  color: #a1a1aa;
+  flex-shrink: 0;
+  transition: color 0.3s var(--lp-ease), transform 0.3s var(--lp-ease);
+}
+.lp-mockx:hover .lp-mockx__arrow,
+.lp-mockx:focus-visible .lp-mockx__arrow {
+  color: var(--gold);
+  transform: translateX(4px);
+}
+
+@media (max-width: 540px) {
+  .lp-mockx { flex-direction: column; align-items: flex-start; text-align: left; }
+  .lp-mockx__arrow { align-self: flex-end; }
+}

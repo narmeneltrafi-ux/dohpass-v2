@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchLandingStats } from '../lib/supabase'
+import CountUp from '../components/CountUp.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS
@@ -56,44 +57,6 @@ function ShinyBorderButton({ children, onClick, className = '', as: Tag = 'butto
     >
       <span className="lp-shiny__inner">{children}</span>
     </Tag>
-  )
-}
-
-/* Animated number counter, fires when scrolled into view */
-function CountUp({ value, durationMs = 1400, suffix = '' }) {
-  const [display, setDisplay] = useState(0)
-  const ref = useRef(null)
-  const startedRef = useRef(false)
-
-  useEffect(() => {
-    if (value == null) return
-    const node = ref.current
-    if (!node) return
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting && !startedRef.current) {
-          startedRef.current = true
-          const start = performance.now()
-          const target = Number(value) || 0
-          const tick = (now) => {
-            const t = Math.min(1, (now - start) / durationMs)
-            // ease-out cubic
-            const eased = 1 - Math.pow(1 - t, 3)
-            setDisplay(Math.round(eased * target))
-            if (t < 1) requestAnimationFrame(tick)
-          }
-          requestAnimationFrame(tick)
-        }
-      })
-    }, { threshold: 0.4 })
-    obs.observe(node)
-    return () => obs.disconnect()
-  }, [value, durationMs])
-
-  return (
-    <span ref={ref} className="lp-countup">
-      {value == null ? '—' : `${display.toLocaleString()}${suffix}`}
-    </span>
   )
 }
 

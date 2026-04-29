@@ -3,16 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { fetchLandingStats } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import ShinyBorderButton from '../components/ShinyBorderButton.jsx'
+import LandingNav from '../components/LandingNav.jsx'
+import LandingFooter from '../components/LandingFooter.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS
    ─────────────────────────────────────────────────────────────── */
-const IconCross = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
 const IconArrow = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -45,39 +41,6 @@ function HandUnderline() {
         strokeLinecap="round"
       />
     </svg>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   1. STICKY GLASS NAVBAR
-   ─────────────────────────────────────────────────────────────── */
-function NavBar({ navigate }) {
-  const links = [
-    { label: 'Tracks', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'About', href: '#credibility' },
-  ]
-  return (
-    <nav className="lp-nav" aria-label="Primary">
-      <div className="lp-nav__brand" onClick={() => navigate('/')}>
-        <span className="lp-nav__cross"><IconCross /></span>
-        <span className="lp-nav__name">
-          <span className="lp-nav__doh">DOH</span>
-          <span className="lp-nav__pass">Pass</span>
-        </span>
-      </div>
-      <div className="lp-nav__links">
-        {links.map(l => (
-          <a key={l.href} href={l.href} className="lp-nav__link">{l.label}</a>
-        ))}
-      </div>
-      <div className="lp-nav__right">
-        <button className="lp-nav__signin" onClick={() => navigate('/login')}>Sign In</button>
-        <button className="lp-nav__cta" onClick={() => navigate('/pricing')}>
-          Start Free Trial
-        </button>
-      </div>
-    </nav>
   )
 }
 
@@ -392,9 +355,9 @@ function CredibilityBar() {
     <section className="lp-cred" id="credibility">
       <h2 className="lp-cred__h2">Built by UAE physicians, for UAE physicians</h2>
       <div className="lp-cred__card">
-        <div className="lp-cred__avatar" aria-label="Founder portrait placeholder">HG</div>
+        <div className="lp-cred__avatar" aria-label="Founder portrait placeholder">DI</div>
         <div className="lp-cred__body">
-          <div className="lp-cred__name">Dr. Huzaifa Gorashy</div>
+          <div className="lp-cred__name">Dr. Ibrahim</div>
           <div className="lp-cred__title">
             Oncology &amp; Palliative Care SHO · Tawam Hospital, Al Ain
           </div>
@@ -617,56 +580,6 @@ function CTACloser({ navigate }) {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   10. FOOTER
-   ─────────────────────────────────────────────────────────────── */
-function FooterLanding({ navigate }) {
-  return (
-    <footer className="lp-foot" aria-label="Site footer">
-      <div className="lp-foot__cols">
-        <div className="lp-foot__brand">
-          <div className="lp-foot__logo" onClick={() => navigate('/')}>
-            <span className="lp-foot__cross"><IconCross /></span>
-            <span className="lp-foot__name">
-              <span className="lp-foot__doh">DOH</span>
-              <span className="lp-foot__pass">Pass</span>
-            </span>
-          </div>
-          <p className="lp-foot__tag">UAE medical licensing prep, written by physicians.</p>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Platform</h4>
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <button onClick={() => navigate('/login')}>Sign In</button>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Resources</h4>
-          <a href="#faq">FAQ</a>
-          <a href="#credibility">About</a>
-          <button onClick={() => navigate('/pricing')}>Start trial</button>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Legal</h4>
-          <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Contact</a>
-        </div>
-      </div>
-
-      <div className="lp-foot__stroke" aria-hidden="true">DOHPASS</div>
-
-      <div className="lp-foot__bottom">
-        <span>&copy; {new Date().getFullYear()} DOHPass. All rights reserved.</span>
-        <span className="lp-foot__status">
-          <span className="lp-foot__statusDot" />
-          All systems operational
-        </span>
-      </div>
-    </footer>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
    PAGE
    ─────────────────────────────────────────────────────────────── */
 export default function Home() {
@@ -691,7 +604,7 @@ export default function Home() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <NavBar navigate={navigate} />
+      <LandingNav />
 
       <Hero navigate={navigate} scrollToFeatures={scrollToFeatures} />
 
@@ -711,7 +624,7 @@ export default function Home() {
 
       <CTACloser navigate={navigate} />
 
-      <FooterLanding navigate={navigate} />
+      <LandingFooter />
     </div>
   )
 }

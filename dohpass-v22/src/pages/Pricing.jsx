@@ -6,6 +6,8 @@ import {
   createCheckoutSession,
   fetchQuestionCounts,
 } from '../lib/supabase'
+import LandingNav from '../components/LandingNav.jsx'
+import LandingFooter from '../components/LandingFooter.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    STRIPE PRICE IDs — preserved per "do not change checkout logic".
@@ -21,12 +23,6 @@ if (!PRICE_GP || !PRICE_SPECIALIST || !PRICE_ALL_ACCESS) {
 /* ───────────────────────────────────────────────────────────────
    ICONS
    ─────────────────────────────────────────────────────────────── */
-const IconCross = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
 const IconCheck = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="20 6 9 17 4 12" />
@@ -43,117 +39,7 @@ const IconShield = ({ size = 14 }) => (
   </svg>
 )
 
-/* ───────────────────────────────────────────────────────────────
-   PLAN BADGE / FIRST-NAME / INITIALS — same logic as Dashboard
-   ─────────────────────────────────────────────────────────────── */
-function planBadge(profile) {
-  if (!profile) return null
-  const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
-    return 'All Access'
-  if (plan === 'specialist') return 'Specialist'
-  if (plan === 'gp') return 'GP'
-  return 'Free'
-}
-const PAID_BADGES = new Set(['All Access', 'Specialist', 'GP'])
-
-function deriveInitials(profile, user) {
-  const src = profile?.full_name?.trim() || user?.email || ''
-  if (!src) return '?'
-  if (profile?.full_name) {
-    const parts = src.split(/\s+/).filter(Boolean)
-    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
-  }
-  return src.slice(0, 2).toUpperCase()
-}
-
-/* ───────────────────────────────────────────────────────────────
-   GLASS CAPSULE NAV — auto-detects auth state
-   ─────────────────────────────────────────────────────────────── */
-function PricingNav({ navigate, user, profile }) {
-  const isAuthed = !!user
-
-  if (isAuthed) {
-    const links = [
-      { label: 'Dashboard',  path: '/dashboard' },
-      { label: 'Specialist', path: '/specialist' },
-      { label: 'GP',         path: '/gp' },
-      { label: 'Flashcards', path: '/gems' },
-      { label: 'Pricing',    path: '/pricing' },
-    ]
-    const badge = planBadge(profile)
-    const initials = deriveInitials(profile, user)
-    const isPaid = PAID_BADGES.has(badge)
-    return (
-      <nav className="lp-nav lp-nav--auth" aria-label="Primary">
-        <div className="lp-nav__brand" onClick={() => navigate('/dashboard')}>
-          <span className="lp-nav__cross"><IconCross /></span>
-          <span className="lp-nav__name">
-            <span className="lp-nav__doh">DOH</span>
-            <span className="lp-nav__pass">Pass</span>
-          </span>
-        </div>
-        <div className="lp-nav__links">
-          {links.map(l => (
-            <button
-              key={l.path}
-              className={`lp-nav__link${l.path === '/pricing' ? ' lp-nav__link--active' : ''}`}
-              onClick={() => navigate(l.path)}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-        <div className="lp-nav__right">
-          {badge && (
-            <button
-              type="button"
-              className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-              onClick={() => navigate('/account')}
-              title={`${badge} plan — open account`}
-              aria-label={`${badge} plan, open account`}
-            >
-              {badge}
-            </button>
-          )}
-          <button
-            type="button"
-            className="lp-nav__avatar"
-            onClick={() => navigate('/account')}
-            aria-label="Open account"
-            title="Account"
-          >
-            {initials}
-          </button>
-        </div>
-      </nav>
-    )
-  }
-
-  // Logged-out variant matches Home.jsx
-  return (
-    <nav className="lp-nav" aria-label="Primary">
-      <div className="lp-nav__brand" onClick={() => navigate('/')}>
-        <span className="lp-nav__cross"><IconCross /></span>
-        <span className="lp-nav__name">
-          <span className="lp-nav__doh">DOH</span>
-          <span className="lp-nav__pass">Pass</span>
-        </span>
-      </div>
-      <div className="lp-nav__links">
-        <a href="#plans"  className="lp-nav__link">Plans</a>
-        <a href="#faq"    className="lp-nav__link">FAQ</a>
-        <a href="/"       className="lp-nav__link">About</a>
-      </div>
-      <div className="lp-nav__right">
-        <button className="lp-nav__signin" onClick={() => navigate('/login')}>Sign In</button>
-        <button className="lp-nav__cta" onClick={() => navigate('/pricing')}>
-          Start Free Trial
-        </button>
-      </div>
-    </nav>
-  )
-}
+/* Nav now lives in src/components/LandingNav.jsx and auto-detects auth. */
 
 /* ───────────────────────────────────────────────────────────────
    1. HERO
@@ -509,65 +395,20 @@ function FinalCTA() {
 /* ───────────────────────────────────────────────────────────────
    7. FOOTER (matches Home.jsx)
    ─────────────────────────────────────────────────────────────── */
-function FooterLanding({ navigate }) {
-  return (
-    <footer className="lp-foot" aria-label="Site footer">
-      <div className="lp-foot__cols">
-        <div className="lp-foot__brand">
-          <div className="lp-foot__logo" onClick={() => navigate('/')}>
-            <span className="lp-foot__cross"><IconCross /></span>
-            <span className="lp-foot__name">
-              <span className="lp-foot__doh">DOH</span>
-              <span className="lp-foot__pass">Pass</span>
-            </span>
-          </div>
-          <p className="lp-foot__tag">UAE medical licensing prep, written by physicians.</p>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Platform</h4>
-          <a href="/#features">Features</a>
-          <a href="/pricing">Pricing</a>
-          <button onClick={() => navigate('/login')}>Sign In</button>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Resources</h4>
-          <a href="#faq">FAQ</a>
-          <a href="/#credibility">About</a>
-          <button onClick={() => navigate('/pricing')}>Start trial</button>
-        </div>
-        <div className="lp-foot__col">
-          <h4>Legal</h4>
-          <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Contact</a>
-        </div>
-      </div>
-
-      <div className="lp-foot__stroke" aria-hidden="true">DOHPASS</div>
-
-      <div className="lp-foot__bottom">
-        <span>&copy; {new Date().getFullYear()} DOHPass. All rights reserved.</span>
-        <span className="lp-foot__status">
-          <span className="lp-foot__statusDot" />
-          All systems operational
-        </span>
-      </div>
-    </footer>
-  )
-}
+/* Footer now lives in src/components/LandingFooter.jsx. */
 
 /* ───────────────────────────────────────────────────────────────
    PAGE
    ─────────────────────────────────────────────────────────────── */
 export default function Pricing() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  // Profile is still fetched here so PricingGrid can mark the user's current
+  // plan. Auth state for the navbar is now LandingNav's own concern.
   const [counts, setCounts] = useState(null) // null until loaded — drives em-dash fallback
 
   useEffect(() => {
     let cancelled = false
-    supabase.auth.getUser().then(({ data }) => { if (!cancelled) setUser(data?.user ?? null) })
     getProfile().then((p) => { if (!cancelled) setProfile(p) })
     fetchQuestionCounts()
       .then((c) => { if (!cancelled) setCounts(c) })
@@ -592,14 +433,14 @@ export default function Pricing() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <PricingNav navigate={navigate} user={user} profile={profile} />
+      <LandingNav />
       <Hero />
       <PricingGrid counts={counts} profile={profile} />
       <TrustRow />
       <ComparisonTable counts={counts} />
       <FAQ />
       <FinalCTA />
-      <FooterLanding navigate={navigate} />
+      <LandingFooter />
     </div>
   )
 }

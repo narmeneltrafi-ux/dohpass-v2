@@ -15,6 +15,11 @@ import FlashcardsHome from './pages/FlashcardsHome.jsx'
 import FlashcardsTrack from './pages/FlashcardsTrack.jsx'
 import FlashcardSystem from './components/FlashcardSystem.jsx'
 import Pricing from './pages/Pricing.jsx'
+import Terms from './pages/Terms.jsx'
+import Privacy from './pages/Privacy.jsx'
+import Contact from './pages/Contact.jsx'
+import About from './pages/About.jsx'
+import Features from './pages/Features.jsx'
 import PaymentSuccess from './pages/PaymentSuccess.jsx'
 import Account from './pages/Account.jsx'
 import Analytics from './pages/Analytics.jsx'
@@ -63,7 +68,10 @@ function GuardedContent({ children }) {
 }
 
 /* Routes that ship their own glass nav/footer — global chrome is suppressed */
-const SELF_CHROMED_PATHS = new Set(['/', '/dashboard', '/pricing'])
+const SELF_CHROMED_PATHS = new Set([
+  '/', '/dashboard', '/pricing',
+  '/terms', '/privacy', '/contact', '/about', '/features',
+])
 
 function ConditionalHeader() {
   const location = useLocation()
@@ -108,6 +116,11 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
           <Route path='/oncology' element={<OncologyPage />} />
           <Route path='/pricing' element={<Pricing />} />
+          <Route path='/terms'    element={<Terms />} />
+          <Route path='/privacy'  element={<Privacy />} />
+          <Route path='/contact'  element={<Contact />} />
+          <Route path='/about'    element={<About />} />
+          <Route path='/features' element={<Features />} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
           <Route path='/account' element={<ProtectedRoute user={user}><Account /></ProtectedRoute>} />
           <Route path='/progress' element={<ProtectedRoute user={user}><ProgressPage /></ProtectedRoute>} />

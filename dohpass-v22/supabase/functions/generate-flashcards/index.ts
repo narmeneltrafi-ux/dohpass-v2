@@ -97,7 +97,9 @@ Deno.serve(async (req) => {
   };
 
   // ---------- RATE LIMIT: once per 24h ----------
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const todayStartUtc = new Date();
+  todayStartUtc.setUTCHours(0, 0, 0, 0);
+  const since = todayStartUtc.toISOString();
   const rlRes = await fetch(
     `${SUPABASE_URL}/rest/v1/function_logs?function_name=eq.${FUNCTION_NAME}&status=eq.completed&created_at=gte.${since}&select=created_at&order=created_at.desc&limit=1`,
     {
@@ -115,7 +117,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: false,
         rateLimited: true,
-        message: `${FUNCTION_NAME} already ran in last 24h`,
+        message: `${FUNCTION_NAME} already ran today (UTC)`,
         lastRun: rlData[0].created_at,
       }),
       { status: 429, headers: { "Content-Type": "application/json" } },

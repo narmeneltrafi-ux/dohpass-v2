@@ -4,7 +4,7 @@ import { supabase, getProfile } from '../lib/supabase'
 
 /* Shared glass capsule navbar for the marketing-side pages.
    Auto-detects auth: logged-out users get the marketing variant
-   (Sign In + Start Free Trial); logged-in users get the same plan-badge
+   (Sign In + View Plans); logged-in users get the same plan-badge
    + initials avatar treatment that lives on the dashboard nav. */
 
 const IconCross = ({ size = 14 }) => (
@@ -123,7 +123,7 @@ export default function LandingNav() {
           <>
             <button className="lp-nav__signin" onClick={() => navigate('/login')}>Sign In</button>
             <button className="lp-nav__cta" onClick={() => navigate('/pricing')}>
-              Start Free Trial
+              View Plans
             </button>
           </>
         )}

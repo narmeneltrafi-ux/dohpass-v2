@@ -99,10 +99,14 @@ function StatsBar({ stats }) {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }
 
+  // Four distinct cells — each shows a different real number. Specialties
+  // falls back to a hardcoded floor when anon RLS hides the topic count;
+  // Flashcards replaces the previous "Explanations" cell which duplicated
+  // the Questions count. Updated comes from a separate downstream branch.
   const cells = [
-    { label: 'Questions Live', value: stats?.questions, suffix: '+' },
-    { label: 'Specialties',    value: stats?.specialties },
-    { label: 'Explanations',   value: stats?.explanations, suffix: '+' },
+    { label: 'Questions Live', value: stats?.questions,   suffix: '+' },
+    { label: 'Specialties',    value: stats?.specialties, suffix: '+' },
+    { label: 'Flashcards',     value: stats?.flashcards,  suffix: '+' },
   ]
 
   return (

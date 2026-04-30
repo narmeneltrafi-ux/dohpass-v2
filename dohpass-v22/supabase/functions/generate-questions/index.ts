@@ -289,8 +289,104 @@ Deno.serve(async (req) => {
     ]) {
       for (const topic of block.topics) {
         const prompt = block.track === "specialist"
-          ? `You are an expert medical educator for the DOH UAE Internal Medicine Specialist exam. Generate exactly 5 high-quality MCQs on: ${topic}. Respond ONLY with a valid JSON array, no markdown, no backticks: [{"topic":"${topic}","subtopic":"subtopic","q":"question","options":["A. opt1","B. opt2","C. opt3","D. opt4"],"answer":"A","explanation":"explanation"}]`
-          : `You are an expert medical educator for the DOH UAE GP exam, Pearson VUE style. Generate exactly 5 clinical vignette MCQs on: ${topic}. Follow UAE/DOH/NICE/WHO guidelines. Respond ONLY with a valid JSON array, no markdown, no backticks: [{"broad_topic":"category","topic":"${topic}","q":"vignette","options":["A. opt1","B. opt2","C. opt3","D. opt4"],"answer":"A","explanation":"explanation","difficulty":"medium","source":"DOH Guidelines","is_active":true}]`;
+          ? `You are a senior consultant medical educator writing items for the UAE DOH Internal Medicine Specialist licensing exam. The exam is administered in Pearson VUE format. The platform selling these questions is being launched commercially — the quality bar is "would a senior consultant in this specialty be willing to put their name on this question?"
+
+Generate exactly 5 high-quality MCQs on: ${topic}
+
+Apply ALL of the following lenses to EVERY question. Items failing any lens will be auto-deactivated by our review system.
+
+## 1. CLINICAL ACCURACY (highest priority)
+- Stated answer must be the best answer per the most current major guideline (2024-2026)
+- Reference the specific guideline that supports it (NICE, ESC, ADA, GINA, GOLD, ATS/ERS, WHO, BSH, BTS, KDIGO, EASL, ACG, ESMO, NCCN, etc.) — name + number + year
+- Never invent a guideline. If you cannot confidently cite a current real guideline, pick a different question
+- FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international guidelines", "standard practice", "DOH guidelines" without specifics
+
+## 2. PEARSON VUE / ITEM-WRITING STYLE
+- Stem MUST be a clinical vignette with sufficient detail to answer WITHOUT seeing the options (cover-the-options test). A senior consultant reading the stem alone must be able to state the answer.
+- Single best answer — no "all of the above," "none of the above," "A and C"
+- Avoid negative framing ("which is NOT...") unless clearly necessary; if used, capitalize the negative word (NOT, LEAST, EXCEPT)
+- Distractors must be plausible AND parallel in structure, length, and category
+- No clinically irrelevant distractors (no obvious throwaways)
+- No "trick" wording or grammatical clues (a/an mismatch, verb agreement)
+- Stem must NOT give away the answer by length, specificity, or including the answer's keyword
+- EXACTLY 5 options for specialist-level (A through E)
+- Avoid absolutes ("always," "never") in distractors unless the answer itself is an absolute clinical rule
+
+## 3. OPTION PARITY (auto-flagged if violated)
+- All options within ±25% length of each other
+- All options in the same category — never mix drug names with management strategies, or visual field defects with general neurological features
+- The correct answer must NOT be longer, more specific, or more detailed than distractors
+- All distractors must be clinically plausible at the specialist level
+
+## 4. INTERNAL CONSISTENCY (auto-rejected if violated)
+- The answer letter MUST match what the explanation argues for
+- The vignette, options, and explanation must tell ONE coherent clinical story
+- If the explanation says "Option C describes the correct approach", the answer field must be "C"
+
+## 5. NO FILLER (auto-rejected)
+- FORBIDDEN phrases: "Vital signs and relevant investigations are reviewed", "Clinical observations are documented", "Relevant investigations are done", or any sentence that adds no clinical information
+- Every sentence in the stem must add clinical content
+
+## 6. EXPLANATION QUALITY (~80-150 words)
+- Teach, don't just state the answer
+- Explain WHY the correct answer is correct, citing the specific current guideline
+- Address why EACH wrong option is wrong (one line per distractor minimum)
+- End with one clinically useful pearl (a teaching point a consultant would share with a registrar)
+
+## 7. UAE/GULF CONTEXT WHERE RELEVANT
+- For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis — favor UAE/Gulf demographics where clinically appropriate
+- Don't force UAE context where it doesn't fit
+
+Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
+
+[{"topic":"${topic}","subtopic":"specific subtopic","q":"full clinical vignette with demographics + presentation + exam + investigations","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"~100-word teaching explanation: why correct (with specific guideline name+year) + why each distractor wrong + clinical pearl"}]`
+          : `You are a senior consultant medical educator writing items for the UAE DOH General Practitioner licensing exam. The exam is administered in Pearson VUE format. The platform selling these questions is being launched commercially — the quality bar is "would a senior GP consultant be willing to put their name on this question?"
+
+Generate exactly 5 high-quality clinical vignette MCQs on: ${topic}
+
+Apply ALL of the following lenses to EVERY question. Items failing any lens will be auto-deactivated by our review system.
+
+## 1. CLINICAL ACCURACY (highest priority)
+- Stated answer must be the best answer per the most current major guideline (2024-2026)
+- Reference the specific guideline (NICE, ESC, ADA, GINA, GOLD, BTS/SIGN, RCGP, WHO, KDIGO) — name + number + year (e.g. "NICE NG28 2022", "GOLD 2025", "BTS/SIGN 158 2024")
+- Never invent a guideline
+- FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international consensus", "DOH/MOH/HAAD guidelines" without a specific document name
+
+## 2. PEARSON VUE / ITEM-WRITING STYLE
+- Stem MUST be a primary care clinical vignette with patient demographics, presenting complaint, relevant history, exam findings, at least one investigation or observation, realistic for UAE primary care
+- Cover-the-options test: a GP reading the stem alone must be able to state the answer
+- Single best answer — no "all of the above," "none of the above"
+- Avoid negative framing; if used, capitalize the negative word
+- 4-5 options (PREFER 5 for higher discrimination)
+- No grammatical clues, no "trick" wording
+
+## 3. OPTION PARITY (auto-flagged if violated)
+- All options within ±25% length of each other
+- All options in the same category — never mix diagnoses with investigations, drugs with lifestyle advice, or causes with consequences
+- Correct answer must NOT be longer or more specific than distractors
+- All distractors clinically plausible at the GP level
+
+## 4. INTERNAL CONSISTENCY (auto-rejected if violated)
+- Answer letter MUST match what the explanation argues for
+- Stem, options, and explanation must form one coherent clinical narrative
+
+## 5. NO FILLER (auto-rejected)
+- FORBIDDEN phrases: "Vital signs and relevant investigations are reviewed", "Observations are documented", "Relevant investigations are done"
+- Every sentence in the stem must add clinical content
+
+## 6. EXPLANATION QUALITY (~80-150 words)
+- Teach, don't just state the answer
+- Why correct (with specific guideline name + year)
+- Why each distractor wrong (one line each)
+- End with one UAE-relevant primary care pearl
+
+## 7. UAE/GULF CONTEXT
+- For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis, vector-borne illness — favor UAE/Gulf demographics
+- For paediatrics, antenatal care — UAE health authority pathways where applicable
+
+Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
+
+[{"broad_topic":"specialty category","topic":"${topic}","q":"full GP vignette","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"~100-word teaching explanation: why correct (with specific guideline name+year) + distractor rebuttal + UAE-relevant pearl","difficulty":"easy|medium|hard","source":"specific guideline name and year (NOT 'DOH Guidelines')","is_active":true}]`;
 
         const result = await callClaude(prompt);
 

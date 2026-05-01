@@ -301,6 +301,13 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 - Never invent a guideline. If you cannot confidently cite a current real guideline, pick a different question
 - FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international guidelines", "standard practice", "DOH guidelines" without specifics
 
+GUIDELINE FRESHNESS — STRICT:
+- The cited guideline year MUST be 2024, 2025, or 2026
+- 2023 is acceptable ONLY if no newer version exists for that specific guideline
+- 2022 or earlier = AUTO-REJECTED, even if you think it's still current
+- Before writing the explanation, ask yourself: "Is there a newer edition of this guideline?" If yes, use the newer one
+- Examples: ESC PE Guidelines 2024 (NOT 2019), GOLD 2025 (NOT 2024), GINA 2025, ATS/ERS 2024, ADA 2026
+
 ## 2. PEARSON VUE / ITEM-WRITING STYLE
 - Stem MUST be a clinical vignette with sufficient detail to answer WITHOUT seeing the options (cover-the-options test). A senior consultant reading the stem alone must be able to state the answer.
 - Single best answer — no "all of the above," "none of the above," "A and C"
@@ -312,11 +319,11 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 - EXACTLY 5 options for specialist-level (A through E)
 - Avoid absolutes ("always," "never") in distractors unless the answer itself is an absolute clinical rule
 
-## 3. OPTION PARITY (auto-flagged if violated)
-- All options within ±25% length of each other
-- All options in the same category — never mix drug names with management strategies, or visual field defects with general neurological features
-- The correct answer must NOT be longer, more specific, or more detailed than distractors
-- All distractors must be clinically plausible at the specialist level
+## 3. OPTION PARITY (auto-rejected if violated)
+- Word-count check: count the words in each option. ALL options must be within ±3 words of each other. If your correct answer is 8 words, distractors must be 5-11 words. NO EXCEPTIONS.
+- Specificity parity: if one option includes a specific treatment name (e.g., "nintedanib"), all others must also include specific treatment names. Don't mix specific drug names with generic mechanism descriptions ("antifibrotic therapy" vs "immunosuppressive therapy")
+- If options describe duration, ALL must describe duration with the same grammatical structure (e.g., all "for X days" or all "X-day course")
+- The correct answer must NOT contain extra qualifiers or extra concepts not present in distractors
 
 ## 4. INTERNAL CONSISTENCY (auto-rejected if violated)
 - The answer letter MUST match what the explanation argues for
@@ -337,6 +344,19 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 - For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis — favor UAE/Gulf demographics where clinically appropriate
 - Don't force UAE context where it doesn't fit
 
+## SELF-CHECK BEFORE WRITING JSON
+Before producing the JSON, verify each question against this checklist. If ANY check fails, rewrite the question:
+
+[ ] Stem passes cover-the-options test (clinician can answer without options)
+[ ] All 5 options within ±3 words of each other
+[ ] All options use parallel grammatical structure
+[ ] Correct answer is NOT longer or more specific than distractors
+[ ] Cited guideline is 2024 or newer (or 2023 if newest available)
+[ ] Guideline citation includes name + number/edition + year
+[ ] No filler phrases ("vital signs reviewed", "observations documented")
+[ ] Answer letter matches what explanation argues for
+[ ] Each distractor is rebutted in the explanation
+
 Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
 
 [{"topic":"${topic}","subtopic":"specific subtopic","q":"full clinical vignette with demographics + presentation + exam + investigations","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"~100-word teaching explanation: why correct (with specific guideline name+year) + why each distractor wrong + clinical pearl"}]`
@@ -352,6 +372,13 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 - Never invent a guideline
 - FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international consensus", "DOH/MOH/HAAD guidelines" without a specific document name
 
+GUIDELINE FRESHNESS — STRICT:
+- The cited guideline year MUST be 2024, 2025, or 2026
+- 2023 is acceptable ONLY if no newer version exists for that specific guideline
+- 2022 or earlier = AUTO-REJECTED, even if you think it's still current
+- Before writing the explanation, ask yourself: "Is there a newer edition of this guideline?" If yes, use the newer one
+- Examples: ESC PE Guidelines 2024 (NOT 2019), GOLD 2025 (NOT 2024), GINA 2025, ATS/ERS 2024, ADA 2026
+
 ## 2. PEARSON VUE / ITEM-WRITING STYLE
 - Stem MUST be a primary care clinical vignette with patient demographics, presenting complaint, relevant history, exam findings, at least one investigation or observation, realistic for UAE primary care
 - Cover-the-options test: a GP reading the stem alone must be able to state the answer
@@ -360,11 +387,11 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 - 4-5 options (PREFER 5 for higher discrimination)
 - No grammatical clues, no "trick" wording
 
-## 3. OPTION PARITY (auto-flagged if violated)
-- All options within ±25% length of each other
-- All options in the same category — never mix diagnoses with investigations, drugs with lifestyle advice, or causes with consequences
-- Correct answer must NOT be longer or more specific than distractors
-- All distractors clinically plausible at the GP level
+## 3. OPTION PARITY (auto-rejected if violated)
+- Word-count check: count the words in each option. ALL options must be within ±3 words of each other. If your correct answer is 8 words, distractors must be 5-11 words. NO EXCEPTIONS.
+- Specificity parity: if one option includes a specific treatment name (e.g., "nintedanib"), all others must also include specific treatment names. Don't mix specific drug names with generic mechanism descriptions ("antifibrotic therapy" vs "immunosuppressive therapy")
+- If options describe duration, ALL must describe duration with the same grammatical structure (e.g., all "for X days" or all "X-day course")
+- The correct answer must NOT contain extra qualifiers or extra concepts not present in distractors
 
 ## 4. INTERNAL CONSISTENCY (auto-rejected if violated)
 - Answer letter MUST match what the explanation argues for
@@ -383,6 +410,19 @@ Apply ALL of the following lenses to EVERY question. Items failing any lens will
 ## 7. UAE/GULF CONTEXT
 - For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis, vector-borne illness — favor UAE/Gulf demographics
 - For paediatrics, antenatal care — UAE health authority pathways where applicable
+
+## SELF-CHECK BEFORE WRITING JSON
+Before producing the JSON, verify each question against this checklist. If ANY check fails, rewrite the question:
+
+[ ] Stem passes cover-the-options test (clinician can answer without options)
+[ ] All 5 options within ±3 words of each other
+[ ] All options use parallel grammatical structure
+[ ] Correct answer is NOT longer or more specific than distractors
+[ ] Cited guideline is 2024 or newer (or 2023 if newest available)
+[ ] Guideline citation includes name + number/edition + year
+[ ] No filler phrases ("vital signs reviewed", "observations documented")
+[ ] Answer letter matches what explanation argues for
+[ ] Each distractor is rebutted in the explanation
 
 Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
 

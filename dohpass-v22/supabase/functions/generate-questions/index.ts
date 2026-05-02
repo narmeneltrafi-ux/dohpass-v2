@@ -28,6 +28,25 @@ const TOPIC_WEIGHTS_V35: Record<string, number> = {
   // Rheumatology, Psychiatry, Gastroenterology, Pharmacology
 };
 
+// ---------- v35 GP TOPIC WEIGHTS (primary-care blueprint gap-fill) ----------
+const GP_TOPIC_WEIGHTS_V35: Record<string, number> = {
+  'Obstetrics and Gynaecology': 0.18,
+  'Paediatrics': 0.15,
+  'Endocrinology': 0.12,
+  'Respiratory': 0.12,
+  'Mental Health': 0.10,
+  'ENT': 0.08,
+  'Geriatrics': 0.06,
+  'Preventive Medicine': 0.05,
+  'Dermatology': 0.05,
+  'Cardiology': 0.04,
+  'Infectious Disease': 0.03,
+  'Primary Care Miscellaneous': 0.02,
+  // PAUSED (already at/over blueprint weight; do NOT generate):
+  // Neurology, Gastroenterology, Haematology, Palliative Care, Urology,
+  // Orthopaedics and MSK, Rheumatology
+};
+
 // Tier 1 subtopic rotation guidance for v35 gap topics — injected into the prompt
 // so the LLM rotates within the topic instead of hammering the same subtopic.
 const TIER1_SUBTOPICS_V35: Record<string, string> = {
@@ -37,8 +56,8 @@ const TIER1_SUBTOPICS_V35: Record<string, string> = {
   'Immunology': 'anaphylaxis mgmt, urticaria/angioedema (incl. C1 esterase), drug allergy, primary immunodeficiency (CVID, IgA def), eosinophilic disorders',
 };
 
-const weightedPickTopic = (): string => {
-  const entries = Object.entries(TOPIC_WEIGHTS_V35);
+const weightedPick = (weights: Record<string, number>): string => {
+  const entries = Object.entries(weights);
   const total = entries.reduce((s, [, w]) => s + w, 0);
   let r = Math.random() * total;
   for (const [k, w] of entries) {
@@ -47,6 +66,9 @@ const weightedPickTopic = (): string => {
   }
   return entries[entries.length - 1][0];
 };
+
+const weightedPickTopic = (): string => weightedPick(TOPIC_WEIGHTS_V35);
+const weightedPickGpTopic = (): string => weightedPick(GP_TOPIC_WEIGHTS_V35);
 
 Deno.serve(async (req) => {
   const startTime = Date.now();
@@ -318,26 +340,20 @@ Deno.serve(async (req) => {
 
   await log("started", `Function triggered (${FUNCTION_VERSION}, batch_size=${batchSize}, dry_run=${dryRun})`);
 
-  // GP rotation preserved from v34 — gap-fill effort is on the IM specialist track.
-  const GP_TOPICS_A = ["Hypertension","Diabetes Type 2","Dyslipidaemia","Thyroid Disorders","Asthma","COPD","Ischaemic Heart Disease","Heart Failure","Atrial Fibrillation","UTI","Anaemia","Depression","Anxiety","Epilepsy","Stroke and TIA","Osteoporosis","Rheumatoid Arthritis","Peptic Ulcer Disease","GERD","Contraception","Antenatal Care","Paediatric Common Illnesses","Vaccinations","Emergency Chest Pain","Pharmacology and Prescribing"];
-  const GP_TOPICS_B = ["Cardiology GP","Respiratory GP","Gastroenterology GP","Endocrinology GP","Nephrology GP","Neurology GP","Haematology GP","Infectious Disease GP","Oncology Red Flags","Ophthalmology","ENT","Dermatology","Psychiatry","Obstetrics and Gynaecology","Paediatrics","Orthopaedics and MSK","Urology","Emergency Medicine GP","Geriatrics","Palliative Care","Radiology and Investigations","Preventive Medicine","Public Health","Dementia","Osteoarthritis"];
-
-  const today = new Date().getDate();
-  const gpTopics = today % 2 !== 0 ? GP_TOPICS_A : GP_TOPICS_B;
-
   const specCount = Math.ceil(batchSize / 2);
   const gpCount = batchSize - specCount;
-  const dayOfYear = Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 86400000);
-  const gpOffset = (dayOfYear * gpCount) % gpTopics.length;
 
-  // Specialist topics drawn from v35 weighted distribution (blueprint gap-fill).
+  // Both tracks now use v35 blueprint-weighted distribution. GP rotation
+  // (GP_TOPICS_A/B by day-of-month parity) was retired in v35 because it kept
+  // hitting paused topics (Neurology, GI, Haematology, Palliative, Urology,
+  // MSK, Rheumatology) that are already at/over blueprint weight.
   const todaysSpec: string[] = [];
   for (let i = 0; i < specCount; i++) {
     todaysSpec.push(weightedPickTopic());
   }
   const todaysGp: string[] = [];
   for (let i = 0; i < gpCount; i++) {
-    todaysGp.push(gpTopics[(gpOffset + i) % gpTopics.length]);
+    todaysGp.push(weightedPickGpTopic());
   }
 
   const results: Array<{

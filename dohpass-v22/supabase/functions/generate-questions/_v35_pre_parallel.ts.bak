@@ -1,4 +1,4 @@
-// v35.1: parallel LLM calls + max_tokens=12000 (May 2026). Restores 20/day after wall-clock failure of v35.0.
+// v35: blueprint-weighted topic distribution + bulk-sweep quality gates (May 2026). Mirrors active 2,265 spec / 730 GP standard.
 
 const constantTimeEqual = (a: string, b: string): boolean => {
   if (a.length !== b.length) return false;
@@ -70,74 +70,6 @@ const weightedPick = (weights: Record<string, number>): string => {
 const weightedPickTopic = (): string => weightedPick(TOPIC_WEIGHTS_V35);
 const weightedPickGpTopic = (): string => weightedPick(GP_TOPIC_WEIGHTS_V35);
 
-const buildSpecialistPrompt = (topic: string, subtopicGuidance: string, gates: string): string =>
-  `You are a senior consultant medical educator writing items for the UAE DOH Internal Medicine Specialist licensing exam (Pearson VUE format). The platform is being launched commercially — quality bar: "would a senior consultant in this specialty be willing to put their name on this question?"
-
-Generate exactly 5 high-quality SBA MCQs on: ${topic}${subtopicGuidance}
-
-You MUST mirror the active 2,265-row specialist standard: avg stem ≥ 466 chars, avg explanation ≥ 1,111 chars, 5-option SBA with parallel distractors. Do NOT regress toward the deactivated set.
-
-${gates}
-
-## CLINICAL ACCURACY (highest priority)
-- Stated answer must be the best answer per the most current major guideline (2024-2026)
-- Reference the specific guideline (NICE, ESC, ADA, GINA, GOLD, ATS/ERS, WHO, BSH, BTS, KDIGO, EASL, ACG, ESMO, NCCN, etc.) — name + number + year
-- Never invent a guideline. If no current real guideline can be cited, write "general internal medicine principle" (per Gate 4) — NEVER fabricate.
-- FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international guidelines", "standard practice", "DOH guidelines" without specifics.
-
-GUIDELINE FRESHNESS — STRICT:
-- Cited guideline year MUST be 2024, 2025, or 2026.
-- 2023 acceptable ONLY if no newer version exists.
-- 2022 or earlier = AUTO-REJECTED.
-- Examples: ESC PE Guidelines 2024 (NOT 2019), GOLD 2025, GINA 2025, ATS/ERS 2024, ADA 2026.
-
-## PEARSON VUE / DOH STEM FORMAT
-- Stem = clinical vignette: demographics, presenting complaint, relevant history, exam findings, ≥1 investigation/observation. Realistic for UAE practice.
-- Single best answer. EXACTLY 5 options A) through E). No "all of the above," "none of the above," "A and C".
-- Distractors must be plausible AND parallel in structure, length, and category.
-- No grammatical clues (a/an mismatch, verb agreement). No absolutes ("always," "never") unless answer itself is absolute.
-
-## UAE / GULF EPIDEMIOLOGY EMPHASIS
-Where clinically relevant, weight toward UAE/Gulf demographics: consanguinity, brucellosis, MERS-CoV, leishmaniasis, BCG vaccination history, thalassaemia carrier states, vitamin D deficiency, T2DM prevalence. Do NOT force UAE context where it does not fit.
-
-## SELF-CHECK BEFORE WRITING JSON
-For EACH of the 5 questions, verify Gates 1-12 above. If ANY gate fails, rewrite that question before continuing. Do NOT emit the JSON until all 5 questions pass all 12 gates.
-
-Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
-
-[{"topic":"${topic}","subtopic":"specific subtopic from rotation list","q":"full clinical vignette ≥280 chars (target 400-550) with demographics + presentation + exam + investigations","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"≥800-char teaching explanation: why correct (mechanism + specific guideline name+year) + one-line rebuttal for EACH of the 4 distractors + key learning point"}]`;
-
-const buildGpPrompt = (topic: string, gates: string): string =>
-  `You are a senior consultant medical educator writing items for the UAE DOH General Practitioner licensing exam (Pearson VUE format). The platform is being launched commercially — quality bar: "would a senior GP consultant be willing to put their name on this question?"
-
-Generate exactly 5 high-quality clinical vignette MCQs on: ${topic}
-
-${gates}
-
-## CLINICAL ACCURACY (highest priority)
-- Stated answer must be the best answer per the most current major guideline (2024-2026).
-- Reference the specific guideline (NICE, ESC, ADA, GINA, GOLD, BTS/SIGN, RCGP, WHO, KDIGO) — name + number + year.
-- Never invent a guideline. If no current real guideline can be cited, write "general internal medicine principle" (per Gate 4).
-- FORBIDDEN citations: "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international consensus", "DOH/MOH/HAAD guidelines" without a specific document name.
-
-GUIDELINE FRESHNESS — STRICT (same as specialist track):
-- 2024-2026 required. 2023 only if no newer. 2022 or earlier = AUTO-REJECTED.
-
-## PEARSON VUE / DOH STEM FORMAT
-- Primary care vignette: demographics, presenting complaint, relevant history, exam, ≥1 investigation/observation, realistic for UAE primary care.
-- Single best answer. EXACTLY 5 options A) through E).
-- Distractors plausible, parallel in structure/length/category.
-
-## UAE / GULF EPIDEMIOLOGY EMPHASIS
-For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis, MERS-CoV, leishmaniasis, BCG, vector-borne illness — favor UAE/Gulf demographics. For paediatrics, antenatal care — UAE health authority pathways where applicable.
-
-## SELF-CHECK BEFORE WRITING JSON
-For EACH of the 5 questions, verify Gates 1-12. If ANY gate fails, rewrite the question.
-
-Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
-
-[{"broad_topic":"specialty category","topic":"${topic}","q":"full GP vignette ≥280 chars","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"≥800-char teaching explanation: why correct (specific guideline name+year) + rebuttal for each distractor + UAE-relevant pearl","difficulty":"easy|medium|hard","source":"specific guideline name and year (NOT 'DOH Guidelines')"}]`;
-
 Deno.serve(async (req) => {
   const startTime = Date.now();
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
@@ -145,7 +77,7 @@ Deno.serve(async (req) => {
   const SB_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
   const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
   const FUNCTION_NAME = "generate-questions";
-  const FUNCTION_VERSION = "v35.1";
+  const FUNCTION_VERSION = "v35";
   const SOURCE_TAG = "layer2-v35";
   const MODEL = "claude-opus-4-5";
   const TIMEOUT_MS = 120_000;
@@ -324,7 +256,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             model: MODEL,
-            max_tokens: 12000,
+            max_tokens: 4000,
             messages: [{ role: "user", content: prompt }],
           }),
         });
@@ -475,52 +407,103 @@ GATE 12 (Five options confirmed): Final array length must equal 5 before output.
 `.trim();
 
   try {
-    for (const block of [
+    outer: for (const block of [
       { topics: todaysSpec, track: "specialist" as const, table: "specialist_questions" },
       { topics: todaysGp,   track: "gp" as const,         table: "gp_questions" },
     ]) {
-      const tasks = block.topics.map((topic) => {
+      for (const topic of block.topics) {
         const subtopicGuidance = block.track === "specialist" && TIER1_SUBTOPICS_V35[topic]
-          ? `\n\nSUBTOPIC ROTATION FOR ${topic} — pick ONE distinct subtopic per question (do not repeat across the items in this batch):\n${TIER1_SUBTOPICS_V35[topic]}\n`
+          ? `\n\nSUBTOPIC ROTATION FOR ${topic} — pick ONE distinct subtopic per question (do not repeat across the 5 items in this batch):\n${TIER1_SUBTOPICS_V35[topic]}\n`
           : "";
+
         const prompt = block.track === "specialist"
-          ? buildSpecialistPrompt(topic, subtopicGuidance, QUALITY_GATES_V35)
-          : buildGpPrompt(topic, QUALITY_GATES_V35);
-        return { topic, prompt };
-      });
+          ? `You are a senior consultant medical educator writing items for the UAE DOH Internal Medicine Specialist licensing exam (Pearson VUE format). The platform is being launched commercially — quality bar: "would a senior consultant in this specialty be willing to put their name on this question?"
 
-      const settled = await Promise.allSettled(
-        tasks.map(({ prompt }) => callClaude(prompt))
-      );
+Generate exactly 5 high-quality SBA MCQs on: ${topic}${subtopicGuidance}
 
-      for (let i = 0; i < settled.length; i++) {
-        const { topic } = tasks[i];
-        const outcome = settled[i];
+You MUST mirror the active 2,265-row specialist standard: avg stem ≥ 466 chars, avg explanation ≥ 1,111 chars, 5-option SBA with parallel distractors. Do NOT regress toward the deactivated set.
 
-        if (outcome.status === "rejected") {
-          await log("error", JSON.stringify({
-            track: block.track, topic, errorType: "promise_rejected", message: String(outcome.reason),
-          }));
-          results.push({ topic, track: block.track, status: "error", errorType: "promise_rejected" });
-          continue;
-        }
+${QUALITY_GATES_V35}
 
-        const result = outcome.value;
+## CLINICAL ACCURACY (highest priority)
+- Stated answer must be the best answer per the most current major guideline (2024-2026)
+- Reference the specific guideline (NICE, ESC, ADA, GINA, GOLD, ATS/ERS, WHO, BSH, BTS, KDIGO, EASL, ACG, ESMO, NCCN, etc.) — name + number + year
+- Never invent a guideline. If no current real guideline can be cited, write "general internal medicine principle" (per Gate 4) — NEVER fabricate.
+- FORBIDDEN citations (auto-rejected): "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international guidelines", "standard practice", "DOH guidelines" without specifics.
+
+GUIDELINE FRESHNESS — STRICT:
+- Cited guideline year MUST be 2024, 2025, or 2026.
+- 2023 acceptable ONLY if no newer version exists.
+- 2022 or earlier = AUTO-REJECTED.
+- Examples: ESC PE Guidelines 2024 (NOT 2019), GOLD 2025, GINA 2025, ATS/ERS 2024, ADA 2026.
+
+## PEARSON VUE / DOH STEM FORMAT
+- Stem = clinical vignette: demographics, presenting complaint, relevant history, exam findings, ≥1 investigation/observation. Realistic for UAE practice.
+- Single best answer. EXACTLY 5 options A) through E). No "all of the above," "none of the above," "A and C".
+- Distractors must be plausible AND parallel in structure, length, and category.
+- No grammatical clues (a/an mismatch, verb agreement). No absolutes ("always," "never") unless answer itself is absolute.
+
+## UAE / GULF EPIDEMIOLOGY EMPHASIS
+Where clinically relevant, weight toward UAE/Gulf demographics: consanguinity, brucellosis, MERS-CoV, leishmaniasis, BCG vaccination history, thalassaemia carrier states, vitamin D deficiency, T2DM prevalence. Do NOT force UAE context where it does not fit.
+
+## SELF-CHECK BEFORE WRITING JSON
+For EACH of the 5 questions, verify Gates 1-12 above. If ANY gate fails, rewrite that question before continuing. Do NOT emit the JSON until all 5 questions pass all 12 gates.
+
+Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
+
+[{"topic":"${topic}","subtopic":"specific subtopic from rotation list","q":"full clinical vignette ≥280 chars (target 400-550) with demographics + presentation + exam + investigations","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"≥800-char teaching explanation: why correct (mechanism + specific guideline name+year) + one-line rebuttal for EACH of the 4 distractors + key learning point"}]`
+          : `You are a senior consultant medical educator writing items for the UAE DOH General Practitioner licensing exam (Pearson VUE format). The platform is being launched commercially — quality bar: "would a senior GP consultant be willing to put their name on this question?"
+
+Generate exactly 5 high-quality clinical vignette MCQs on: ${topic}
+
+${QUALITY_GATES_V35}
+
+## CLINICAL ACCURACY (highest priority)
+- Stated answer must be the best answer per the most current major guideline (2024-2026).
+- Reference the specific guideline (NICE, ESC, ADA, GINA, GOLD, BTS/SIGN, RCGP, WHO, KDIGO) — name + number + year.
+- Never invent a guideline. If no current real guideline can be cited, write "general internal medicine principle" (per Gate 4).
+- FORBIDDEN citations: "current evidence-based clinical guidelines (NICE/WHO)", "WHO recommendations", "international consensus", "DOH/MOH/HAAD guidelines" without a specific document name.
+
+GUIDELINE FRESHNESS — STRICT (same as specialist track):
+- 2024-2026 required. 2023 only if no newer. 2022 or earlier = AUTO-REJECTED.
+
+## PEARSON VUE / DOH STEM FORMAT
+- Primary care vignette: demographics, presenting complaint, relevant history, exam, ≥1 investigation/observation, realistic for UAE primary care.
+- Single best answer. EXACTLY 5 options A) through E).
+- Distractors plausible, parallel in structure/length/category.
+
+## UAE / GULF EPIDEMIOLOGY EMPHASIS
+For diabetes, vitamin D deficiency, consanguinity, thalassaemia, brucellosis, MERS-CoV, leishmaniasis, BCG, vector-borne illness — favor UAE/Gulf demographics. For paediatrics, antenatal care — UAE health authority pathways where applicable.
+
+## SELF-CHECK BEFORE WRITING JSON
+For EACH of the 5 questions, verify Gates 1-12. If ANY gate fails, rewrite the question.
+
+Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Schema:
+
+[{"broad_topic":"specialty category","topic":"${topic}","q":"full GP vignette ≥280 chars","options":["A. opt1","B. opt2","C. opt3","D. opt4","E. opt5"],"answer":"A","explanation":"≥800-char teaching explanation: why correct (specific guideline name+year) + rebuttal for each distractor + UAE-relevant pearl","difficulty":"easy|medium|hard","source":"specific guideline name and year (NOT 'DOH Guidelines')"}]`;
+
+        const result = await callClaude(prompt);
+
         if (!result.ok) {
           await log("error", JSON.stringify({
-            track: block.track, topic, errorType: result.errorType, status: result.status,
-            requestId: result.requestId, attempts: result.attempts, message: result.message,
+            track: block.track,
+            topic,
+            errorType: result.errorType,
+            status: result.status,
+            requestId: result.requestId,
+            attempts: result.attempts,
+            message: result.message,
           }));
-          results.push({
-            topic, track: block.track, status: "error",
-            errorType: result.errorType, requestId: result.requestId, attempts: result.attempts,
-          });
-          if (result.isTimeout) timedOut = true;
-          // No "break outer" — in parallel mode, one timeout must not abort siblings already collected.
+          results.push({ topic, track: block.track, status: "error", errorType: result.errorType, requestId: result.requestId, attempts: result.attempts });
+          if (result.isTimeout) {
+            timedOut = true;
+            break outer;
+          }
           continue;
         }
 
         try {
+          // Gate 12 enforcement at insert time + dedup guard (similarity > 0.85 vs q_original).
           const candidates: any[] = Array.isArray(result.data) ? result.data : [];
           const accepted: any[] = [];
           let skippedDup = 0;

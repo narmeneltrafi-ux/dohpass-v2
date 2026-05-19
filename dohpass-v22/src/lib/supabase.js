@@ -345,6 +345,17 @@ export async function fetchTrialQuestions(track) {
   return data || []
 }
 
+// Anonymous (unauthenticated) preview. Server caps p_limit at 5; the 3-question
+// preview cap is enforced client-side via localStorage in the quiz pages.
+export async function fetchPreviewQuestions(track, limit = 3) {
+  const { data, error } = await supabase.rpc('get_preview_questions', {
+    p_track: track,
+    p_limit: limit,
+  })
+  if (error) { console.error('preview fetch error:', error); return [] }
+  return data || []
+}
+
 export async function fetchTrialStatus() {
   const { data, error } = await supabase.rpc('get_trial_status')
   if (error || !data) return { used: 0, limit: 30, remaining: 30 }

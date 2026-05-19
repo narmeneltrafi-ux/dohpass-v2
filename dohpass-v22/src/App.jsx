@@ -109,8 +109,11 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/auth' element={<Navigate to='/login' replace />} />
           <Route path='/' element={<HomeRoot user={user} />} />
           <Route path='/dashboard' element={<ProtectedRoute user={user}><Dashboard /></ProtectedRoute>} />
-          <Route path='/specialist' element={<ProtectedRoute user={user}><SpecialistQuiz /></ProtectedRoute>} />
-          <Route path='/gp' element={<ProtectedRoute user={user}><GPQuiz /></ProtectedRoute>} />
+          {/* /specialist and /gp are open to anonymous visitors: the page
+              components handle their own gate (3-question localStorage preview
+              for anon, server trial/paid flow for authed users). */}
+          <Route path='/specialist' element={<SpecialistQuiz />} />
+          <Route path='/gp' element={<GPQuiz />} />
           <Route path='/flashcards' element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
           <Route path='/gems'       element={<ProtectedRoute user={user}><FlashcardsHome /></ProtectedRoute>} />
           <Route path='/flashcards/:track' element={<ProtectedRoute user={user}><FlashcardsTrack /></ProtectedRoute>} />

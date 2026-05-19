@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.2.0",
-    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/supabase-js": "^2.105.4",
     "pg": "^8.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

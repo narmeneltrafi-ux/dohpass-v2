@@ -240,7 +240,7 @@ export default function SpecialistQuiz() {
         </div>
         <PaywallGate
           title="Trial used up"
-          body="You've used all 30 free questions. Upgrade to continue practicing."
+          body="You've used all 10 free trial questions. Upgrade to continue practicing."
           ctaLabel="Upgrade to Unlimited"
         />
       </div>

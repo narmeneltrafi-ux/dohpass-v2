@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  supabase,
   fetchSpecialistQuestions,
   fetchSpecialistTopics,
   saveProgress,
@@ -8,6 +9,7 @@ import {
   hasAccess,
   fetchTrialQuestions,
   fetchTrialStatus,
+  fetchPreviewQuestions,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -17,7 +19,25 @@ import { useBookmarks } from '../hooks/useBookmarks'
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
-function PaywallGate({ title, body, ctaLabel }) {
+const ANON_KEY = 'dohpass_anon_trial'
+const ANON_LIMIT = 3
+
+function readAnonCount() {
+  try {
+    const n = parseInt(localStorage.getItem(ANON_KEY) || '0', 10)
+    return Number.isFinite(n) && n >= 0 ? n : 0
+  } catch {
+    return 0
+  }
+}
+
+function incrementAnonCount() {
+  const next = readAnonCount() + 1
+  try { localStorage.setItem(ANON_KEY, String(next)) } catch { /* private mode */ }
+  return next
+}
+
+function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
   const navigate = useNavigate()
   return (
     <div className="paywall-wrap">
@@ -25,7 +45,7 @@ function PaywallGate({ title, body, ctaLabel }) {
         <div className="paywall-icon">🔒</div>
         <h2 className="paywall-title">{title}</h2>
         <p className="paywall-body">{body}</p>
-        <button className="btn-primary gold paywall-cta" onClick={() => navigate('/pricing')}>
+        <button className="btn-primary gold paywall-cta" onClick={() => navigate(ctaPath)}>
           {ctaLabel}
         </button>
       </div>
@@ -50,14 +70,30 @@ export default function SpecialistQuiz() {
   const [feedback, setFeedback] = useState(null)
   const [done, setDone] = useState(false)
 
-  // null = loading, true = paid, false = free
+  // null = checking, true = anonymous (no session), false = authed
+  const [isAnon, setIsAnon] = useState(null)
+  // null = loading, true = paid, false = free (only meaningful when isAnon === false)
   const [isPaid, setIsPaid] = useState(null)
   const [plan, setPlan] = useState(null)
   const [trialStatus, setTrialStatus] = useState(null) // { used, limit, remaining }
+  const [anonUsed, setAnonUsed] = useState(0)
+  // Snapshot of anonUsed at mount, used to size the bank without retriggering
+  // loadQuestions on every submit-driven increment.
+  const anonUsedAtMountRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (!session) {
+        const used = readAnonCount()
+        anonUsedAtMountRef.current = used
+        setAnonUsed(used)
+        setIsAnon(true)
+        return
+      }
+      setIsAnon(false)
       const p = await getProfile()
       if (cancelled) return
       const paid = hasAccess(p)
@@ -71,10 +107,12 @@ export default function SpecialistQuiz() {
     return () => { cancelled = true }
   }, [])
 
-  const planAllowed = isPaid === true && (plan === 'specialist' || plan === 'all_access')
-  const trialActive = isPaid === false && trialStatus !== null && trialStatus.remaining > 0
-  const trialExhausted = isPaid === false && trialStatus !== null && trialStatus.remaining === 0
-  const wrongPlan = isPaid === true && plan !== 'specialist' && plan !== 'all_access'
+  const planAllowed = isAnon === false && isPaid === true && (plan === 'specialist' || plan === 'all_access')
+  const trialActive = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining > 0
+  const trialExhausted = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining === 0
+  const wrongPlan = isAnon === false && isPaid === true && plan !== 'specialist' && plan !== 'all_access'
+  const anonActive = isAnon === true && anonUsed < ANON_LIMIT
+  const anonExhausted = isAnon === true && anonUsed >= ANON_LIMIT
 
   useEffect(() => {
     if (!planAllowed) return
@@ -90,6 +128,9 @@ export default function SpecialistQuiz() {
         data = await fetchSpecialistQuestions(activeTopic === 'All' ? null : activeTopic)
       } else if (trialActive) {
         data = await fetchTrialQuestions('specialist')
+      } else if (anonActive) {
+        const remaining = Math.max(0, ANON_LIMIT - anonUsedAtMountRef.current)
+        data = await fetchPreviewQuestions('specialist', remaining)
       }
       setBank(shuffle(data))
       setIndex(0); setCorrect(0); setWrong(0)
@@ -99,14 +140,20 @@ export default function SpecialistQuiz() {
     } finally {
       setLoading(false)
     }
-  }, [planAllowed, trialActive, activeTopic])
+  }, [planAllowed, trialActive, anonActive, activeTopic])
 
   useEffect(() => {
+    if (isAnon === null) return
+    if (isAnon === true) {
+      if (anonActive) loadQuestions()
+      else setLoading(false)
+      return
+    }
     if (isPaid === null) return
     if (isPaid === false && trialStatus === null) return
     if (planAllowed || trialActive) loadQuestions()
     else setLoading(false)
-  }, [isPaid, trialStatus, planAllowed, trialActive, loadQuestions])
+  }, [isAnon, anonActive, isPaid, trialStatus, planAllowed, trialActive, loadQuestions])
 
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
@@ -133,7 +180,11 @@ export default function SpecialistQuiz() {
       setWrong(w => w + 1)
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })
     }
-    await saveProgress('specialist', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
+    if (isAnon) {
+      setAnonUsed(incrementAnonCount())
+    } else {
+      await saveProgress('specialist', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
+    }
   }
 
   function handleNext() {
@@ -196,6 +247,26 @@ export default function SpecialistQuiz() {
     )
   }
 
+  // Anonymous preview cap. Gated on !submitted so the user can finish viewing
+  // feedback for the question that pushed them to the limit before the
+  // paywall takes over.
+  if (anonExhausted && !submitted) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="quiz-header">
+          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+          <div className="quiz-title gold">Internal Medicine Specialist</div>
+        </div>
+        <PaywallGate
+          title="Preview limit reached"
+          body="Create a free account to unlock 10 questions — no payment needed"
+          ctaLabel="Sign up free"
+          ctaPath="/login"
+        />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>
@@ -211,6 +282,22 @@ export default function SpecialistQuiz() {
     )
   }
   if (done) {
+    if (isAnon) {
+      return (
+        <div className="quiz-page" style={{ paddingTop: '62px' }}>
+          <div className="quiz-header">
+            <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+            <div className="quiz-title gold">Internal Medicine Specialist</div>
+          </div>
+          <PaywallGate
+            title="Preview complete"
+            body="Create a free account to unlock 10 questions — no payment needed"
+            ctaLabel="Sign up free"
+            ctaPath="/login"
+          />
+        </div>
+      )
+    }
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <ResultsScreen correct={correct} wrong={wrong} track="gold" onRestart={handleRestart} />
@@ -225,8 +312,15 @@ export default function SpecialistQuiz() {
     )
   }
 
+  const anonRemaining = Math.max(0, ANON_LIMIT - anonUsed)
+
   const chromeTop = (
     <>
+      {anonActive && (
+        <div className="qui-trial qui-trial--gold" role="status">
+          Free preview · {anonRemaining} of {ANON_LIMIT} questions left
+        </div>
+      )}
       {trialActive && (
         <div className="qui-trial qui-trial--gold" role="status">
           Free trial · {trialStatus.remaining} of {trialStatus.limit} questions left

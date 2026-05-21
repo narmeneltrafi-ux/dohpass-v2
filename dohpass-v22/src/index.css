@@ -3823,6 +3823,26 @@ nav {
   line-height: 1.55;
   color: #a1a1aa;
 }
+.lp-hero__founder {
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(196, 155, 66, 0.62);
+  border-left: 2px solid rgba(196, 155, 66, 0.28);
+  padding-left: 14px;
+  margin: 16px auto 32px;
+  max-width: 400px;
+  text-align: left;
+  display: block;
+  line-height: 1.6;
+}
+.lp-hero__trust {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-top: 16px;
+  text-align: center;
+}
 .lp-hero__ctas {
   display: flex;
   align-items: center;

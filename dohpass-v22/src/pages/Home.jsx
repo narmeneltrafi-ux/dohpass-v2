@@ -54,31 +54,40 @@ function Hero({ navigate, scrollToFeatures }) {
       <div className="lp-hero__inner">
         <div className="lp-hero__badge">
           <span className="lp-hero__pulse" />
-          DOH 2026 exam ready · Updated weekly
+          DOH 2026 blueprint · Updated daily
         </div>
 
         <h1 className="lp-hero__h1">
-          Pass your DOH exam with
+          Your exam is specific.
           <br />
           <span className="lp-hero__h1-gold">
-            confidence
-            <HandUnderline />
+            Your preparation should be too.
           </span>
         </h1>
 
         <p className="lp-hero__sub">
-          3,000+ specialist questions. 1,000+ GP questions. Written and reviewed by UAE physicians,
-          mapped to the current DOH blueprint.
+          Every question mapped to the current UAE DOH blueprint.
+          Not adapted from another exam. Not recycled.
+          Written from scratch for the exam you're actually sitting.
+        </p>
+
+        <p className="lp-hero__founder">
+          "Built by a UAE physician who sat the DOH exam
+          and found nothing purpose-built for it."
         </p>
 
         <div className="lp-hero__ctas">
-          <button className="aw-btn" onClick={() => navigate('/pricing')}>
-            See Plans <IconArrow />
+          <button className="aw-btn" onClick={scrollToFeatures}>
+            See a real DOH question <IconArrow />
           </button>
-          <button className="lp-ghost" onClick={scrollToFeatures}>
-            See a sample question <IconArrow />
+          <button className="lp-ghost" onClick={() => navigate('/pricing')}>
+            View Plans <IconArrow />
           </button>
         </div>
+
+        <p className="lp-hero__trust">
+          No credit card &nbsp;·&nbsp; Free preview
+        </p>
       </div>
     </section>
   )

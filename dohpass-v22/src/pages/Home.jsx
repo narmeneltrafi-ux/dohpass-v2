@@ -46,7 +46,7 @@ function Hero({ navigate, scrollToFeatures }) {
           Your exam is specific.
           <br />
           <span className="lp-hero__h1-gold">
-            Your preparation should be too.
+            Your preparation should be&nbsp;too.
           </span>
         </h1>
 

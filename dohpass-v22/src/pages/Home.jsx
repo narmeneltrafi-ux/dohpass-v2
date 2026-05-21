@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchLandingStats } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
-import ShinyBorderButton from '../components/ShinyBorderButton.jsx'
 import LandingNav from '../components/LandingNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 
@@ -73,9 +72,9 @@ function Hero({ navigate, scrollToFeatures }) {
         </p>
 
         <div className="lp-hero__ctas">
-          <ShinyBorderButton onClick={() => navigate('/pricing')}>
+          <button className="aw-btn" onClick={() => navigate('/pricing')}>
             See Plans <IconArrow />
-          </ShinyBorderButton>
+          </button>
           <button className="lp-ghost" onClick={scrollToFeatures}>
             See a sample question <IconArrow />
           </button>
@@ -600,12 +599,9 @@ function CTACloser({ navigate }) {
       <div className="lp-closer__glow" aria-hidden="true" />
       <h2 className="lp-closer__h2">Ready to pass?</h2>
       <p className="lp-closer__sub">View plans and pricing. Cancel anytime within 7 days for a full refund.</p>
-      <ShinyBorderButton
-        className="lp-closer__btn"
-        onClick={() => navigate('/pricing')}
-      >
+      <button className="aw-btn" onClick={() => navigate('/pricing')}>
         See Plans <IconArrow size={18} />
-      </ShinyBorderButton>
+      </button>
       <p className="lp-closer__small">Join physicians preparing across the UAE.</p>
     </section>
   )

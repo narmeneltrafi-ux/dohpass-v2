@@ -3737,69 +3737,6 @@ nav {
   box-shadow: 0 8px 30px rgba(255,255,255,0.05);
 }
 
-/* ── PRIMITIVE: SHINY BORDER BUTTON (gold conic, spinning) ──── */
-.lp-shiny {
-  position: relative;
-  display: inline-block;
-  padding: 2px;                 /* border thickness */
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  isolation: isolate;
-  transition: transform 0.35s var(--lp-ease), box-shadow 0.35s var(--lp-ease);
-}
-.lp-shiny::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    rgba(201,168,76,0.0) 0deg,
-    rgba(201,168,76,0.0) 90deg,
-    var(--gold-bright) 180deg,
-    rgba(201,168,76,0.0) 270deg,
-    rgba(201,168,76,0.0) 360deg
-  );
-  animation: lp-spin 4s linear infinite;
-  z-index: 0;
-}
-.lp-shiny::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: inherit;
-  background: linear-gradient(180deg, #fadf90, var(--gold));
-  z-index: 1;
-}
-.lp-shiny__inner {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.85rem 1.6rem;
-  border-radius: 999px;
-  color: #0b0b14;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
-}
-.lp-shiny:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 40px rgba(201,168,76,0.35);
-}
-@keyframes lp-spin {
-  to { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lp-shiny::before { animation: none; }
-}
-
 /* ── 2. HERO ────────────────────────────────────────────────── */
 .lp-hero {
   position: relative;
@@ -4599,10 +4536,6 @@ nav {
   color: #a1a1aa;
   margin-bottom: 2rem;
 }
-.lp-closer__btn .lp-shiny__inner {
-  padding: 1.05rem 2rem;
-  font-size: 1rem;
-}
 .lp-closer__small {
   margin-top: 1.5rem;
   font-size: 0.85rem;
@@ -5048,18 +4981,6 @@ nav {
   /* fixed nav lives at top: 24px, ~56px tall — give the hero clean breathing room */
   padding-top: 0;
 }
-
-/* ── ShinyBorderButton disabled state ────────────────────────── */
-/* Locked-not-broken: spinner stops, gradient mutes, cursor not-allowed.
-   Shape stays gold-pill so the visual hierarchy of "this is the primary
-   action" still reads clearly during the migration window. */
-.lp-shiny--disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-  filter: saturate(0.85);
-}
-.lp-shiny--disabled::before { animation: none; opacity: 0.35; }
-.lp-shiny--disabled:hover { transform: none; box-shadow: none; }
 
 /* ── 2. PLAN CARDS (extends .lp-plan from Home pricing teaser) ── */
 .lp-pp-plans {
@@ -6018,10 +5939,6 @@ a.lp-contact__value:hover { color: var(--gold); }
   transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
 }
 
-/* Static gold pill — no rotating border, no shimmer. The QuestionCard
-   is a high-density UI; users see this CTA 30-50+ times per session,
-   so the marketing-side ShinyBorderButton motion is intentionally
-   replaced with a calm, static treatment here. */
 .qui-cta--gold {
   background: var(--gold);
   color: #0b0b14;

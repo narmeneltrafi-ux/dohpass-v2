@@ -28,21 +28,6 @@ const IconChevron = ({ size = 18 }) => (
    PRIMITIVES
    ─────────────────────────────────────────────────────────────── */
 
-/* Hand-drawn underline SVG, sits behind a word in the headline */
-function HandUnderline() {
-  return (
-    <svg className="lp-underline" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
-      <path
-        d="M5 14 Q 70 4 150 11 T 295 9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 /* ───────────────────────────────────────────────────────────────
    2. HERO
    ─────────────────────────────────────────────────────────────── */

@@ -3806,16 +3806,6 @@ nav {
   display: inline-block;
   color: var(--gold);
 }
-.lp-underline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.15em;
-  width: 100%;
-  height: 0.32em;
-  color: var(--gold-bright);
-  pointer-events: none;
-}
 .lp-hero__sub {
   max-width: 640px;
   margin: 0 auto 2.25rem;

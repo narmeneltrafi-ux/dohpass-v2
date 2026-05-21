@@ -73,9 +73,9 @@ function Hero({ navigate, scrollToFeatures }) {
         </p>
 
         <div className="lp-hero__ctas">
-          <ShinyBorderButton onClick={() => navigate('/pricing')}>
+          <button className="aw-btn" onClick={() => navigate('/pricing')}>
             See Plans <IconArrow />
-          </ShinyBorderButton>
+          </button>
           <button className="lp-ghost" onClick={scrollToFeatures}>
             See a sample question <IconArrow />
           </button>

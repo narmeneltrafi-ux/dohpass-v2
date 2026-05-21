@@ -3894,6 +3894,19 @@ nav {
   flex-wrap: wrap;
 }
 
+@media (max-width: 480px) {
+  .lp-hero__ctas {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .lp-hero__ctas .lp-ghost,
+  .lp-hero__ctas button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ── 3. STATS BAR ───────────────────────────────────────────── */
 .lp-statswrap {
   position: relative;

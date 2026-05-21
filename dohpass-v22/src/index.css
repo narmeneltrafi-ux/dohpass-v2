@@ -3893,6 +3893,10 @@ nav {
   gap: 0.85rem;
   flex-wrap: wrap;
 }
+.lp-hero__ctas .aw-btn {
+  width: auto;
+  min-width: 160px;
+}
 
 @media (max-width: 480px) {
   .lp-hero__ctas {

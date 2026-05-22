@@ -253,7 +253,7 @@ function MockTracks() {
           <span className="lp-mock__count">1,000+ Q</span>
         </div>
         <div className="lp-mock__rows">
-          <span>Primary Care</span><span>Pediatrics</span><span>Women&apos;s Health</span>
+          <span>Primary Care</span><span>Endocrinology</span><span>Women&apos;s Health</span>
         </div>
       </div>
     </div>

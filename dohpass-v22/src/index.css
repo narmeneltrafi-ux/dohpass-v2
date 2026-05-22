@@ -6116,3 +6116,327 @@ a.lp-contact__value:hover { color: var(--gold); }
 
   .qui-hint { display: none; }
 }
+/* ───────────────────────────────────────────────────────────
+   SampleQuestionDemo — interactive 5-question landing demo
+   Dark theme, gold accent, green/red answer feedback.
+   Append to src/index.css.
+   ─────────────────────────────────────────────────────────── */
+
+.sqd-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.sqd-card {
+  background: #121212;
+  border: 1px solid rgba(196, 155, 66, 0.18);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: left;
+}
+
+.sqd-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sqd-tag {
+  font-size: 12px;
+  color: #c49b42;
+  background: rgba(196, 155, 66, 0.1);
+  border: 1px solid rgba(196, 155, 66, 0.2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  letter-spacing: 0.03em;
+}
+
+.sqd-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sqd-streak {
+  font-size: 12px;
+  color: #e8a849;
+  font-weight: 500;
+}
+
+.sqd-counter {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.sqd-stem {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 14px;
+}
+
+.sqd-leadin {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.sqd-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sqd-opt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, opacity 0.2s;
+  font-family: inherit;
+}
+
+.sqd-opt:hover:not(:disabled) {
+  border-color: rgba(196, 155, 66, 0.5);
+  background: #1f1f1f;
+}
+
+.sqd-opt:disabled {
+  cursor: default;
+}
+
+.sqd-opt__key {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sqd-opt__text {
+  flex: 1;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sqd-opt__icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sqd-opt--correct {
+  border-color: #2ea043;
+  background: rgba(46, 160, 67, 0.12);
+}
+.sqd-opt--correct .sqd-opt__key,
+.sqd-opt--correct .sqd-opt__text,
+.sqd-opt--correct .sqd-opt__icon {
+  color: #4ade80;
+}
+
+.sqd-opt--wrong {
+  border-color: #e5484d;
+  background: rgba(229, 72, 77, 0.12);
+}
+.sqd-opt--wrong .sqd-opt__key,
+.sqd-opt--wrong .sqd-opt__text,
+.sqd-opt--wrong .sqd-opt__icon {
+  color: #f87171;
+}
+
+.sqd-opt--dim {
+  opacity: 0.45;
+}
+
+/* ── Explanation panel ── */
+.sqd-explain {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #161616;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: sqd-reveal 0.35s ease;
+}
+
+@keyframes sqd-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sqd-explain__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sqd-explain__verdict {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+.sqd-explain--ok .sqd-explain__verdict {
+  color: #4ade80;
+  background: rgba(46, 160, 67, 0.15);
+}
+.sqd-explain--miss .sqd-explain__verdict {
+  color: #f87171;
+  background: rgba(229, 72, 77, 0.15);
+}
+
+.sqd-explain__cite {
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.sqd-explain__why {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 14px;
+}
+
+.sqd-explain__distractors {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 12px;
+  margin-bottom: 14px;
+}
+.sqd-explain__distractors p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 6px;
+}
+.sqd-explain__distractors strong {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sqd-explain__learn {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #e8c98a;
+  background: rgba(196, 155, 66, 0.08);
+  border-left: 2px solid rgba(196, 155, 66, 0.4);
+  padding: 10px 14px;
+  border-radius: 0;
+  margin-bottom: 16px;
+}
+
+.sqd-next {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(196, 155, 66, 0.4);
+  color: #c49b42;
+  border-radius: 999px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sqd-next:hover {
+  background: rgba(196, 155, 66, 0.1);
+  border-color: #c49b42;
+}
+
+/* ── Upgrade wall ── */
+.sqd-wall {
+  background: #121212;
+  border: 1px solid rgba(196, 155, 66, 0.25);
+  border-radius: 16px;
+  padding: 40px 28px;
+  text-align: center;
+}
+
+.sqd-wall__streak {
+  font-size: 14px;
+  color: #e8a849;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.sqd-wall__title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.sqd-wall__sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 420px;
+  margin: 0 auto 24px;
+}
+
+.sqd-wall__cta {
+  display: inline-block;
+  width: auto;
+  min-width: 220px;
+  padding: 15px 32px;
+  font-size: 15px;
+}
+
+.sqd-wall__trust {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .sqd-card { padding: 22px 16px; }
+  .sqd-wall { padding: 32px 18px; }
+}
+
+.lp-sampledemo {
+  background: #0c0c0c;
+  padding: 64px 16px;
+}
+.lp-sampledemo__inner {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+.lp-sampledemo__eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c49b42;
+}
+.lp-sampledemo__title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 4vw, 38px);
+  color: #ffffff;
+  margin: 12px 0 8px;
+}
+.lp-sampledemo__sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 32px;
+}

@@ -4,6 +4,7 @@ import { fetchLandingStats } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import LandingNav from '../components/LandingNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
+import SampleQuestionDemo from '../components/SampleQuestionDemo.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS
@@ -615,7 +616,7 @@ export default function Home() {
   }, [])
 
   const scrollToFeatures = useCallback(() => {
-    const el = document.getElementById('features')
+    const el = document.getElementById('try-it')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
@@ -633,6 +634,15 @@ export default function Home() {
       <div className="lp-statswrap">
         <StatsBar stats={stats} />
       </div>
+
+      <section className="lp-sampledemo" id="try-it" aria-label="Try a question">
+        <div className="lp-sampledemo__inner">
+          <span className="lp-sampledemo__eyebrow">TRY IT NOW</span>
+          <h2 className="lp-sampledemo__title">Answer a real DOH question.</h2>
+          <p className="lp-sampledemo__sub">No signup. Tap an answer, see the explanation.</p>
+          <SampleQuestionDemo />
+        </div>
+      </section>
 
       <FeaturesSection />
 

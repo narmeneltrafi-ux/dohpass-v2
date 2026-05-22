@@ -3920,7 +3920,11 @@ nav {
 
 /* ── 4. FEATURES (LIGHT) ────────────────────────────────────── */
 .lp-features {
-  background: var(--lp-light);
+  background: linear-gradient(
+    to bottom,
+    #e8e6e0 0%,
+    var(--lp-light) 140px
+  );
   color: var(--lp-light-text);
   padding: 7rem 0;
   position: relative;
@@ -6415,8 +6419,14 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 
 .lp-sampledemo {
-  background: #0c0c0c;
+  background: linear-gradient(
+    to bottom,
+    #0c0c0c 0%,
+    #0c0c0c 75%,
+    #1a1a1a 100%
+  );
   padding: 64px 16px;
+  position: relative;
 }
 .lp-sampledemo__inner {
   max-width: 680px;

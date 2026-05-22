@@ -20,12 +20,23 @@ CREATE OR REPLACE FUNCTION public.trigger_reengagement_emails()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth, net
+SET search_path = public, auth, net, vault
 AS $$
 DECLARE
   target_day  integer;
   user_email  text;
+  cron_secret text;
 BEGIN
+  SELECT decrypted_secret
+    INTO cron_secret
+    FROM vault.decrypted_secrets
+   WHERE name = 'CRON_SECRET'
+   LIMIT 1;
+
+  IF cron_secret IS NULL OR cron_secret = '' THEN
+    RAISE EXCEPTION 'trigger_reengagement_emails: CRON_SECRET missing from vault.decrypted_secrets';
+  END IF;
+
   FOREACH target_day IN ARRAY ARRAY[2, 5, 10, 14]
   LOOP
     FOR user_email IN
@@ -45,7 +56,10 @@ BEGIN
     LOOP
       PERFORM net.http_post(
         url     := 'https://qvzvdwvyihwwiqlhgogq.supabase.co/functions/v1/send-reengagement-email',
-        headers := '{"Content-Type":"application/json"}'::jsonb,
+        headers := jsonb_build_object(
+                     'Content-Type',  'application/json',
+                     'x-cron-secret', cron_secret
+                   ),
         body    := jsonb_build_object('email', user_email, 'day', target_day)
       );
     END LOOP;

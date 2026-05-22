@@ -2,6 +2,15 @@
 // Invoked by pg_cron through public.trigger_reengagement_emails() for users who
 // confirmed their email N days ago and still have no rows in user_progress.
 
+const constantTimeEqual = (a: string, b: string): boolean => {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+};
+
 type Day = 2 | 5 | 10 | 14;
 
 interface Template {
@@ -60,6 +69,15 @@ const json = (body: unknown, status: number): Response =>
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json({ error: "Method Not Allowed" }, 405);
+  }
+
+  const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
+  if (!CRON_SECRET) {
+    return json({ error: "Server misconfigured: CRON_SECRET unset" }, 500);
+  }
+  const providedSecret = req.headers.get("x-cron-secret") ?? "";
+  if (!constantTimeEqual(CRON_SECRET, providedSecret)) {
+    return json({ error: "Unauthorized" }, 401);
   }
 
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";

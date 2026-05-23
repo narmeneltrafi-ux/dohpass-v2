@@ -358,6 +358,6 @@ export async function fetchPreviewQuestions(track, limit = 3) {
 
 export async function fetchTrialStatus() {
   const { data, error } = await supabase.rpc('get_trial_status')
-  if (error || !data) return { used: 0, limit: 30, remaining: 30 }
+  if (error || !data) return { used: 0, limit: 10, remaining: 10 }
   return data
 }

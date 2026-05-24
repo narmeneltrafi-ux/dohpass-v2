@@ -6683,3 +6683,99 @@ a.lp-contact__value:hover { color: var(--gold); }
   border: 1px solid var(--gold-border);
   vertical-align: middle;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   AppNav mobile additions (DORMANT — used only by src/components/AppNav.jsx)
+   Hamburger + full-screen drawer for the .lp-nav glass capsule.
+   Every selector is scoped under .lp-nav so .site-header is untouched.
+   Single breakpoint at 880px so authed (5 links) and logged-out both
+   collapse cleanly.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hamburger — hidden on desktop, revealed at <=880px */
+.lp-nav__hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.25rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Full-screen drawer — hidden by default */
+.lp-nav__mobile {
+  display: none;
+  position: fixed;
+  top: 88px;            /* clears the capsule (top:24px + ~56px height + gap) */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(7, 7, 14, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.25s var(--lp-ease), transform 0.25s var(--lp-ease);
+  pointer-events: none;
+  z-index: 290;         /* just below the .lp-nav capsule (z-index 300) */
+}
+.lp-nav__mobile--open {
+  display: flex;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.lp-nav__mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.lp-nav__mobile-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: #d4d4d8;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.25s var(--lp-ease), background 0.25s var(--lp-ease);
+}
+.lp-nav__mobile-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.lp-nav__mobile-link--active {
+  color: var(--gold);
+}
+
+.lp-nav__mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* Single responsive breakpoint for AppNav */
+@media (max-width: 880px) {
+  .lp-nav .lp-nav__links { display: none; }
+  .lp-nav__hamburger { display: flex; }
+}
+@media (min-width: 881px) {
+  .lp-nav__hamburger { display: none; }
+  .lp-nav__mobile { display: none; }
+}

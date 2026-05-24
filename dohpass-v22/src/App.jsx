@@ -63,8 +63,18 @@ const GUARDED_PATHS = ['/specialist', '/gp', '/gems', '/flashcards', '/mock-exam
 
 function GuardedContent({ children }) {
   const location = useLocation()
+  const [paid, setPaid] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getProfile().then(p => {
+      if (!cancelled) setPaid(hasAccess(p))
+    })
+    return () => { cancelled = true }
+  }, [])
+
   const isGuarded = GUARDED_PATHS.some(p => location.pathname.startsWith(p))
-  if (isGuarded) return <ScreenGuard>{children}</ScreenGuard>
+  if (isGuarded && paid) return <ScreenGuard>{children}</ScreenGuard>
   return children
 }
 

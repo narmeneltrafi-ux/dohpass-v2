@@ -39,16 +39,18 @@ const SECTIONS = [
     ),
   },
   {
-    title: '4. Subscriptions & Billing',
+    title: '4. Payment & Access',
     body: (
       <>
-        <p>Access to paid content is provided on a monthly subscription basis. Subscriptions
-          renew automatically each billing period until cancelled. You may cancel at any time
-          from your account; cancellation takes effect at the end of the current period.</p>
-        <p>We offer a 7-day money-back guarantee for first-time subscribers. If the Service is
+        <p>Access to paid content is provided for a fixed term (30 days) per payment. Access is
+          granted manually after payment is received and is not charged or renewed automatically.
+          When a term ends, access pauses until a new payment is made. There is no recurring
+          billing and no subscription to cancel.</p>
+        <p>We offer a 7-day money-back guarantee for first-time buyers. If the Service is
           not for you, contact us within 7 days of your first payment for a full refund.</p>
         <p>Prices are listed in AED and are inclusive of all applicable taxes unless stated
-          otherwise. Payments are processed by our third-party payment provider.</p>
+          otherwise. Payment is made by direct bank transfer; we do not collect or store card
+          or banking details, and no third-party payment processor is involved.</p>
       </>
     ),
   },

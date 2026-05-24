@@ -389,7 +389,7 @@ function buildTeaserPlans(stats) {
       features: [
         `${liveCount(stats?.gp)} GP questions`,
         'DOH GP blueprint',
-        'Cancel anytime',
+        'No subscription · No auto-renew',
       ],
     },
     {
@@ -423,7 +423,7 @@ function PricingTeaser({ stats, navigate }) {
   return (
     <section className="lp-pricing" id="pricing">
       <h2 className="lp-pricing__h2">Simple pricing. Real results.</h2>
-      <p className="lp-pricing__sub">All plans monthly. Cancel anytime.</p>
+      <p className="lp-pricing__sub">One payment = 30 days access. No subscription · No auto-renew.</p>
       <div className="lp-pricing__grid">
         {plans.map((p) => (
           <article
@@ -435,7 +435,7 @@ function PricingTeaser({ stats, navigate }) {
             <div className="lp-plan__price">
               <span className="lp-plan__cur">AED</span>
               <span className="lp-plan__num">{p.price}</span>
-              <span className="lp-plan__per">/mo</span>
+              <span className="lp-plan__per">/ 30 days</span>
             </div>
             <ul className="lp-plan__feats">
               {p.features.map((f) => (
@@ -517,12 +517,12 @@ const FAQS = [
     a: 'New vignettes are added weekly. Existing questions are revised whenever a guideline changes or a reviewer flags an update.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. Plans are billed monthly and you can cancel from your account page in one click. Access continues until the end of your billing period.',
+    q: 'How does payment work?',
+    a: 'No subscription and no auto-renew. You pay once by bank transfer for 30 days of access. When it ends, access simply pauses \u2014 renew anytime by sending another transfer. Nothing is ever charged automatically.',
   },
   {
     q: 'Is there a free trial?',
-    a: 'There\u2019s no free trial. Plans are billed monthly with cancel-anytime, and the 7-day money-back guarantee covers buyer\u2019s remorse \u2014 if it\u2019s not for you, we refund.',
+    a: 'No free trial, but every track has free preview questions so you can see the quality first. A 7-day money-back guarantee covers your first payment \u2014 if it\u2019s not for you, we refund.',
   },
   {
     q: 'GP vs Specialist track — which one?',
@@ -587,7 +587,7 @@ function CTACloser({ navigate }) {
     <section className="lp-closer" id="cta">
       <div className="lp-closer__glow" aria-hidden="true" />
       <h2 className="lp-closer__h2">Ready to pass?</h2>
-      <p className="lp-closer__sub">View plans and pricing. Cancel anytime within 7 days for a full refund.</p>
+      <p className="lp-closer__sub">View plans and pricing. Full refund within 7 days of payment.</p>
       <button className="aw-btn" onClick={() => navigate('/pricing')}>
         See Plans <IconArrow size={18} />
       </button>

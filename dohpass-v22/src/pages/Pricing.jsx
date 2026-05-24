@@ -51,7 +51,7 @@ function Hero() {
       <div className="lp-hero__inner">
         <div className="lp-hero__badge">
           <span className="lp-hero__pulse" />
-          Simple pricing · Cancel anytime
+          Simple pricing · No subscription · No auto-renew
         </div>
         <h1 className="lp-hero__h1" id="lp-pricing-h1">
           One price.
@@ -141,7 +141,7 @@ function PlanCard({ plan, currentPlan, onSelect }) {
       <div className="lp-plan__price lp-pp-plan__price">
         <span className="lp-plan__num lp-pp-plan__num">{plan.price}</span>
         <span className="lp-pp-plan__cur">AED</span>
-        <span className="lp-plan__per">/ month</span>
+        <span className="lp-plan__per">/ 30 days</span>
       </div>
 
       <ul className="lp-plan__feats">
@@ -192,7 +192,7 @@ function PricingGrid({ counts, profile, onSelect }) {
 function TrustRow() {
   const items = [
     '7-day money-back guarantee',
-    'Cancel anytime · No contracts',
+    'No subscription · No auto-renew · No contracts',
     'Secure payment · 256-bit encryption',
   ]
   return (
@@ -301,11 +301,11 @@ function ComparisonTable({ counts }) {
 const FAQS = [
   {
     q: 'Is there a free trial?',
-    a: 'There\u2019s no free trial. Plans are billed monthly with cancel-anytime, and the 7-day money-back guarantee covers buyer\u2019s remorse \u2014 if it\u2019s not for you, we refund.',
+    a: 'No free trial, but every track has free preview questions so you can see the quality first. A 7-day money-back guarantee covers your first payment \u2014 if it\u2019s not for you, we refund.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. Cancel from your account at any time. No contracts, no fees.',
+    q: 'How does payment work?',
+    a: 'No subscription and no auto-renew. You pay once by bank transfer for 30 days of access. When it ends, access simply pauses \u2014 renew anytime by sending another transfer. Nothing is ever charged automatically.',
   },
   {
     q: 'What payment methods do you accept?',

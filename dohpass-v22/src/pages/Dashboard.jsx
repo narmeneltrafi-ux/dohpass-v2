@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   supabase,
   getProfile,
+  hasAccess,
   fetchProgress,
   fetchOverallProgress,
   fetchWeeklyAnswered,
@@ -53,6 +54,13 @@ const IconClipboard = () => (
     <rect x="6" y="4" width="12" height="17" rx="2" />
     <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
     <path d="M9 11h6M9 15h4" />
+  </svg>
+)
+/* Lock — gated content badge */
+const IconLock = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="11" width="16" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
   </svg>
 )
 
@@ -269,6 +277,10 @@ export default function Dashboard() {
   }, [])
 
   const firstName = deriveFirstName(profile, user)
+  // Mock exam is All-Access-only (matches /pricing + the /mock-exam route gate),
+  // so it unlocks only with active access AND the all_access plan.
+  const mockUnlocked = hasAccess(profile) && profile?.plan === 'all_access'
+  const mockTarget = mockUnlocked ? '/mock-exam' : '/checkout?plan=all_access'
   const accuracy = overall && overall.answered > 0
     ? Math.round((overall.correct / overall.answered) * 100)
     : null
@@ -356,15 +368,23 @@ export default function Dashboard() {
         <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>
         <div
           className="lp-mockx"
-          onClick={() => navigate('/mock-exam')}
+          onClick={() => navigate(mockTarget)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/mock-exam') } }}
+          aria-label={mockUnlocked ? 'Start timed mock exam' : 'Timed mock exam — All Access required, go to checkout'}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(mockTarget) } }}
         >
           <span className="lp-mockx__icon"><IconClipboard /></span>
           <div className="lp-mockx__body">
-            <h3 className="lp-mockx__title">Timed mock exam</h3>
-            <p className="lp-mockx__desc">100 questions · 150 minutes · pass mark 60% — simulates the live DOH exam.</p>
+            <h3 className="lp-mockx__title">
+              Timed mock exam
+              {!mockUnlocked && <span className="lp-mockx__lock"><IconLock /> All Access</span>}
+            </h3>
+            <p className="lp-mockx__desc">
+              {mockUnlocked
+                ? '100 questions · 150 minutes · pass mark 60% — simulates the live DOH exam.'
+                : 'Unlock with All Access. 100 questions · 150 minutes · pass mark 60% — simulates the live DOH exam.'}
+            </p>
           </div>
           <span className="lp-mockx__arrow"><IconArrow size={18} /></span>
         </div>

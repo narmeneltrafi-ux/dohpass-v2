@@ -199,10 +199,10 @@ export default function SampleQuestionDemo() {
             {remaining.toLocaleString()} more DOH-style questions are waiting —
             every one with a guideline-cited explanation like the ones you just saw.
           </p>
-          <button className="aw-btn sqd-wall__cta" onClick={() => navigate('/pricing')}>
-            Unlock the full bank →
+          <button className="aw-btn sqd-wall__cta" onClick={() => navigate('/login')}>
+            Create your free account →
           </button>
-          <p className="sqd-wall__trust">No credit card to start · Free preview</p>
+          <p className="sqd-wall__trust">Free to start · 10 more questions on signup</p>
         </div>
       </div>
     );

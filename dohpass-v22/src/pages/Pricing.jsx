@@ -126,7 +126,7 @@ function buildPlans(counts) {
   ]
 }
 
-function PlanCard({ plan, currentPlan }) {
+function PlanCard({ plan, currentPlan, onSelect }) {
   const isCurrent = currentPlan === plan.id
   return (
     <article
@@ -153,33 +153,34 @@ function PlanCard({ plan, currentPlan }) {
         ))}
       </ul>
 
-      {/* All plan CTAs render in identical ghost state while Stripe is off and
-          Lemon Squeezy isn't wired yet. Showing a single solid gold pill on the
-          recommended plan would mislead users into thinking checkout works.
-          Recommended treatment lives at the CARD level (gold border, glow, tint)
-          and the RECOMMENDED pill — never on the disabled CTA. When the new
-          checkout lands, the recommended plan returns to a primary gold pill. */}
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        className="lp-pp-plan__cta lp-pp-plan__cta--ghost"
-      >
-        {isCurrent ? 'Current plan' : plan.ctaLabel}
-      </button>
+      {/* Manual bank-transfer rail. Recommended plan gets the solid gold pill;
+          others use the ghost treatment. Current plan is non-actionable. */}
+      {isCurrent ? (
+        <button type="button" disabled aria-disabled="true" className="lp-pp-plan__cta lp-pp-plan__cta--ghost">
+          Current plan
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={`lp-pp-plan__cta ${plan.recommended ? 'lp-pp-plan__cta--gold' : 'lp-pp-plan__cta--outline'}`}
+          onClick={() => onSelect(plan.id)}
+        >
+          {plan.ctaLabel}
+        </button>
+      )}
 
-      <div className="lp-pp-plan__soon" aria-live="polite">Coming soon</div>
+      <div className="lp-pp-plan__soon">Pay by bank transfer</div>
     </article>
   )
 }
 
-function PricingGrid({ counts, profile }) {
+function PricingGrid({ counts, profile, onSelect }) {
   const plans = buildPlans(counts)
   const currentPlan = profile?.plan || 'free'
   return (
     <section className="lp-pp-plans" id="plans" aria-label="Available plans">
       <div className="lp-pp-plans__grid">
-        {plans.map((p) => <PlanCard key={p.id} plan={p} currentPlan={currentPlan} />)}
+        {plans.map((p) => <PlanCard key={p.id} plan={p} currentPlan={currentPlan} onSelect={onSelect} />)}
       </div>
     </section>
   )
@@ -368,7 +369,7 @@ function FAQ() {
 /* ───────────────────────────────────────────────────────────────
    6. FINAL CTA
    ─────────────────────────────────────────────────────────────── */
-function FinalCTA() {
+function FinalCTA({ onSelect }) {
   return (
     <section className="lp-closer lp-pp-finale">
       <div className="lp-closer__glow" aria-hidden="true" />
@@ -376,18 +377,14 @@ function FinalCTA() {
       <p className="lp-closer__sub">
         Start with the Specialist plan. Cancel any time within 7 days for a full refund.
       </p>
-      {/* Same rule as the plan-card CTAs: no solid gold pill while checkout is
-          off. The final CTA matches the disabled ghost treatment until Lemon
-          Squeezy ships, then can come back as a primary gold pill. */}
       <button
         type="button"
-        disabled
-        aria-disabled="true"
-        className="lp-pp-plan__cta lp-pp-plan__cta--ghost lp-pp-finale__cta"
+        className="lp-pp-plan__cta lp-pp-plan__cta--gold lp-pp-finale__cta"
+        onClick={() => onSelect('specialist')}
       >
         Start Specialist
       </button>
-      <p className="lp-pp-plan__soon lp-pp-finale__soon">Coming soon</p>
+      <p className="lp-pp-plan__soon lp-pp-finale__soon">Pay by bank transfer</p>
     </section>
   )
 }
@@ -406,6 +403,10 @@ export default function Pricing() {
   // Profile is still fetched here so PricingGrid can mark the user's current
   // plan. Auth state for the navbar is now LandingNav's own concern.
   const [counts, setCounts] = useState(null) // null until loaded — drives em-dash fallback
+
+  function goToCheckout(planId) {
+    navigate(`/checkout?plan=${planId}`)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -435,11 +436,11 @@ export default function Pricing() {
 
       <LandingNav />
       <Hero />
-      <PricingGrid counts={counts} profile={profile} />
+      <PricingGrid counts={counts} profile={profile} onSelect={goToCheckout} />
       <TrustRow />
       <ComparisonTable counts={counts} />
       <FAQ />
-      <FinalCTA />
+      <FinalCTA onSelect={goToCheckout} />
       <LandingFooter />
     </div>
   )

@@ -231,6 +231,7 @@ export default function GPQuiz() {
           title="Wrong Plan"
           body="This track requires the GP plan or All Access."
           ctaLabel="Upgrade Plan"
+          ctaPath="/checkout?plan=gp"
         />
       </div>
     )
@@ -247,6 +248,7 @@ export default function GPQuiz() {
           title="Trial used up"
           body="You've used all 10 free trial questions. Upgrade to continue practicing."
           ctaLabel="Upgrade to Unlimited"
+          ctaPath="/checkout?plan=gp"
         />
       </div>
     )

@@ -21,6 +21,7 @@ import Contact from './pages/Contact.jsx'
 import About from './pages/About.jsx'
 import Features from './pages/Features.jsx'
 import PaymentSuccess from './pages/PaymentSuccess.jsx'
+import Checkout from './pages/Checkout.jsx'
 import Account from './pages/Account.jsx'
 import Analytics from './pages/Analytics.jsx'
 import MockExam from './pages/MockExam.jsx'
@@ -71,7 +72,7 @@ function GuardedContent({ children }) {
 const SELF_CHROMED_PATHS = new Set([
   '/', '/dashboard', '/pricing',
   '/terms', '/privacy', '/contact', '/about', '/features',
-  '/specialist', '/gp',
+  '/specialist', '/gp', '/checkout',
 ])
 
 function ConditionalHeader() {
@@ -120,6 +121,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/flashcards/:track/:system' element={<ProtectedRoute user={user}><FlashcardSystem userId={user?.id} /></ProtectedRoute>} />
           <Route path='/oncology' element={<OncologyPage />} />
           <Route path='/pricing' element={<Pricing />} />
+          <Route path='/checkout' element={<Checkout />} />
           <Route path='/terms'    element={<Terms />} />
           <Route path='/privacy'  element={<Privacy />} />
           <Route path='/contact'  element={<Contact />} />
@@ -129,7 +131,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/account' element={<ProtectedRoute user={user}><Account /></ProtectedRoute>} />
           <Route path='/progress' element={<ProtectedRoute user={user}><ProgressPage /></ProtectedRoute>} />
           <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
-          <Route path='/mock-exam' element={<PaidRoute user={user}><MockExam /></PaidRoute>} />
+          <Route path='/mock-exam' element={<PaidRoute user={user} allowedPlans={[]}><MockExam /></PaidRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

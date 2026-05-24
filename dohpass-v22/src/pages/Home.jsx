@@ -405,7 +405,7 @@ function buildTeaserPlans(stats) {
       ],
     },
     {
-      id: 'all',
+      id: 'all_access',
       name: 'All Access',
       price: '89',
       ctaLabel: 'Get All Access',
@@ -445,25 +445,19 @@ function PricingTeaser({ stats, navigate }) {
                 </li>
               ))}
             </ul>
-            {/* Disabled ghost CTA — exactly the same class as /pricing so
-                no plan card on the site shows an active gold pill while
-                checkout is off (Lemon Squeezy migration window). */}
+            {/* Manual bank-transfer rail — same classes as /pricing. */}
             <button
               type="button"
-              disabled
-              aria-disabled="true"
-              className="lp-pp-plan__cta lp-pp-plan__cta--ghost"
+              className={`lp-pp-plan__cta ${p.recommended ? 'lp-pp-plan__cta--gold' : 'lp-pp-plan__cta--outline'}`}
+              onClick={() => navigate(`/checkout?plan=${p.id}`)}
             >
               {p.ctaLabel}
             </button>
-            <div className="lp-pp-plan__soon">Coming soon</div>
+            <div className="lp-pp-plan__soon">Pay by bank transfer</div>
           </article>
         ))}
       </div>
 
-      {/* Active gold pill below the cards. The card CTAs themselves stay
-          disabled (Lemon Squeezy migration), so this is the only path out
-          of the teaser into /pricing — keeps the section navigable. */}
       <button
         type="button"
         className="lp-pricing__seeAll"

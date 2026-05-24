@@ -83,6 +83,13 @@ export default function Account() {
   const cancelsAtPeriodEnd = Boolean(profile.cancel_at_period_end)
   const periodEnd = formatDate(profile.current_period_end)
 
+  // Manual bank-transfer access: granted via access_expires_at, is_paid stays
+  // false. Shown only when there's no Stripe subscription to manage.
+  const manualExpiry = profile.access_expires_at
+    ? new Date(profile.access_expires_at)
+    : null
+  const hasManualAccess = !isPaid && manualExpiry && manualExpiry > new Date()
+
   return (
     <div className="account">
       <div className="account-card">
@@ -123,6 +130,26 @@ export default function Account() {
               {portalLoading ? 'Redirecting…' : 'Manage Subscription'}
             </button>
             {portalError && <p className="account-error">{portalError}</p>}
+          </>
+        ) : hasManualAccess ? (
+          <>
+            <div className="account-row">
+              <span className="account-label">Current plan</span>
+              <span className="account-value">{planLabel[profile.plan] || profile.plan}</span>
+            </div>
+            <div className="account-row">
+              <span className="account-label">Access ends on</span>
+              <span className="account-value">{formatDate(profile.access_expires_at)}</span>
+            </div>
+            <div className="account-notice">
+              Your access runs for 30 days. To renew, transfer again before this date — we'll extend it once we confirm payment.
+            </div>
+            <button
+              className="account-btn account-btn--primary"
+              onClick={() => navigate(`/checkout?plan=${profile.plan}`)}
+            >
+              Renew by bank transfer
+            </button>
           </>
         ) : (
           <>

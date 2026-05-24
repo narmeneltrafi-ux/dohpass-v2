@@ -46,7 +46,7 @@ const SECTIONS = [
           granted manually after payment is received and is not charged or renewed automatically.
           When a term ends, access pauses until a new payment is made. There is no recurring
           billing and no subscription to cancel.</p>
-        <p>We offer a 7-day money-back guarantee for first-time subscribers. If the Service is
+        <p>We offer a 7-day money-back guarantee for first-time buyers. If the Service is
           not for you, contact us within 7 days of your first payment for a full refund.</p>
         <p>Prices are listed in AED and are inclusive of all applicable taxes unless stated
           otherwise. Payments are processed by our third-party payment provider.</p>

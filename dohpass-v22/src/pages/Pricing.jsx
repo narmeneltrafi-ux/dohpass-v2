@@ -51,7 +51,7 @@ function Hero() {
       <div className="lp-hero__inner">
         <div className="lp-hero__badge">
           <span className="lp-hero__pulse" />
-          Simple pricing · Cancel anytime
+          Simple pricing · No subscription · No auto-renew
         </div>
         <h1 className="lp-hero__h1" id="lp-pricing-h1">
           One price.
@@ -141,7 +141,7 @@ function PlanCard({ plan, currentPlan, onSelect }) {
       <div className="lp-plan__price lp-pp-plan__price">
         <span className="lp-plan__num lp-pp-plan__num">{plan.price}</span>
         <span className="lp-pp-plan__cur">AED</span>
-        <span className="lp-plan__per">/ month</span>
+        <span className="lp-plan__per">/ 30 days</span>
       </div>
 
       <ul className="lp-plan__feats">
@@ -192,7 +192,7 @@ function PricingGrid({ counts, profile, onSelect }) {
 function TrustRow() {
   const items = [
     '7-day money-back guarantee',
-    'Cancel anytime · No contracts',
+    'No subscription · No auto-renew · No contracts',
     'Secure payment · 256-bit encryption',
   ]
   return (

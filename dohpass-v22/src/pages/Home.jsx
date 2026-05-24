@@ -389,7 +389,7 @@ function buildTeaserPlans(stats) {
       features: [
         `${liveCount(stats?.gp)} GP questions`,
         'DOH GP blueprint',
-        'Cancel anytime',
+        'No subscription · No auto-renew',
       ],
     },
     {
@@ -423,7 +423,7 @@ function PricingTeaser({ stats, navigate }) {
   return (
     <section className="lp-pricing" id="pricing">
       <h2 className="lp-pricing__h2">Simple pricing. Real results.</h2>
-      <p className="lp-pricing__sub">All plans monthly. Cancel anytime.</p>
+      <p className="lp-pricing__sub">One payment = 30 days access. No subscription · No auto-renew.</p>
       <div className="lp-pricing__grid">
         {plans.map((p) => (
           <article
@@ -435,7 +435,7 @@ function PricingTeaser({ stats, navigate }) {
             <div className="lp-plan__price">
               <span className="lp-plan__cur">AED</span>
               <span className="lp-plan__num">{p.price}</span>
-              <span className="lp-plan__per">/mo</span>
+              <span className="lp-plan__per">/ 30 days</span>
             </div>
             <ul className="lp-plan__feats">
               {p.features.map((f) => (

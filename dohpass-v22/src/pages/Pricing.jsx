@@ -375,7 +375,7 @@ function FinalCTA({ onSelect }) {
       <div className="lp-closer__glow" aria-hidden="true" />
       <h2 className="lp-closer__h2">Still deciding?</h2>
       <p className="lp-closer__sub">
-        Start with the Specialist plan. Cancel any time within 7 days for a full refund.
+        Start with the Specialist plan. Full refund within 7 days of payment.
       </p>
       <button
         type="button"

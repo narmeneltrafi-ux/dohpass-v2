@@ -6,7 +6,7 @@ import {
   createCheckoutSession,
   fetchQuestionCounts,
 } from '../lib/supabase'
-import LandingNav from '../components/LandingNav.jsx'
+import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 
 /* ───────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const IconShield = ({ size = 14 }) => (
   </svg>
 )
 
-/* Nav now lives in src/components/LandingNav.jsx and auto-detects auth. */
+/* Nav now lives in src/components/AppNav.jsx and auto-detects auth. */
 
 /* ───────────────────────────────────────────────────────────────
    1. HERO
@@ -401,7 +401,7 @@ export default function Pricing() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   // Profile is still fetched here so PricingGrid can mark the user's current
-  // plan. Auth state for the navbar is now LandingNav's own concern.
+  // plan. Auth state for the navbar is now AppNav's own concern.
   const [counts, setCounts] = useState(null) // null until loaded — drives em-dash fallback
 
   function goToCheckout(planId) {
@@ -434,7 +434,7 @@ export default function Pricing() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <LandingNav />
+      <AppNav />
       <Hero />
       <PricingGrid counts={counts} profile={profile} onSelect={goToCheckout} />
       <TrustRow />

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, createManualOrder, generatePaymentReference } from '../lib/supabase'
 import { getPlan, BANK_DETAILS, SUPPORT_EMAIL, ACTIVATION_WINDOW } from '../lib/paymentConfig'
-import LandingNav from '../components/LandingNav.jsx'
+import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 
 const IconArrow = ({ size = 16 }) => (
@@ -98,7 +98,7 @@ export default function Checkout() {
     return (
       <div className="lp-root lp-pp">
         {orbs}
-        <LandingNav />
+        <AppNav />
         <div className="bt-page"><div className="bt-card"><p className="bt-muted">Loading…</p></div></div>
       </div>
     )
@@ -109,7 +109,7 @@ export default function Checkout() {
     return (
       <div className="lp-root lp-pp">
         {orbs}
-        <LandingNav />
+        <AppNav />
         <div className="bt-page">
           <div className="bt-card bt-card--narrow">
             <h1 className="bt-h1">Create your account to continue</h1>
@@ -133,7 +133,7 @@ export default function Checkout() {
     return (
       <div className="lp-root lp-pp">
         {orbs}
-        <LandingNav />
+        <AppNav />
         <div className="bt-page">
           <div className="bt-card bt-card--narrow bt-card--center">
             <div className="bt-tick"><IconCheck size={26} /></div>
@@ -172,7 +172,7 @@ export default function Checkout() {
   return (
     <div className="lp-root lp-pp">
       {orbs}
-      <LandingNav />
+      <AppNav />
       <div className="bt-page">
         <div className="bt-card">
           <span className="bt-eyebrow">Pay by bank transfer</span>

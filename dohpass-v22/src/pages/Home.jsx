@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchLandingStats } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
-import LandingNav from '../components/LandingNav.jsx'
+import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 import SampleQuestionDemo from '../components/SampleQuestionDemo.jsx'
 
@@ -621,7 +621,7 @@ export default function Home() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <LandingNav />
+      <AppNav />
 
       <Hero navigate={navigate} scrollToFeatures={scrollToFeatures} />
 

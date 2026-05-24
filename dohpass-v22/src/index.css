@@ -6765,17 +6765,20 @@ a.lp-contact__value:hover { color: var(--gold); }
 .lp-nav__mobile-actions {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 0.75rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.10);
 }
 
-/* Drawer action buttons render full-width block (override inline button defaults) */
+/* Drawer action buttons render as identical full-width blocks
+   (override the inline-block button default so they stack vertically). */
 .lp-nav__mobile-actions .lp-nav__signin,
 .lp-nav__mobile-actions .lp-nav__cta {
   display: block;
   width: 100%;
   text-align: center;
+  box-sizing: border-box;
 }
 
 /* Single responsive breakpoint for AppNav */

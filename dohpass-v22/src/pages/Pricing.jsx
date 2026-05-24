@@ -301,11 +301,11 @@ function ComparisonTable({ counts }) {
 const FAQS = [
   {
     q: 'Is there a free trial?',
-    a: 'There\u2019s no free trial. Plans are billed monthly with cancel-anytime, and the 7-day money-back guarantee covers buyer\u2019s remorse \u2014 if it\u2019s not for you, we refund.',
+    a: 'No free trial, but every track has free preview questions so you can see the quality first. A 7-day money-back guarantee covers your first payment \u2014 if it\u2019s not for you, we refund.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. Cancel from your account at any time. No contracts, no fees.',
+    q: 'How does payment work?',
+    a: 'No subscription and no auto-renew. You pay once by bank transfer for 30 days of access. When it ends, access simply pauses \u2014 renew anytime by sending another transfer. Nothing is ever charged automatically.',
   },
   {
     q: 'What payment methods do you accept?',

@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+// Where Supabase sends users after they click the email-confirmation link.
+// This URL MUST be present in the Supabase dashboard redirect allowlist
+// (Authentication → URL Configuration → Redirect URLs) or the link 404s.
+const EMAIL_REDIRECT_URL = 'https://dohpass.com/dashboard'
+
 const IconCross = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
     <rect x="9" y="2" width="6" height="20" rx="2" />
@@ -29,6 +34,11 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
+  // Post-signup confirmation state: true once a confirmation email is sent and
+  // we're waiting for the user to click the link.
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resent, setResent] = useState(false)
 
   async function handleSubmit() {
     setLoading(true)
@@ -40,12 +50,38 @@ export default function AuthPage() {
       if (error) setError(error.message)
       else navigate('/')
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: EMAIL_REDIRECT_URL },
+      })
       if (error) setError(error.message)
-      else if (data.session) navigate('/')
-      else setMessage('Check your email to confirm your account.')
+      else if (data.session) navigate('/')         // confirmations off → straight in
+      else setAwaitingConfirm(true)                // confirmation required → show confirm screen
     }
     setLoading(false)
+  }
+
+  async function handleResend() {
+    setResending(true)
+    setError(null)
+    setResent(false)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: EMAIL_REDIRECT_URL },
+    })
+    if (error) setError(error.message)
+    else setResent(true)
+    setResending(false)
+  }
+
+  function backToForm(nextMode) {
+    setAwaitingConfirm(false)
+    setResent(false)
+    setError(null)
+    setMessage(null)
+    if (nextMode) setMode(nextMode)
   }
 
   function handleKey(e) {
@@ -69,6 +105,57 @@ export default function AuthPage() {
           <span className="aw-brand-name">DOH<span>Pass</span></span>
         </div>
 
+        {awaitingConfirm ? (
+          <>
+            {/* Eyebrow pill */}
+            <div className="aw-eyebrow">
+              <IconPulse />
+              Almost there
+            </div>
+
+            <h1 className="aw-heading">Confirm your email</h1>
+            <p className="aw-sub">
+              We sent a confirmation link to <strong>{email}</strong>.
+              Click it to activate your account and start practising.
+            </p>
+
+            <div className="aw-divider" />
+
+            <ol className="aw-steps">
+              <li>Open the email from DOHPass (check spam/junk too).</li>
+              <li>Tap <strong>Confirm your email</strong> in that message.</li>
+              <li>You'll land back here, signed in and ready to go.</li>
+            </ol>
+
+            {error && <div className="auth-error">{error}</div>}
+            {resent && <div className="auth-success">Confirmation email resent ✓</div>}
+
+            <button className="aw-btn" onClick={handleResend} disabled={resending}>
+              {resending
+                ? <span className="aw-btn-loading">Sending…</span>
+                : <>
+                    <span>Resend confirmation email</span>
+                    <span className="aw-btn-icon"><IconArrow /></span>
+                  </>
+              }
+            </button>
+
+            <div className="aw-toggle">
+              Wrong address?{' '}
+              <span className="aw-toggle-link" onClick={() => backToForm('signup')}>
+                Use a different email
+              </span>
+            </div>
+
+            <div className="aw-toggle">
+              Already confirmed?{' '}
+              <span className="aw-toggle-link" onClick={() => backToForm('login')}>
+                Sign In
+              </span>
+            </div>
+          </>
+        ) : (
+        <>
         {/* Eyebrow pill */}
         <div className="aw-eyebrow">
           <IconPulse />
@@ -152,6 +239,8 @@ export default function AuthPage() {
           </svg>
           View Plans
         </div>
+        </>
+        )}
       </div>
     </div>
   )

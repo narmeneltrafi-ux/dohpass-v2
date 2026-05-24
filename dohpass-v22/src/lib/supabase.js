@@ -223,6 +223,39 @@ export async function createPortalSession() {
   return { url: data.url, error: null }
 }
 
+// ── MANUAL BANK-TRANSFER ORDERS ───────────────────────────────────────────────
+
+// Unambiguous alphabet — no I/O/0/1 so the reference is easy to read and type
+// into a bank memo. 32^8 ≈ 1.1e12 space; the DB UNIQUE constraint is the
+// integrity backstop.
+const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+export function generatePaymentReference() {
+  const bytes = new Uint8Array(8)
+  crypto.getRandomValues(bytes)
+  let s = ''
+  for (let i = 0; i < 8; i++) s += REF_ALPHABET[bytes[i] % REF_ALPHABET.length]
+  return `DOH-${s.slice(0, 4)}-${s.slice(4, 8)}`
+}
+
+// Insert a PENDING manual order for the current user. The column-scoped INSERT
+// grant means only these four fields are writable — status defaults to
+// 'pending' and grant dates stay service-role only. There is no client path to
+// activate access; an admin runs the Phase 3 grant after confirming transfer.
+// Returns { error } — null on success.
+export async function createManualOrder({ amountAed, paymentReference }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'You must be signed in to place an order.' }
+  const { error } = await supabase.from('manual_orders').insert({
+    user_id: user.id,
+    user_email: user.email,
+    amount_aed: amountAed,
+    payment_reference: paymentReference,
+  })
+  if (error) return { error }
+  return { error: null }
+}
+
 // ── PROFILES ──────────────────────────────────────────────────────────────────
 
 // Upsert a profile row for the given user. Call once on sign-in.
@@ -246,7 +279,7 @@ export async function getProfile() {
     if (!user) return null
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end')
+      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end, access_expires_at')
       .eq('id', user.id)
       .single()
     if (error || !data) return null
@@ -256,12 +289,17 @@ export async function getProfile() {
   }
 }
 
-// Content access gate. is_paid covers active subscribers; grace_period_end
-// keeps access alive briefly after a failed renewal so we don't yank the
-// user mid-study. Use this anywhere a paid plan unlocks content — never
-// for UI labels (those should still read is_paid directly).
+// Content access gate. Precedence:
+//   1. access_expires_at  — manual bank-transfer rail. DATED access: granted
+//      only while the timestamp is in the future, so it RE-LOCKS automatically
+//      on expiry. Manual grants set this and leave is_paid = false.
+//   2. is_paid            — legacy Stripe subscribers (indefinite while true).
+//   3. grace_period_end   — keeps Stripe access alive briefly after a failed
+//      renewal so we don't yank the user mid-study.
+// Use this anywhere a paid plan unlocks content — never for UI labels.
 export function hasAccess(profile) {
   if (!profile) return false
+  if (profile.access_expires_at && new Date(profile.access_expires_at) > new Date()) return true
   if (profile.is_paid) return true
   return Boolean(
     profile.grace_period_end && new Date(profile.grace_period_end) > new Date()

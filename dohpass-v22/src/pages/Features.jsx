@@ -150,7 +150,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Closer CTA — disabled to match /pricing during the Lemon Squeezy migration */}
+      {/* Closer CTA — manual bank-transfer rail */}
       <section className="lp-closer lp-feat__closer">
         <div className="lp-closer__glow" aria-hidden="true" />
         <h2 className="lp-closer__h2">Ready to start?</h2>
@@ -159,14 +159,12 @@ export default function Features() {
         </p>
         <button
           type="button"
-          disabled
-          aria-disabled="true"
-          className="lp-pp-plan__cta lp-pp-plan__cta--ghost lp-pp-finale__cta"
-          onClick={() => navigate('/pricing')}
+          className="lp-pp-plan__cta lp-pp-plan__cta--gold lp-pp-finale__cta"
+          onClick={() => navigate('/checkout?plan=specialist')}
         >
           Start Specialist
         </button>
-        <p className="lp-pp-plan__soon lp-pp-finale__soon">Coming soon</p>
+        <p className="lp-pp-plan__soon lp-pp-finale__soon">Pay by bank transfer</p>
       </section>
 
       <LandingFooter />

@@ -226,6 +226,7 @@ export default function SpecialistQuiz() {
           title="Wrong Plan"
           body="This track requires the Specialist plan or All Access."
           ctaLabel="Upgrade Plan"
+          ctaPath="/checkout?plan=specialist"
         />
       </div>
     )
@@ -242,6 +243,7 @@ export default function SpecialistQuiz() {
           title="Trial used up"
           body="You've used all 10 free trial questions. Upgrade to continue practicing."
           ctaLabel="Upgrade to Unlimited"
+          ctaPath="/checkout?plan=specialist"
         />
       </div>
     )

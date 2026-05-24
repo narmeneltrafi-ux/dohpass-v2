@@ -39,7 +39,7 @@ export default function LandingFooter() {
           {/* FAQ lives on /pricing — anchor link scrolls to it after navigation */}
           <a href="/pricing#faq">FAQ</a>
           <button onClick={() => navigate('/about')}>About</button>
-          <button onClick={() => navigate('/pricing')}>Start trial</button>
+          <button onClick={() => navigate('/pricing')}>Get Started</button>
         </div>
 
         <div className="lp-foot__col">

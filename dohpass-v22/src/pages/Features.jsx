@@ -155,7 +155,7 @@ export default function Features() {
         <div className="lp-closer__glow" aria-hidden="true" />
         <h2 className="lp-closer__h2">Ready to start?</h2>
         <p className="lp-closer__sub">
-          Pick the plan that matches your exam. Cancel any time within 7 days for a full refund.
+          Pick the plan that matches your exam. Full refund within 7 days of payment.
         </p>
         <button
           type="button"

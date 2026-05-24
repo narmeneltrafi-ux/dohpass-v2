@@ -49,7 +49,8 @@ const SECTIONS = [
         <p>We offer a 7-day money-back guarantee for first-time buyers. If the Service is
           not for you, contact us within 7 days of your first payment for a full refund.</p>
         <p>Prices are listed in AED and are inclusive of all applicable taxes unless stated
-          otherwise. Payments are processed by our third-party payment provider.</p>
+          otherwise. Payment is made by direct bank transfer; we do not collect or store card
+          or banking details, and no third-party payment processor is involved.</p>
       </>
     ),
   },

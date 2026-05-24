@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import LandingNav from '../components/LandingNav.jsx'
+import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 
 const IconMail = ({ size = 18 }) => (
@@ -57,7 +57,7 @@ export default function Contact() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <LandingNav />
+      <AppNav />
 
       <header className="lp-doc__hero">
         <h1 className="lp-doc__h1">Get in touch</h1>

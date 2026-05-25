@@ -6726,6 +6726,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 .lp-nav__mobile--open {
   display: flex;
+  flex-direction: column;
   opacity: 1;
   transform: none;
   pointer-events: auto;

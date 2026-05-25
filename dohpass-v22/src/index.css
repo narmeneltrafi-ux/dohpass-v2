@@ -6782,6 +6782,27 @@ a.lp-contact__value:hover { color: var(--gold); }
   box-sizing: border-box;
 }
 
+/* Defensive: force every drawer child into normal-flow full-width blocks,
+   defeating any inherited float/position/inline from base button rules.
+   Sledgehammer until root cause confirmed — see note. */
+.lp-nav__mobile { align-items: stretch; }
+.lp-nav__mobile-nav,
+.lp-nav__mobile-actions { width: 100%; }
+.lp-nav__mobile-nav > button,
+.lp-nav__mobile-actions > button {
+  position: static !important;
+  float: none !important;
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+.lp-nav__mobile-link--active {
+  position: static;
+  float: none;
+  display: flex;
+  width: 100%;
+}
+
 /* Single responsive breakpoint for AppNav */
 @media (max-width: 880px) {
   .lp-nav .lp-nav__links { display: none; }

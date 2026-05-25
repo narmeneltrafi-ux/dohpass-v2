@@ -5712,13 +5712,14 @@ a.lp-contact__value:hover { color: var(--gold); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  gap: 0.4rem;
+  width: auto;
+  min-height: 44px;
+  padding: 0 0.7rem;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: var(--text-muted);
+  color: var(--text);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.15s;
 }
@@ -5727,6 +5728,16 @@ a.lp-contact__value:hover { color: var(--gold); }
   border-color: var(--qui-accent-border);
   background: var(--qui-accent-soft);
   transform: translateX(-1px);
+}
+
+.qui-back__label {
+  font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .qui-back__label { display: none; }
 }
 
 .qui-counter {

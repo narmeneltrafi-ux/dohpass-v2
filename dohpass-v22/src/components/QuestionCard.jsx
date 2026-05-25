@@ -162,6 +162,7 @@ export default function QuestionCard({
             type="button"
           >
             <IconArrowLeft />
+            <span className="qui-back__label">Dashboard</span>
           </button>
           <div className="qui-counter" aria-live="polite">
             Question {index + 1} of {total}

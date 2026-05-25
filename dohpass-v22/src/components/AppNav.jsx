@@ -163,52 +163,43 @@ export default function AppNav() {
         </div>
       </nav>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer — single flat column, no nested containers */}
       <div className={`lp-nav__mobile${mobileOpen ? ' lp-nav__mobile--open' : ''}`}>
-        <nav className="lp-nav__mobile-nav" aria-label="Mobile">
-          {links.map((l) => (
-            <button
-              key={l.path}
-              className={`lp-nav__mobile-link${location.pathname === l.path ? ' lp-nav__mobile-link--active' : ''}`}
-              onClick={() => navigate(l.path)}
-            >
-              {l.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="lp-nav__mobile-actions">
-          {isAuthed ? (
-            <>
-              {badge && (
-                <button
-                  type="button"
-                  className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-                  style={{ alignSelf: 'flex-start' }}
-                  onClick={() => navigate('/account')}
-                  aria-label={`${badge} plan, open account`}
-                >
-                  {badge}
-                </button>
-              )}
+        {links.map((l) => (
+          <button
+            key={l.path}
+            className={`lp-nav__mobile-link${location.pathname === l.path ? ' lp-nav__mobile-link--active' : ''}`}
+            onClick={() => navigate(l.path)}
+          >
+            {l.label}
+          </button>
+        ))}
+        <div className="lp-nav__mobile-divider" />
+        {isAuthed ? (
+          <>
+            {badge && (
               <button
-                className="lp-nav__mobile-link"
+                type="button"
+                className={`lp-nav__mobile-link${isPaid ? ' lp-nav__mobile-link--active' : ''}`}
                 onClick={() => navigate('/account')}
               >
-                Account
+                {badge}
               </button>
-            </>
-          ) : (
-            <>
-              <button className="lp-nav__signin" onClick={() => navigate('/login')} style={{ width: '100%' }}>
-                Sign In
-              </button>
-              <button className="lp-nav__cta" onClick={() => navigate('/pricing')} style={{ width: '100%' }}>
-                View Plans
-              </button>
-            </>
-          )}
-        </div>
+            )}
+            <button className="lp-nav__mobile-link" onClick={() => navigate('/account')}>
+              Account
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="lp-nav__mobile-link" onClick={() => navigate('/login')}>
+              Sign In
+            </button>
+            <button className="lp-nav__mobile-cta" onClick={() => navigate('/pricing')}>
+              View Plans
+            </button>
+          </>
+        )}
       </div>
     </>
   )

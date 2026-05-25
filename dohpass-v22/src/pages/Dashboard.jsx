@@ -10,16 +10,11 @@ import {
   fetchQuestionCounts,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
+import AppNav from '../components/AppNav.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS (monochrome line, gold-tinted via currentColor)
    ─────────────────────────────────────────────────────────────── */
-const IconCross = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
 const IconArrow = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -64,30 +59,6 @@ const IconLock = ({ size = 13 }) => (
   </svg>
 )
 
-/* ───────────────────────────────────────────────────────────────
-   PLAN BADGE
-   ─────────────────────────────────────────────────────────────── */
-function planBadge(profile) {
-  if (!profile) return null
-  const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
-    return 'All Access'
-  if (plan === 'specialist') return 'Specialist'
-  if (plan === 'gp') return 'GP'
-  return 'Free'
-}
-const PAID_BADGES = new Set(['All Access', 'Specialist', 'GP'])
-
-function deriveInitials(profile, user) {
-  const src = profile?.full_name?.trim() || user?.email || ''
-  if (!src) return '?'
-  if (profile?.full_name) {
-    const parts = src.split(/\s+/).filter(Boolean)
-    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
-  }
-  return src.slice(0, 2).toUpperCase()
-}
-
 function titleCase(s) {
   if (!s) return ''
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
@@ -114,66 +85,6 @@ function deriveFirstName(profile, user) {
   return 'there'
 }
 
-/* ───────────────────────────────────────────────────────────────
-   AUTHED NAVBAR
-   ─────────────────────────────────────────────────────────────── */
-function AuthNavBar({ navigate, profile, user, currentPath }) {
-  const links = [
-    { label: 'Dashboard',  path: '/dashboard' },
-    { label: 'Specialist', path: '/specialist' },
-    { label: 'GP',         path: '/gp' },
-    { label: 'Flashcards', path: '/gems' },
-    { label: 'Progress',   path: '/progress' },
-  ]
-  const badge = planBadge(profile)
-  const initials = deriveInitials(profile, user)
-  const isPaid = PAID_BADGES.has(badge)
-
-  return (
-    <nav className="lp-nav lp-nav--auth" aria-label="Primary">
-      <div className="lp-nav__brand" onClick={() => navigate('/dashboard')}>
-        <span className="lp-nav__cross"><IconCross /></span>
-        <span className="lp-nav__name">
-          <span className="lp-nav__doh">DOH</span>
-          <span className="lp-nav__pass">Pass</span>
-        </span>
-      </div>
-      <div className="lp-nav__links">
-        {links.map(l => (
-          <button
-            key={l.path}
-            className={`lp-nav__link${currentPath === l.path ? ' lp-nav__link--active' : ''}`}
-            onClick={() => navigate(l.path)}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
-      <div className="lp-nav__right">
-        {badge && (
-          <button
-            type="button"
-            className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-            onClick={() => navigate('/account')}
-            title={`${badge} plan — open account`}
-            aria-label={`${badge} plan, open account`}
-          >
-            {badge}
-          </button>
-        )}
-        <button
-          type="button"
-          className="lp-nav__avatar"
-          onClick={() => navigate('/account')}
-          aria-label="Open account"
-          title="Account"
-        >
-          {initials}
-        </button>
-      </div>
-    </nav>
-  )
-}
 
 /* ───────────────────────────────────────────────────────────────
    STATS BAR — same shape as the landing-page stats
@@ -302,12 +213,7 @@ export default function Dashboard() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <AuthNavBar
-        navigate={navigate}
-        profile={profile}
-        user={user}
-        currentPath="/dashboard"
-      />
+      <AppNav />
 
       <header className="lp-dash__hero">
         <h1 className="lp-dash__h1">

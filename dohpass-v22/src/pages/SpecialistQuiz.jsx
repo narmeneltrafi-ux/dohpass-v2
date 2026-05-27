@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useReducer, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   supabase,
-  fetchSpecialistQuestions,
+  fetchQuestionIdList,
+  fetchQuestionsByIds,
   fetchSpecialistTopics,
   saveProgress,
   getProfile,
@@ -21,6 +22,7 @@ function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
 const ANON_KEY = 'dohpass_anon_trial'
 const ANON_LIMIT = 3
+const PREFETCH_WINDOW = 10
 
 function readAnonCount() {
   try {
@@ -58,7 +60,15 @@ export default function SpecialistQuiz() {
   const { bookmarks, toggle } = useBookmarks('specialist')
   const [topics, setTopics] = useState(['All'])
   const [activeTopic, setActiveTopic] = useState('All')
-  const [bank, setBank] = useState([])
+
+  // Stage 1: shuffled [{id, topic}] list — loaded instantly, powers counter + progress bar.
+  const [shuffledIds, setShuffledIds] = useState([])
+  // Stage 2: full content cache keyed by id. Refs avoid stale closures in prefetchBatch.
+  const contentCacheRef = useRef(new Map())
+  const prefetchingRef = useRef(new Set())
+  // Bumped after each prefetch batch to trigger a re-render so currentQuestion updates.
+  const [, bumpCache] = useReducer(x => x + 1, 0)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -119,28 +129,58 @@ export default function SpecialistQuiz() {
     fetchSpecialistTopics().then(setTopics).catch(console.error)
   }, [planAllowed])
 
+  // Fetch full content for a batch of ids and populate the cache.
+  const prefetchBatch = useCallback(async (ids) => {
+    const toFetch = ids.filter(id =>
+      !contentCacheRef.current.has(id) && !prefetchingRef.current.has(id)
+    )
+    if (toFetch.length === 0) return
+    toFetch.forEach(id => prefetchingRef.current.add(id))
+    try {
+      const questions = await fetchQuestionsByIds('specialist', toFetch)
+      questions.forEach(q => contentCacheRef.current.set(q.id, q))
+      bumpCache()
+    } finally {
+      toFetch.forEach(id => prefetchingRef.current.delete(id))
+    }
+  }, [bumpCache])
+
   const loadQuestions = useCallback(async () => {
     setLoading(true)
     setError(null)
+    contentCacheRef.current = new Map()
+    prefetchingRef.current = new Set()
     try {
-      let data = []
+      let idList = []
       if (planAllowed) {
-        data = await fetchSpecialistQuestions(activeTopic === 'All' ? null : activeTopic)
+        // Stage 1: sub-100KB id+topic list — replaces the 7.4MB full-bank fetch.
+        idList = await fetchQuestionIdList('specialist', activeTopic === 'All' ? null : activeTopic)
       } else if (trialActive) {
-        data = await fetchTrialQuestions('specialist')
+        // Trial ≤30 questions — populate cache directly, no two-stage needed.
+        const data = await fetchTrialQuestions('specialist')
+        data.forEach(q => contentCacheRef.current.set(q.id, q))
+        idList = data.map(q => ({ id: q.id, topic: q.topic }))
       } else if (anonActive) {
+        // Anon preview ≤5 questions — populate cache directly.
         const remaining = Math.max(0, ANON_LIMIT - anonUsedAtMountRef.current)
-        data = await fetchPreviewQuestions('specialist', remaining)
+        const data = await fetchPreviewQuestions('specialist', remaining)
+        data.forEach(q => contentCacheRef.current.set(q.id, q))
+        idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      setBank(shuffle(data))
+      const shuffled = shuffle(idList)
+      setShuffledIds(shuffled)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
+      // Stage 2: prefetch first window (paid path only — trial/anon already in cache).
+      if (planAllowed && shuffled.length > 0) {
+        prefetchBatch(shuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      }
     } catch {
       setError('Failed to load questions. Check your connection.')
     } finally {
       setLoading(false)
     }
-  }, [planAllowed, trialActive, anonActive, activeTopic])
+  }, [planAllowed, trialActive, anonActive, activeTopic, prefetchBatch])
 
   useEffect(() => {
     if (isAnon === null) return
@@ -155,11 +195,25 @@ export default function SpecialistQuiz() {
     else setLoading(false)
   }, [isAnon, anonActive, isPaid, trialStatus, planAllowed, trialActive, loadQuestions])
 
+  // As the user advances, prefetch the next window so they never wait between questions.
+  useEffect(() => {
+    if (!planAllowed || shuffledIds.length === 0) return
+    const ids = shuffledIds.slice(index + 1, index + 1 + PREFETCH_WINDOW).map(r => r.id)
+    if (ids.length > 0) prefetchBatch(ids)
+  }, [index, shuffledIds, planAllowed, prefetchBatch])
+
+  // Derived from Stage 1 data — available immediately after id-list loads.
+  const currentEntry = shuffledIds[index] ?? null
+  const currentQuestion = currentEntry
+    ? contentCacheRef.current.get(currentEntry.id) ?? null
+    : null
+  const total = shuffledIds.length
+
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
   async function handleSubmit() {
-    if (selected === null) return
-    const q = bank[index]
+    if (selected === null || !currentQuestion) return
+    const q = currentQuestion
     const correctIdx = resolveCorrectIndex(q.options, q.answer)
     if (correctIdx === -1) {
       console.error('Unresolvable answer for question', q.id, q.answer)
@@ -188,29 +242,33 @@ export default function SpecialistQuiz() {
   }
 
   function handleNext() {
-    if (index + 1 >= bank.length) { setDone(true); return }
+    if (index + 1 >= total) { setDone(true); return }
     setIndex(i => i + 1)
     setSelected(null); setSubmitted(false); setFeedback(null)
   }
 
   async function handleRestart() {
     if (isPaid && plan && (plan === 'specialist' || plan === 'all_access')) {
-      // Paid user: reshuffle existing bank
-      setBank(b => shuffle(b))
+      // Paid: reshuffle ids — content cache stays valid (keyed by id, not position).
+      const reshuffled = shuffle([...shuffledIds])
+      setShuffledIds(reshuffled)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
+      prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
-    // Free user: refetch trial status + questions
+    // Trial: refetch status + questions
     const status = await fetchTrialStatus()
     setTrialStatus(status)
     if (status.remaining === 0) {
-      // Component will re-render to PaywallGate based on trialStatus state
       setDone(false)
       return
     }
     const data = await fetchTrialQuestions('specialist')
-    setBank(shuffle(data))
+    contentCacheRef.current = new Map()
+    data.forEach(q => contentCacheRef.current.set(q.id, q))
+    const idList = data.map(q => ({ id: q.id, topic: q.topic }))
+    setShuffledIds(shuffle(idList))
     setIndex(0); setCorrect(0); setWrong(0)
     setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
   }
@@ -306,10 +364,19 @@ export default function SpecialistQuiz() {
       </div>
     )
   }
-  if (bank.length === 0) {
+  if (total === 0) {
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <div className="loading">No questions found for this topic.</div>
+      </div>
+    )
+  }
+  // Rare: prefetch hasn't arrived yet for the current question. Spinner only —
+  // prefetchBatch is already in-flight from the index-advance useEffect.
+  if (!currentQuestion) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="loading"><div className="spinner" />Loading question...</div>
       </div>
     )
   }
@@ -346,10 +413,11 @@ export default function SpecialistQuiz() {
     </>
   )
 
+  // currentEntry.topic is available from Stage 1 — no need to wait for full content.
   const chromeBookmark = (
     <BookmarkButton
-      questionId={bank[index].id}
-      topic={bank[index].topic}
+      questionId={currentEntry.id}
+      topic={currentEntry.topic}
       bookmarks={bookmarks}
       toggle={toggle}
     />
@@ -357,9 +425,9 @@ export default function SpecialistQuiz() {
 
   return (
     <QuestionCard
-      question={bank[index]}
+      question={currentQuestion}
       index={index}
-      total={bank.length}
+      total={total}
       correct={correct}
       wrong={wrong}
       selectedOption={selected}

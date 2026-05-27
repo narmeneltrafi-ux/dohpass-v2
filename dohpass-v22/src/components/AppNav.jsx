@@ -43,6 +43,7 @@ const AUTH_LINKS = [
   { label: 'GP',         path: '/gp'         },
   { label: 'Flashcards', path: '/gems'       },
   { label: 'Progress',   path: '/progress'   },
+  { label: 'Analytics',  path: '/analytics'  },
   { label: 'Pricing',    path: '/pricing'    },
 ]
 

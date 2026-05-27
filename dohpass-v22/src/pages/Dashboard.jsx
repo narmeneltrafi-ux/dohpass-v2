@@ -156,7 +156,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [user, setUser] = useState(null)
-  const [counts, setCounts] = useState({ specialist: 0, gp: 0, flashcards: 0 })
+  const [counts, setCounts] = useState(null)
   const [weekly, setWeekly] = useState(null)
   const [overall, setOverall] = useState(null)
   const [progSpecialist, setProgSpecialist] = useState(null)
@@ -195,7 +195,7 @@ export default function Dashboard() {
   const accuracy = overall && overall.answered > 0
     ? Math.round((overall.correct / overall.answered) * 100)
     : null
-  const bankSize = (counts.specialist || 0) + (counts.gp || 0)
+  const bankSize = (counts?.specialist || 0) + (counts?.gp || 0)
   const totalAnswered = overall?.answered ?? null
 
   let subhead
@@ -242,29 +242,29 @@ export default function Dashboard() {
             eyebrow="Specialist"
             title="Internal Medicine Specialist"
             desc="Cardiology, Respiratory, Nephrology and the rest of the specialist blueprint."
-            count={counts.specialist}
+            count={counts?.specialist}
             route="/specialist"
             navigate={navigate}
             progress={progSpecialist}
-            total={counts.specialist}
+            total={counts?.specialist}
           />
           <TrackCard
             Icon={IconHeartPulse}
             eyebrow="GP"
             title="General Practice"
             desc="Broad primary-care coverage mapped to the DOH GP blueprint."
-            count={counts.gp}
+            count={counts?.gp}
             route="/gp"
             navigate={navigate}
             progress={progGP}
-            total={counts.gp}
+            total={counts?.gp}
           />
           <TrackCard
             Icon={IconLayers}
             eyebrow="Flashcards"
             title="Concept &amp; Drug Cards"
             desc="High-yield concept, drug and anatomy cards across both tracks."
-            count={counts.flashcards}
+            count={counts?.flashcards}
             route="/gems"
             navigate={navigate}
             progress={null}

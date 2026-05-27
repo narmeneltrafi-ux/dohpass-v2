@@ -223,10 +223,7 @@ export default function Checkout() {
           {/* Unique reference */}
           <div className="bt-refbox bt-refbox--accent">
             <span className="bt-refbox__label">Use this as your payment reference / memo</span>
-            <div className="bt-refbox__copyline">
-              <span className="bt-refbox__value">{reference}</span>
-              <CopyRow label="reference" value={reference} mono />
-            </div>
+            <CopyRow label="Payment reference" value={reference} mono />
             <span className="bt-refbox__hint">This lets us match your transfer to your account. Please don't change it.</span>
           </div>
 

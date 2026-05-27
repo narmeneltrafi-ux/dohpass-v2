@@ -48,6 +48,8 @@ export default function QuestionCard({
   mode = 'tutor',
   chromeTop = null,
   chromeBookmark = null,
+  backPath = '/dashboard',
+  backLabel = 'Dashboard',
 }) {
   const navigate = useNavigate()
   const explRef = useRef(null)
@@ -89,7 +91,7 @@ export default function QuestionCard({
       if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return
 
       if (e.key === 'Escape') {
-        navigate('/dashboard')
+        navigate(backPath)
         return
       }
       if (!submitted) {
@@ -157,12 +159,12 @@ export default function QuestionCard({
         <div className="qui-topbar">
           <button
             className="qui-back"
-            onClick={() => navigate('/dashboard')}
-            aria-label="Back to dashboard"
+            onClick={() => navigate(backPath)}
+            aria-label={`Back to ${backLabel}`}
             type="button"
           >
             <IconArrowLeft />
-            <span className="qui-back__label">Dashboard</span>
+            <span className="qui-back__label">{backLabel}</span>
           </button>
           <div className="qui-counter" aria-live="polite">
             Question {index + 1} of {total}
@@ -227,9 +229,6 @@ export default function QuestionCard({
                   <span className="qui-opt__icon qui-opt__icon--bad" aria-label="Your selected answer was incorrect">
                     <IconX />
                   </span>
-                )}
-                {submitted && state === 'correct' && i !== selectedOption && (
-                  <span className="qui-opt__flag">CORRECT</span>
                 )}
               </button>
             )

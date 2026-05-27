@@ -440,6 +440,8 @@ export default function SpecialistQuiz() {
       mode="tutor"
       chromeTop={chromeTop}
       chromeBookmark={chromeBookmark}
+      backPath={isAnon ? '/' : '/dashboard'}
+      backLabel={isAnon ? 'Home' : 'Dashboard'}
     />
   )
 }

@@ -374,6 +374,36 @@ export async function fetchWeeklyAnswered() {
   return count ?? 0
 }
 
+// ── TWO-STAGE QUIZ LOADING ────────────────────────────────────────────────────
+
+// Stage 1: fetch lightweight id list for the filtered set (~KB, not MB).
+// Specialist: fetches all id+topic rows then filters in JS via primaryTopic().
+//   The topic column stores composite values like "Cardiology/Sub" that require
+//   splitting + alias resolution — not cleanly replicable as a server-side .eq().
+//   Filtering a KB-sized id list in JS is negligible.
+// GP: filter is a broad_topic system name → server-side .eq(), no JS filtering needed.
+export async function fetchQuestionIdList(track, filter = null) {
+  if (track === 'specialist') {
+    const data = await fetchAllRows('specialist_questions', 'id, topic')
+    if (!filter) return data
+    return data.filter(r => primaryTopic(r.topic) === filter)
+  }
+  const filters = filter ? { broad_topic: filter } : {}
+  return fetchAllRows('gp_questions', 'id, topic, broad_topic', filters)
+}
+
+// Stage 2: fetch full question content for a specific batch of ids.
+export async function fetchQuestionsByIds(track, ids) {
+  if (!ids || ids.length === 0) return []
+  const table = track === 'specialist' ? 'specialist_questions' : 'gp_questions'
+  const { data, error } = await supabase
+    .from(table)
+    .select('id, topic, subtopic, q, options, answer, explanation')
+    .in('id', ids)
+  if (error) throw error
+  return data || []
+}
+
 export async function fetchTrialQuestions(track) {
   const { data, error } = await supabase.rpc('get_trial_questions', {
     p_track: track,

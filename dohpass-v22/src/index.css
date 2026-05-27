@@ -6743,12 +6743,6 @@ a.lp-contact__value:hover { color: var(--gold); }
   pointer-events: auto;
 }
 
-.lp-nav__mobile-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
 .lp-nav__mobile-link {
   display: flex;
   align-items: center;
@@ -6772,25 +6766,6 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 .lp-nav__mobile-link--active {
   color: var(--gold);
-}
-
-.lp-nav__mobile-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-/* Drawer action buttons render as identical full-width blocks
-   (override the inline-block button default so they stack vertically). */
-.lp-nav__mobile-actions .lp-nav__signin,
-.lp-nav__mobile-actions .lp-nav__cta {
-  display: block;
-  width: 100%;
-  text-align: center;
-  box-sizing: border-box;
 }
 
 .lp-nav__mobile-divider {
@@ -6819,9 +6794,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 @media (max-width: 880px) {
   .lp-nav .lp-nav__links { display: none; }
   .lp-nav__hamburger { display: flex; }
-  /* Hide the in-capsule sign-in / CTA only (drawer copies live under
-     .lp-nav__mobile-actions and are untouched by the > combinator).
-     .lp-nav__planBadge + .lp-nav__avatar stay visible for authed users. */
+  /* Hide the in-capsule sign-in / CTA only; .lp-nav__planBadge + .lp-nav__avatar stay visible for authed users. */
   .lp-nav__right > .lp-nav__signin,
   .lp-nav__right > .lp-nav__cta { display: none; }
 }

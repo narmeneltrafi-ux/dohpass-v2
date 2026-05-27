@@ -17,7 +17,7 @@ export const BANK_DETAILS = {
 }
 
 // Where buyers email their transfer proof. Also used as the support contact.
-export const SUPPORT_EMAIL = 'HGORASHY@YAHOO.COM'
+export const SUPPORT_EMAIL = 'support@dohpass.com'
 
 // How quickly you commit to activating access after proof is received.
 // Used verbatim in the "what happens next" copy and confirmation screen.

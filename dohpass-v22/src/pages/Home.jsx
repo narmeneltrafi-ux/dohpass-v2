@@ -644,8 +644,6 @@ export default function Home() {
 
       <PricingTeaser stats={stats} navigate={navigate} />
 
-      <Testimonials />
-
       <FAQ />
 
       <CTACloser navigate={navigate} />

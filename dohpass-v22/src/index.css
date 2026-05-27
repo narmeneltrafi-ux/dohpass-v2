@@ -1923,6 +1923,24 @@ nav {
 .breakdown-divider { width: 1px; height: 42px; background: var(--border-med); }
 
 .results-restart { margin-top: 2.25rem; }
+.results-nav-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.results-nav-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.results-nav-btn--ghost { background: none; border-color: transparent; color: var(--text-muted); font-size: 0.82rem; }
+.results-nav-btn--ghost:hover { color: var(--text-secondary); background: none; }
 
 /* ─── AUTH (legacy selectors kept for error/success shared with quiz) ── */
 .auth-error {

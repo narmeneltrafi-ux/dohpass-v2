@@ -443,6 +443,8 @@ export default function GPQuiz() {
       mode="tutor"
       chromeTop={chromeTop}
       chromeBookmark={chromeBookmark}
+      backPath={isAnon ? '/' : '/dashboard'}
+      backLabel={isAnon ? 'Home' : 'Dashboard'}
     />
   )
 }

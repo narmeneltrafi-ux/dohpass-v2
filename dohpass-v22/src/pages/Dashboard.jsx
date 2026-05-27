@@ -202,7 +202,10 @@ export default function Dashboard() {
   if (weekly == null) {
     subhead = 'Loading your weekly progress…'
   } else if (weekly === 0) {
-    subhead = 'No questions answered this week — pick up where you left off.'
+    const isFirstVisit = overall == null || overall.answered === 0
+    subhead = isFirstVisit
+      ? 'Your exam prep starts here. Pick a track below to answer your first question.'
+      : 'No questions answered this week — pick up where you left off.'
   } else {
     subhead = `You've answered ${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} this week.`
   }

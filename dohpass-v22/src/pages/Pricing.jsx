@@ -101,7 +101,7 @@ function buildPlans(counts) {
       features: [
         `${liveCount(counts?.specialist)} specialist questions`,
         'Cardiology, Respiratory, Nephrology & more',
-        'MRCP-style format',
+        'Pearson VUE-style vignettes',
         'Detailed clinical explanations',
       ],
       ctaLabel: 'Start Specialist',
@@ -193,7 +193,7 @@ function TrustRow() {
   const items = [
     '7-day money-back guarantee',
     'No subscription · No auto-renew · No contracts',
-    'Secure payment · 256-bit encryption',
+    'Secure bank transfer · Manual activation · 7-day refund',
   ]
   return (
     <div className="lp-pp-trust">

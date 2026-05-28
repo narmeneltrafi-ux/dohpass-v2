@@ -472,6 +472,7 @@ export default function GPQuiz() {
       chromeBookmark={chromeBookmark}
       backPath={isAnon ? '/' : '/dashboard'}
       backLabel={isAnon ? 'Home' : 'Dashboard'}
+      isPaid={planAllowed}
     />
   )
 }

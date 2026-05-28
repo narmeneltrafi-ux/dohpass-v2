@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
+import { supabase } from '../lib/supabase'
 
 /* ───────────────────────────────────────────────────────────────
    Premium question-taking interface.
@@ -50,11 +51,14 @@ export default function QuestionCard({
   chromeBookmark = null,
   backPath = '/dashboard',
   backLabel = 'Dashboard',
+  isPaid = false,
 }) {
   const navigate = useNavigate()
   const explRef = useRef(null)
   const stemRef = useRef(null)
   const [submitting, setSubmitting] = useState(false)
+  const [aiExpl, setAiExpl] = useState(null)          // null | 'loading' | string
+  useEffect(() => { setAiExpl(null) }, [index])       // reset on every new question
 
   const options = question?.options || []
   const correctIdx = question ? resolveCorrectIndex(options, question.answer) : -1
@@ -115,6 +119,25 @@ export default function QuestionCard({
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [submitted, selectedOption, options.length, onNext, navigate, handleSelectInternal, handleSubmitInternal])
+
+  const handleAIExplain = useCallback(async () => {
+    if (!question || aiExpl) return
+    setAiExpl('loading')
+    const { data, error } = await supabase.functions.invoke('enhance-explanation', {
+      body: {
+        questionText: question.q,
+        options: question.options,
+        correctLetter: question.answer,
+        selectedLetter: selectedOption !== null ? String.fromCharCode(65 + selectedOption) : '',
+        existingExplanation: question.explanation ?? '',
+      },
+    })
+    if (error || !data?.explanation) {
+      setAiExpl('Sorry, could not load the AI explanation. Try again.')
+    } else {
+      setAiExpl(data.explanation)
+    }
+  }, [question, selectedOption, aiExpl])
 
   /* fade explanation panel into view */
   useEffect(() => {
@@ -289,6 +312,25 @@ export default function QuestionCard({
               question.explanation && (
                 <p className="qui-expl__body">{question.explanation}</p>
               )
+            )}
+
+            {/* AI deeper explanation — paid users only, wrong answers only */}
+            {isPaid && !feedback?.correct && !dataIssue && (
+              <div className="qui-ai-expl">
+                {aiExpl === null && (
+                  <button type="button" className="qui-ai-expl__btn" onClick={handleAIExplain}>
+                    ✦ Explain in detail
+                  </button>
+                )}
+                {aiExpl === 'loading' && (
+                  <div className="qui-ai-expl__loading">
+                    <span className="qui-ai-expl__spinner" /> Generating explanation…
+                  </div>
+                )}
+                {aiExpl && aiExpl !== 'loading' && (
+                  <div className="qui-ai-expl__text">{aiExpl}</div>
+                )}
+              </div>
             )}
           </div>
         )}

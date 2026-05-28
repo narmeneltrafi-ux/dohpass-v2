@@ -474,6 +474,7 @@ export default function SpecialistQuiz() {
       chromeBookmark={chromeBookmark}
       backPath={isAnon ? '/' : '/dashboard'}
       backLabel={isAnon ? 'Home' : 'Dashboard'}
+      isPaid={planAllowed}
     />
   )
 }

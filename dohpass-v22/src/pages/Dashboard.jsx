@@ -11,6 +11,7 @@ import {
   fetchStreak,
   fetchFlashcardDueCount,
   fetchWeakTopics,
+  fetchTodayAnswered,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
@@ -175,7 +176,10 @@ export default function Dashboard() {
   const [progSpecialist, setProgSpecialist] = useState(null)
   const [progGP, setProgGP] = useState(null)
   const [flashcardDue, setFlashcardDue] = useState(null)
+  const [todayCount, setTodayCount] = useState(null)
   const [drillData, setDrillData] = useState(null)  // { track, topics: [{topic, accuracy}] } | null
+
+  const DAILY_GOAL = 20
 
   useEffect(() => {
     let cancelled = false
@@ -192,7 +196,8 @@ export default function Dashboard() {
       fetchProgress('specialist'),
       fetchProgress('gp'),
       fetchFlashcardDueCount(),
-    ]).then(([p, c, o, w, s, ps, pg, fd]) => {
+      fetchTodayAnswered(),
+    ]).then(([p, c, o, w, s, ps, pg, fd, td]) => {
       if (cancelled) return
       setProfile(p)
       setCounts(c)
@@ -202,6 +207,7 @@ export default function Dashboard() {
       setProgSpecialist(ps)
       setProgGP(pg)
       setFlashcardDue(fd)
+      setTodayCount(td)
 
       // Fetch weak topics for the track the user primarily uses
       if (!p || !hasAccess(p)) return
@@ -277,6 +283,30 @@ export default function Dashboard() {
           accuracy={accuracy}
         />
       </div>
+
+      {todayCount !== null && (
+        <div className="lp-goal" role="region" aria-label="Daily goal progress">
+          <div className="lp-goal__left">
+            <span className="lp-goal__label">Today's goal</span>
+            <span className={`lp-goal__count${todayCount >= DAILY_GOAL ? ' lp-goal__count--met' : ''}`}>
+              {todayCount} <span className="lp-goal__target">/ {DAILY_GOAL}</span>
+            </span>
+          </div>
+          <div className="lp-goal__track" aria-hidden="true">
+            <div
+              className={`lp-goal__fill${todayCount >= DAILY_GOAL ? ' lp-goal__fill--met' : ''}`}
+              style={{ width: `${Math.min(100, Math.round((todayCount / DAILY_GOAL) * 100))}%` }}
+            />
+          </div>
+          <span className="lp-goal__msg">
+            {todayCount === 0
+              ? 'Start answering to hit your goal'
+              : todayCount >= DAILY_GOAL
+                ? 'Goal met today!'
+                : `${DAILY_GOAL - todayCount} to go`}
+          </span>
+        </div>
+      )}
 
       <section className="lp-dash__section" aria-labelledby="lp-tracks-h">
         <h2 className="lp-dash__h2" id="lp-tracks-h">Your tracks</h2>

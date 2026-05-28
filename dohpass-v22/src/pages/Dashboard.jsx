@@ -375,6 +375,29 @@ export default function Dashboard() {
         </section>
       )}
 
+      {hasAccess(profile) && (
+        <section className="lp-dash__section" aria-labelledby="lp-tutor-h">
+          <h2 className="lp-dash__h2" id="lp-tutor-h">AI Tutor</h2>
+          <div
+            className="lp-tutor-cta"
+            onClick={() => navigate('/tutor')}
+            role="button"
+            tabIndex={0}
+            aria-label="Open your personal AI tutor"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/tutor') } }}
+          >
+            <span className="lp-tutor-cta__icon" aria-hidden="true">✦</span>
+            <div className="lp-tutor-cta__body">
+              <h3 className="lp-tutor-cta__title">Ask your personal tutor</h3>
+              <p className="lp-tutor-cta__desc">
+                Powered by your progress data — ask clinical questions, get practice problems, and understand your weak spots.
+              </p>
+            </div>
+            <span className="lp-tutor-cta__arrow"><IconArrow size={18} /></span>
+          </div>
+        </section>
+      )}
+
       <section className="lp-dash__section" aria-labelledby="lp-mock-h">
         <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>
         <div

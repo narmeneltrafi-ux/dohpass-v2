@@ -93,10 +93,13 @@ export default function AppNav() {
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   const isAuthed = !!user
-  const links = isAuthed ? AUTH_LINKS : PUBLIC_LINKS
   const badge = planBadge(profile)
   const initials = deriveInitials(profile, user)
   const isPaid = PAID_BADGES.has(badge)
+  // Paid users get a Tutor entry appended to the nav
+  const links = isAuthed
+    ? [...AUTH_LINKS, ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : [])]
+    : PUBLIC_LINKS
 
   return (
     <>

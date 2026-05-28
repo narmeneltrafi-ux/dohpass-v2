@@ -39,3 +39,8 @@ verify_jwt = false
 # user JWT, so gateway verification must stay off or every send will 401.
 [functions.send-reengagement-email]
 verify_jwt = false
+
+# ai-tutor handles auth in-function via GoTrue (same workaround as
+# create-checkout — gateway rejects HS256 tokens on this project).
+[functions.ai-tutor]
+verify_jwt = false

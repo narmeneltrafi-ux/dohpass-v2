@@ -475,6 +475,7 @@ export default function MockExam() {
               feedback={feedback}
               track={accentVar}
               mode="timed"
+              isPaid={true}
             />
           </div>
         )}

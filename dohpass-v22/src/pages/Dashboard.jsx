@@ -9,6 +9,8 @@ import {
   fetchWeeklyAnswered,
   fetchQuestionCounts,
   fetchStreak,
+  fetchFlashcardDueCount,
+  fetchWeakTopics,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
@@ -50,6 +52,14 @@ const IconClipboard = () => (
     <rect x="6" y="4" width="12" height="17" rx="2" />
     <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
     <path d="M9 11h6M9 15h4" />
+  </svg>
+)
+/* Drill / target — crosshair */
+const IconTarget = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
   </svg>
 )
 /* Lock — gated content badge */
@@ -114,7 +124,7 @@ function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
 /* ───────────────────────────────────────────────────────────────
    GLASS TRACK CARD
    ─────────────────────────────────────────────────────────────── */
-function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progress, total }) {
+function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progress, total, due }) {
   const pct = (progress && total > 0) ? Math.round((progress.answered / total) * 100) : 0
   const hasProgress = progress && progress.answered > 0
   return (
@@ -128,12 +138,13 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
       <div className="lp-track__top">
         <span className="lp-track__icon"><Icon /></span>
         <span className="lp-track__eyebrow">{eyebrow}</span>
+        {due > 0 && <span className="lp-track__due">{due} due</span>}
       </div>
       <h3 className="lp-track__title">{title}</h3>
       <p className="lp-track__desc">{desc}</p>
 
       <div className="lp-track__meta">
-        <span className="lp-track__count">{count != null ? count.toLocaleString() : '—'} questions</span>
+        <span className="lp-track__count">{count != null ? count.toLocaleString() : '—'} {eyebrow === 'Flashcards' ? 'cards' : 'questions'}</span>
         {hasProgress && <span className="lp-track__pct">{pct}%</span>}
       </div>
       {hasProgress && (
@@ -143,7 +154,7 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
       )}
 
       <button className="lp-track__cta" type="button">
-        {hasProgress ? 'Continue' : 'Start'}
+        {due > 0 && eyebrow === 'Flashcards' ? `Review ${due} due` : hasProgress ? 'Continue' : 'Start'}
         <IconArrow />
       </button>
     </article>
@@ -163,6 +174,8 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(null)
   const [progSpecialist, setProgSpecialist] = useState(null)
   const [progGP, setProgGP] = useState(null)
+  const [flashcardDue, setFlashcardDue] = useState(null)
+  const [drillData, setDrillData] = useState(null)  // { track, topics: [{topic, accuracy}] } | null
 
   useEffect(() => {
     let cancelled = false
@@ -178,7 +191,8 @@ export default function Dashboard() {
       fetchStreak(),
       fetchProgress('specialist'),
       fetchProgress('gp'),
-    ]).then(([p, c, o, w, s, ps, pg]) => {
+      fetchFlashcardDueCount(),
+    ]).then(([p, c, o, w, s, ps, pg, fd]) => {
       if (cancelled) return
       setProfile(p)
       setCounts(c)
@@ -187,6 +201,15 @@ export default function Dashboard() {
       setStreak(s)
       setProgSpecialist(ps)
       setProgGP(pg)
+      setFlashcardDue(fd)
+
+      // Fetch weak topics for the track the user primarily uses
+      if (!p || !hasAccess(p)) return
+      const drillTrack = p.diagnostic_track
+        || (ps?.answered >= pg?.answered ? 'specialist' : 'gp')
+      fetchWeakTopics(drillTrack).then(topics => {
+        if (!cancelled && topics.length > 0) setDrillData({ track: drillTrack, topics })
+      })
     })
     return () => { cancelled = true }
   }, [])
@@ -290,9 +313,37 @@ export default function Dashboard() {
             navigate={navigate}
             progress={null}
             total={null}
+            due={flashcardDue ?? 0}
           />
         </div>
       </section>
+
+      {drillData && (
+        <section className="lp-dash__section" aria-labelledby="lp-drill-h">
+          <h2 className="lp-dash__h2" id="lp-drill-h">Focus drill</h2>
+          <div
+            className="lp-drill"
+            onClick={() => navigate(`/${drillData.track}?drill=1`)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Start weak-topic drill for ${drillData.track}`}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/${drillData.track}?drill=1`) } }}
+          >
+            <span className="lp-drill__icon"><IconTarget /></span>
+            <div className="lp-drill__body">
+              <h3 className="lp-drill__title">Drill your weak spots</h3>
+              <p className="lp-drill__topics">
+                {drillData.topics.map(t => (
+                  <span key={t.topic} className="lp-drill__chip">
+                    {t.topic} <span className="lp-drill__chip-pct">{t.accuracy}%</span>
+                  </span>
+                ))}
+              </p>
+            </div>
+            <span className="lp-drill__arrow"><IconArrow size={18} /></span>
+          </div>
+        </section>
+      )}
 
       <section className="lp-dash__section" aria-labelledby="lp-mock-h">
         <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>

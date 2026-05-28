@@ -475,6 +475,34 @@ export async function completeDiagnostic(track) {
   }).eq('id', user.id)
 }
 
+// ── FLASHCARD DUE COUNT ───────────────────────────────────────────────────────
+
+// Returns how many flashcards are due for review right now. Used by Dashboard.
+export async function fetchFlashcardDueCount() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const { count, error } = await supabase
+    .from('flashcard_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .lte('due_date', new Date().toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// Returns up to `limit` topics with the lowest accuracy for a track.
+// Requires at least `minAttempts` answers before a topic qualifies, and only
+// returns topics below 75% (genuinely weak — not just sparse data).
+export async function fetchWeakTopics(track, limit = 3, minAttempts = 3) {
+  const { topicAccuracy } = await fetchUserProgressSummary(track)
+  return Object.entries(topicAccuracy)
+    .filter(([, a]) => a.total >= minAttempts)
+    .map(([topic, a]) => ({ topic, accuracy: Math.round((a.correct / a.total) * 100), total: a.total }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .filter(t => t.accuracy < 75)
+    .slice(0, limit)
+}
+
 // ── ADAPTIVE QUESTION SELECTION ───────────────────────────────────────────────
 
 // Fetches the current user's answered-question summary for a track.

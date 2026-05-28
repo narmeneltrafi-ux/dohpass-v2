@@ -1,7 +1,8 @@
-// ai-tutor — personalised chat endpoint for the DOH exam tutor.
+// ai-tutor — personalised streaming chat endpoint for the DOH exam tutor.
 // Fetches the user's progress data server-side, injects it into the system
-// prompt, then runs a tool-use loop that can pull real exam questions from
-// the question bank. Final response is fake-streamed over SSE.
+// prompt (cached static block + uncached dynamic block), then runs a real
+// Anthropic streaming loop that handles tool_use calls before forwarding
+// text tokens to the client over SSE. Replaces the old fake-setTimeout stream.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -18,14 +19,44 @@ const CORS = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function primaryTopic(topic: string): string {
-  if (!topic) return "Unknown";
-  return topic.split(/\/|,/)[0].trim();
-}
+// Static system prompt block — marked for prompt caching.
+// Minimum 1024 tokens required for Anthropic cache activation;
+// this block is ~1200 tokens and never changes across requests.
+const STATIC_SYSTEM = `You are Dr. Tutor, a senior consultant physician and expert DOH exam coach. You help doctors from across the Middle East and South Asia pass the UAE Department of Health (DOH) licensing examination for physicians.
 
-// deno-lint-ignore no-explicit-any
-type SvcClient = ReturnType<typeof createClient>;
+## About the DOH Exam
+The UAE DOH licensing exam tests clinical knowledge across all major specialties. It is a 150-question multiple-choice exam (single best answer format). The exam has a 65% pass mark. Questions follow a Pearson VUE clinical vignette format: a brief clinical scenario followed by 4–5 answer options. The exam covers the following domains: Internal Medicine, Cardiology, Gastroenterology, Nephrology, Respiratory Medicine, Endocrinology, Rheumatology, Infectious Disease, Haematology, Oncology, Neurology, Psychiatry, Dermatology, Obstetrics and Gynaecology, Paediatrics, Surgery, Ophthalmology, ENT, Orthopaedics, Community Medicine, Pharmacology, and Medical Ethics.
 
+## Your coaching responsibilities
+- Answer all clinical questions with precision. Tie every management step to a specific guideline (NICE, JNC 8, UAE MOH, ADA, AHA/ACC, ESC, WHO, GINA, GOLD as appropriate). When citing a guideline, name the source explicitly.
+- When the student asks to be quizzed or requests a practice question, call fetch_practice_question immediately — do not write your own question from memory.
+- After receiving a question from the tool: present the question text and ALL answer options clearly (A. ... B. ... C. ... etc.), then STOP and wait for the student's answer. Do not reveal the correct answer until the student responds.
+- Once the student answers: reveal whether they were correct, then explain the mechanism behind the correct answer. If they answered incorrectly, address why their chosen option was a plausible but wrong distractor. Use the explanation to anchor a memorable clinical rule.
+- Proactively reference the student's weak topics when those topics are relevant to the conversation.
+- Be warm, direct, and efficient — like a consultant running a focused bedside teaching session. Avoid excessive padding.
+- Keep responses to 2–4 short paragraphs unless the topic genuinely demands more depth.
+- Use **bold** for drug names, key lab values, diagnostic criteria, important numerical thresholds, and guideline names.
+- If unsure of a specific dose, threshold, or country-specific protocol, say "verify in current guidelines" rather than guessing. Hallucinations on a medical platform are unacceptable.
+- For mnemonics or memory aids, offer them proactively when they help retention.
+
+## High-yield clinical principles
+- ECG interpretation: identify rate, rhythm, axis, intervals (PR, QRS, QT), and ST/T wave changes systematically before giving a diagnosis.
+- Chest X-ray: comment on technical quality, then work systematically (trachea, hila, lung fields, heart borders, diaphragm, costophrenic angles, mediastinum, bones).
+- Drug prescribing for UAE practice: use BNF/NICE or ESC/AHA guidelines; note UAE-specific formulary differences when relevant.
+- Statistical concepts tested frequently: sensitivity, specificity, PPV, NPV, NNT, NNH, relative risk, odds ratio, p-value, confidence intervals, number needed to screen. Always explain which statistic is appropriate for the clinical question being asked.
+- Ethics questions: anchor to the four principles (autonomy, beneficence, non-maleficence, justice) plus UAE-specific consent law. In UAE, family involvement in consent decisions is culturally and legally significant.
+
+## Response quality standards
+- Never start a response with "Great question!" or similar filler phrases.
+- Do not write lengthy preambles — lead with the clinical answer.
+- When presenting multiple steps (e.g., management ladder, diagnostic criteria), use a numbered list for clarity.
+- After a correct student answer, briefly confirm and add one high-yield fact they might not know.
+- After an incorrect student answer, be empathetic but immediately and clearly correct the misconception.
+- When quoting numbers (e.g., HbA1c targets, BP thresholds, drug doses), always give the source guideline.`;
+
+// Tools definition — cache_control on the last (only) tool marks the tools
+// prefix for caching. Combined with the static system block this exceeds the
+// 1024-token cache activation threshold.
 const TOOLS = [
   {
     name: "fetch_practice_question",
@@ -49,8 +80,16 @@ const TOOLS = [
       },
       required: ["topic", "track"],
     },
+    cache_control: { type: "ephemeral" },
   },
 ];
+
+type SvcClient = ReturnType<typeof createClient>;
+
+function primaryTopic(topic: string): string {
+  if (!topic) return "Unknown";
+  return topic.split(/\/|,/)[0].trim();
+}
 
 async function fetchPracticeQuestion(
   topic: string,
@@ -114,7 +153,6 @@ async function buildUserContext(
   const rows = progressRes.data ?? [];
   const dueCount = dueRes.count ?? 0;
 
-  // Aggregate by normalised topic
   const acc: Record<string, { correct: number; total: number; track: string }> =
     {};
   for (const row of rows) {
@@ -174,6 +212,34 @@ async function buildUserContext(
   return lines.join("\n");
 }
 
+// Parse Anthropic's SSE stream, yielding each parsed data event object.
+// Anthropic streams lines like "data: {...json...}" separated by blank lines.
+// We ignore "event:" lines since the type field inside data is authoritative.
+async function* parseAnthropicStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>
+): AsyncGenerator<Record<string, unknown>> {
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const raw = line.slice(6).trim();
+      if (raw === "[DONE]") return;
+      try {
+        yield JSON.parse(raw) as Record<string, unknown>;
+      } catch { /* skip malformed frames */ }
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
@@ -218,21 +284,26 @@ Deno.serve(async (req) => {
   const svc = createClient(SUPABASE_URL, SB_SERVICE_ROLE_KEY);
   const userContext = await buildUserContext(user.id, svc);
 
-  const systemPrompt = `You are Dr. Tutor, a senior consultant physician and expert DOH exam coach. You help doctors pass the UAE Department of Health licensing exam.
-
-## This student's current performance
-${userContext}
-
-## Coaching rules
-- Answer clinical questions with precision; tie every management step to a specific guideline (NICE, JNC 8, UAE MOH, ADA, ESC as appropriate)
-- When the student asks to be quizzed or requests a practice question, call fetch_practice_question immediately — do not write your own question
-- After receiving a question from the tool: present the question text and ALL answer options clearly, then STOP — do not reveal the answer yet. Wait for the student's response before showing the correct answer and explanation
-- Proactively reference the student's weak topics when those topics are relevant to the conversation
-- Be warm, direct, and efficient — like a consultant running a focused bedside teaching session
-- Keep responses to 2–4 paragraphs unless the topic genuinely demands depth
-- Use **bold** for drug names, key values, diagnostic criteria, and guidelines
-- If unsure of a specific dose or threshold, say "verify in current guidelines" rather than guessing
-- Primary track focus for this session: ${track === "gp" ? "General Practice (GP)" : "Internal Medicine Specialist"}`;
+  // Split system into cached static block + uncached dynamic block.
+  // cache_control on the static block tells Anthropic to cache everything up
+  // to and including that block. Dynamic user context follows uncached.
+  const systemBlocks = [
+    {
+      type: "text",
+      text:
+        STATIC_SYSTEM +
+        `\n\nPrimary track focus for this session: ${
+          track === "gp"
+            ? "General Practice (GP)"
+            : "Internal Medicine Specialist"
+        }`,
+      cache_control: { type: "ephemeral" },
+    },
+    {
+      type: "text",
+      text: `## This student's current performance\n${userContext}`,
+    },
+  ];
 
   // deno-lint-ignore no-explicit-any
   const apiMessages: any[] = messages.map((m) => ({
@@ -240,95 +311,147 @@ ${userContext}
     content: m.content,
   }));
 
-  let finalText = "";
-
-  for (let loop = 0; loop < MAX_LOOPS; loop++) {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1200,
-        system: systemPrompt,
-        tools: TOOLS,
-        messages: apiMessages,
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      return new Response(
-        JSON.stringify({
-          error: `Claude error ${res.status}: ${errText.slice(0, 200)}`,
-        }),
-        { status: 502, headers: { ...CORS, "Content-Type": "application/json" } }
-      );
-    }
-
-    // deno-lint-ignore no-explicit-any
-    const data: any = await res.json();
-
-    if (data.stop_reason === "tool_use") {
-      // deno-lint-ignore no-explicit-any
-      const toolBlocks = data.content.filter((b: any) => b.type === "tool_use");
-      apiMessages.push({ role: "assistant", content: data.content });
-
-      // deno-lint-ignore no-explicit-any
-      const results: any[] = [];
-      for (const tb of toolBlocks) {
-        let result = "";
-        if (tb.name === "fetch_practice_question") {
-          result = await fetchPracticeQuestion(
-            tb.input.topic ?? "",
-            tb.input.track ?? track,
-            svc
-          );
-        } else {
-          result = `Unknown tool: ${tb.name}`;
-        }
-        results.push({
-          type: "tool_result",
-          tool_use_id: tb.id,
-          content: result,
-        });
-      }
-      apiMessages.push({ role: "user", content: results });
-      continue;
-    }
-
-    // deno-lint-ignore no-explicit-any
-    finalText = (data.content as any[])
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("");
-    break;
-  }
-
-  // Fake-stream the final text as SSE: 4 chars every 12 ms
   const enc = new TextEncoder();
-  const CHUNK = 4;
-  const DELAY_MS = 12;
 
   const stream = new ReadableStream({
     async start(ctrl) {
-      for (let i = 0; i < finalText.length; i += CHUNK) {
-        ctrl.enqueue(
-          enc.encode(
-            `data: ${JSON.stringify({
-              type: "delta",
-              text: finalText.slice(i, i + CHUNK),
-            })}\n\n`
-          )
-        );
-        await new Promise((r) => setTimeout(r, DELAY_MS));
+      const send = (obj: unknown) =>
+        ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+
+      try {
+        for (let loop = 0; loop < MAX_LOOPS; loop++) {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": ANTHROPIC_API_KEY,
+              "anthropic-version": "2023-06-01",
+              "anthropic-beta": "prompt-caching-2024-07-31",
+            },
+            body: JSON.stringify({
+              model: MODEL,
+              max_tokens: 1200,
+              system: systemBlocks,
+              tools: TOOLS,
+              messages: apiMessages,
+              stream: true,
+            }),
+          });
+
+          if (!res.ok || !res.body) {
+            const errText = await res.text().catch(() => "");
+            send({
+              type: "error",
+              message: `Claude error ${res.status}: ${errText.slice(0, 200)}`,
+            });
+            ctrl.close();
+            return;
+          }
+
+          // Content blocks accumulated per stream iteration for tool_use reconstruction
+          // deno-lint-ignore no-explicit-any
+          const contentBlocks: any[] = [];
+          let stopReason: string | null = null;
+
+          for await (const event of parseAnthropicStream(
+            res.body.getReader()
+          )) {
+            if (event.type === "content_block_start") {
+              // deno-lint-ignore no-explicit-any
+              const cb = event.content_block as any;
+              contentBlocks[event.index as number] = {
+                ...cb,
+                _json: "",
+              };
+            }
+
+            if (event.type === "content_block_delta") {
+              // deno-lint-ignore no-explicit-any
+              const delta = event.delta as any;
+              const block = contentBlocks[event.index as number];
+
+              if (delta.type === "text_delta") {
+                const text = delta.text as string;
+                if (block) block.text = (block.text ?? "") + text;
+                // Forward text token immediately — this is the real streaming benefit
+                send({ type: "delta", text });
+              } else if (delta.type === "input_json_delta") {
+                if (block) block._json = (block._json ?? "") + delta.partial_json;
+              }
+            }
+
+            if (event.type === "content_block_stop") {
+              const block = contentBlocks[event.index as number];
+              if (block?.type === "tool_use" && block._json) {
+                try {
+                  block.input = JSON.parse(block._json);
+                } catch {
+                  block.input = {};
+                }
+              }
+            }
+
+            if (event.type === "message_delta") {
+              // deno-lint-ignore no-explicit-any
+              const delta = event.delta as any;
+              stopReason = delta.stop_reason as string;
+            }
+          }
+
+          if (stopReason === "end_turn") break;
+
+          if (stopReason === "tool_use") {
+            // deno-lint-ignore no-explicit-any
+            const toolBlocks = contentBlocks.filter((b: any) => b?.type === "tool_use");
+
+            // Reconstruct assistant message with both text and tool_use blocks
+            apiMessages.push({
+              role: "assistant",
+              content: contentBlocks
+                .filter(Boolean)
+                // deno-lint-ignore no-explicit-any
+                .map((b: any) => {
+                  if (b.type === "tool_use") {
+                    return {
+                      type: "tool_use",
+                      id: b.id,
+                      name: b.name,
+                      input: b.input ?? {},
+                    };
+                  }
+                  return { type: "text", text: b.text ?? "" };
+                }),
+            });
+
+            // Execute tools and collect results
+            // deno-lint-ignore no-explicit-any
+            const results: any[] = [];
+            for (const tb of toolBlocks) {
+              let result = "";
+              if (tb.name === "fetch_practice_question") {
+                result = await fetchPracticeQuestion(
+                  tb.input?.topic ?? "",
+                  tb.input?.track ?? track,
+                  svc
+                );
+              } else {
+                result = `Unknown tool: ${tb.name}`;
+              }
+              results.push({
+                type: "tool_result",
+                tool_use_id: tb.id,
+                content: result,
+              });
+            }
+
+            apiMessages.push({ role: "user", content: results });
+          }
+        }
+      } catch (err) {
+        send({ type: "error", message: String(err) });
       }
-      ctrl.enqueue(
-        enc.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
-      );
+
+      send({ type: "done" });
       ctrl.close();
     },
   });

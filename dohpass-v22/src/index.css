@@ -6791,6 +6791,14 @@ a.lp-contact__value:hover { color: var(--gold); }
 .lp-nav__mobile-link--active {
   color: var(--gold);
 }
+.lp-nav__mobile-badge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  opacity: 0.8;
+}
 
 .lp-nav__mobile-divider {
   height: 1px;

@@ -435,6 +435,46 @@ export async function fetchQuestionsByIds(track, ids) {
   return data || []
 }
 
+// ── DIAGNOSTIC ASSESSMENT ─────────────────────────────────────────────────────
+
+// Selects 20 questions spread across the 10 most-represented topics for a track.
+// Topic frequency is a reliable proxy for exam weight since AI generation targets
+// blueprint proportions. Free to call — no hasAccess() gate (diagnostic is free).
+export async function fetchDiagnosticQuestions(track) {
+  const allIds = await fetchQuestionIdList(track)
+
+  // Group by normalized topic
+  const byTopic = new Map()
+  for (const r of allIds) {
+    const topic = primaryTopic(r.topic)
+    if (!topic) continue
+    if (!byTopic.has(topic)) byTopic.set(topic, [])
+    byTopic.get(topic).push(r.id)
+  }
+
+  // Sort topics by question count descending (high-frequency = high exam weight)
+  const sortedTopics = [...byTopic.entries()].sort((a, b) => b[1].length - a[1].length)
+
+  // Sample 2 from each of the top 10 topics
+  const selectedIds = []
+  for (const [, pool] of sortedTopics.slice(0, 10)) {
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    selectedIds.push(...shuffled.slice(0, 2))
+  }
+
+  const questions = await fetchQuestionsByIds(track, selectedIds)
+  return questions.sort(() => Math.random() - 0.5)
+}
+
+export async function completeDiagnostic(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({
+    diagnostic_completed_at: new Date().toISOString(),
+    diagnostic_track: track,
+  }).eq('id', user.id)
+}
+
 export async function fetchTrialQuestions(track) {
   const { data, error } = await supabase.rpc('get_trial_questions', {
     p_track: track,

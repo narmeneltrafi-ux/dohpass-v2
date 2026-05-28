@@ -58,8 +58,8 @@ export default function AuthPage() {
         options: { emailRedirectTo: EMAIL_REDIRECT_URL },
       })
       if (error) setError(error.message)
-      else if (data.session) navigate('/')         // confirmations off → straight in
-      else setAwaitingConfirm(true)                // confirmation required → show confirm screen
+      else if (data.session) navigate('/diagnostic') // new account → readiness check first
+      else setAwaitingConfirm(true)                  // confirmation required → show confirm screen
     }
     setLoading(false)
   }

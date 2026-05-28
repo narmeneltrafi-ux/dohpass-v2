@@ -221,6 +221,24 @@ export default function Dashboard() {
 
       <AppNav />
 
+      {profile && !profile.diagnostic_completed_at && (
+        <div className="diag-dash-banner" role="banner" aria-label="Readiness check prompt">
+          <div className="diag-dash-banner__body">
+            <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
+            <span className="diag-dash-banner__sub">
+              20 questions · 10 topics · ~10 min — see exactly where to focus.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="diag-dash-banner__cta"
+            onClick={() => navigate('/diagnostic')}
+          >
+            Start <IconArrow size={13} />
+          </button>
+        </div>
+      )}
+
       <header className="lp-dash__hero">
         <h1 className="lp-dash__h1">
           Welcome back, <span className="lp-dash__h1-name">{firstName}</span>

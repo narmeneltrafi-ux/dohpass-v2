@@ -8,6 +8,7 @@ import {
   fetchOverallProgress,
   fetchWeeklyAnswered,
   fetchQuestionCounts,
+  fetchStreak,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
@@ -89,12 +90,12 @@ function deriveFirstName(profile, user) {
 /* ───────────────────────────────────────────────────────────────
    STATS BAR — same shape as the landing-page stats
    ─────────────────────────────────────────────────────────────── */
-function DashStatsBar({ weekly, totalAnswered, accuracy, bankSize }) {
+function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
   const cells = [
+    { label: 'Day Streak',     value: streak,        suffix: '' },
     { label: 'This Week',      value: weekly,        suffix: '' },
     { label: 'Total Answered', value: totalAnswered, suffix: '' },
     { label: 'Accuracy',       value: accuracy,      suffix: '%' },
-    { label: 'Bank Size',      value: bankSize,      suffix: '+' },
   ]
   return (
     <div className="lp-stats" role="region" aria-label="Your progress at a glance">
@@ -159,6 +160,7 @@ export default function Dashboard() {
   const [counts, setCounts] = useState(null)
   const [weekly, setWeekly] = useState(null)
   const [overall, setOverall] = useState(null)
+  const [streak, setStreak] = useState(null)
   const [progSpecialist, setProgSpecialist] = useState(null)
   const [progGP, setProgGP] = useState(null)
 
@@ -173,14 +175,16 @@ export default function Dashboard() {
       fetchQuestionCounts(),
       fetchOverallProgress(),
       fetchWeeklyAnswered(),
+      fetchStreak(),
       fetchProgress('specialist'),
       fetchProgress('gp'),
-    ]).then(([p, c, o, w, ps, pg]) => {
+    ]).then(([p, c, o, w, s, ps, pg]) => {
       if (cancelled) return
       setProfile(p)
       setCounts(c)
       setOverall(o)
       setWeekly(w)
+      setStreak(s)
       setProgSpecialist(ps)
       setProgGP(pg)
     })
@@ -195,7 +199,6 @@ export default function Dashboard() {
   const accuracy = overall && overall.answered > 0
     ? Math.round((overall.correct / overall.answered) * 100)
     : null
-  const bankSize = (counts?.specialist || 0) + (counts?.gp || 0)
   const totalAnswered = overall?.answered ?? null
 
   let subhead
@@ -227,10 +230,10 @@ export default function Dashboard() {
 
       <div className="lp-statswrap lp-dash__statswrap">
         <DashStatsBar
+          streak={streak}
           weekly={weekly}
           totalAnswered={totalAnswered}
           accuracy={accuracy}
-          bankSize={bankSize > 0 ? bankSize : null}
         />
       </div>
 

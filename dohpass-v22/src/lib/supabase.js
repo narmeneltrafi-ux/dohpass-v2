@@ -359,6 +359,12 @@ export async function fetchOverallProgress() {
   }
 }
 
+export async function fetchStreak() {
+  const { data, error } = await supabase.rpc('get_user_streak')
+  if (error) return null
+  return data ?? 0
+}
+
 // Count of questions the current user has answered in the last 7 days.
 // Uses an exact head-only count for speed (no row payload).
 export async function fetchWeeklyAnswered() {

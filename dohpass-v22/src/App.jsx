@@ -28,6 +28,7 @@ import MockExam from './pages/MockExam.jsx'
 import OncologyPage from './pages/OncologyPage.jsx'
 import ProgressPage from './pages/ProgressPage'
 import Diagnostic from './pages/Diagnostic.jsx'
+import Tutor from './pages/Tutor.jsx'
 
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
@@ -83,7 +84,7 @@ function GuardedContent({ children }) {
 const SELF_CHROMED_PATHS = new Set([
   '/', '/dashboard', '/pricing', '/diagnostic',
   '/terms', '/privacy', '/contact', '/about', '/features',
-  '/specialist', '/gp', '/checkout',
+  '/specialist', '/gp', '/checkout', '/tutor',
 ])
 
 function ConditionalHeader() {
@@ -144,6 +145,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/progress' element={<ProtectedRoute user={user}><ProgressPage /></ProtectedRoute>} />
           <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
           <Route path='/mock-exam' element={<PaidRoute user={user} allowedPlans={[]}><MockExam /></PaidRoute>} />
+          <Route path='/tutor' element={<PaidRoute user={user}><Tutor /></PaidRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

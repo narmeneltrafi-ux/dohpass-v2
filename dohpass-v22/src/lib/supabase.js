@@ -475,6 +475,97 @@ export async function completeDiagnostic(track) {
   }).eq('id', user.id)
 }
 
+// Returns how many questions the current user answered today (calendar day, local time).
+export async function fetchTodayAnswered() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const { count, error } = await supabase
+    .from('user_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', todayStart.toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// ── FLASHCARD DUE COUNT ───────────────────────────────────────────────────────
+
+// Returns how many flashcards are due for review right now. Used by Dashboard.
+export async function fetchFlashcardDueCount() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const { count, error } = await supabase
+    .from('flashcard_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .lte('due_date', new Date().toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// Returns up to `limit` topics with the lowest accuracy for a track.
+// Requires at least `minAttempts` answers before a topic qualifies, and only
+// returns topics below 75% (genuinely weak — not just sparse data).
+export async function fetchWeakTopics(track, limit = 3, minAttempts = 3) {
+  const { topicAccuracy } = await fetchUserProgressSummary(track)
+  return Object.entries(topicAccuracy)
+    .filter(([, a]) => a.total >= minAttempts)
+    .map(([topic, a]) => ({ topic, accuracy: Math.round((a.correct / a.total) * 100), total: a.total }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .filter(t => t.accuracy < 75)
+    .slice(0, limit)
+}
+
+// ── ADAPTIVE QUESTION SELECTION ───────────────────────────────────────────────
+
+// Fetches the current user's answered-question summary for a track.
+// Returns seenIds (Set), wrongIds (Set), topicAccuracy ({topic: {correct, total}}).
+// Used by sortAdaptive to score and prioritise the question id list.
+export async function fetchUserProgressSummary(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('question_id, is_correct, topic')
+    .eq('user_id', user.id)
+    .eq('track', track)
+
+  if (error || !data) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const seenIds = new Set(data.map(r => r.question_id))
+  const wrongIds = new Set(data.filter(r => !r.is_correct).map(r => r.question_id))
+
+  const topicAccuracy = {}
+  for (const row of data) {
+    const topic = primaryTopic(row.topic) || 'Unknown'
+    if (!topicAccuracy[topic]) topicAccuracy[topic] = { correct: 0, total: 0 }
+    topicAccuracy[topic].total++
+    if (row.is_correct) topicAccuracy[topic].correct++
+  }
+
+  return { seenIds, wrongIds, topicAccuracy }
+}
+
+// Scores each question in idList and returns a sorted copy (highest priority first).
+// Scoring weights: topic weakness 0.40, unseen bonus 0.35, wrong bonus 0.25, jitter 0.08.
+// Pre-computes all scores before sorting so jitter is fixed per question per call.
+export function sortAdaptive(idList, { seenIds, wrongIds, topicAccuracy }) {
+  const scored = idList.map(q => {
+    const topic = primaryTopic(q.topic) || 'Unknown'
+    const acc = topicAccuracy[topic]
+    const topicScore  = acc ? 1 - (acc.correct / acc.total) : 0.5
+    const unseenScore = seenIds.has(q.id) ? 0 : 1
+    const wrongScore  = wrongIds.has(q.id) ? 1 : 0
+    const score = topicScore * 0.40 + unseenScore * 0.35 + wrongScore * 0.25 + Math.random() * 0.08
+    return { q, score }
+  })
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map(s => s.q)
+}
+
 export async function fetchTrialQuestions(track) {
   const { data, error } = await supabase.rpc('get_trial_questions', {
     p_track: track,

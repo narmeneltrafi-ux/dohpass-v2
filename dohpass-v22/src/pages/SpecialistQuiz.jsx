@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useReducer, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   supabase,
   fetchQuestionIdList,
@@ -11,6 +11,9 @@ import {
   fetchTrialQuestions,
   fetchTrialStatus,
   fetchPreviewQuestions,
+  fetchUserProgressSummary,
+  sortAdaptive,
+  primaryTopic,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -57,6 +60,7 @@ function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
 
 export default function SpecialistQuiz() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { bookmarks, toggle } = useBookmarks('specialist')
   const [topics, setTopics] = useState(['All'])
   const [activeTopic, setActiveTopic] = useState('All')
@@ -119,6 +123,7 @@ export default function SpecialistQuiz() {
   }, [])
 
   const planAllowed = isAnon === false && isPaid === true && (plan === 'specialist' || plan === 'all_access')
+  const isDrillMode = planAllowed && searchParams.get('drill') === '1'
   const trialActive = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining > 0
   const trialExhausted = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining === 0
   const wrongPlan = isAnon === false && isPaid === true && plan !== 'specialist' && plan !== 'all_access'
@@ -154,8 +159,25 @@ export default function SpecialistQuiz() {
     try {
       let idList = []
       if (planAllowed) {
-        // Stage 1: sub-100KB id+topic list — replaces the 7.4MB full-bank fetch.
-        idList = await fetchQuestionIdList('specialist', activeTopic === 'All' ? null : activeTopic)
+        const topicFilter = isDrillMode ? null : (activeTopic === 'All' ? null : activeTopic)
+        const [rawIds, summary] = await Promise.all([
+          fetchQuestionIdList('specialist', topicFilter),
+          fetchUserProgressSummary('specialist'),
+        ])
+        let pool = rawIds
+        if (isDrillMode) {
+          // Identify up to 3 weak topics (< 75% accuracy, ≥ 3 attempts)
+          const weakTopics = Object.entries(summary.topicAccuracy)
+            .filter(([, a]) => a.total >= 3 && (a.correct / a.total) < 0.75)
+            .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
+            .slice(0, 3)
+            .map(([t]) => t)
+          if (weakTopics.length > 0) {
+            pool = rawIds.filter(q => weakTopics.includes(primaryTopic(q.topic)))
+          }
+        }
+        idList = sortAdaptive(pool, summary)
+        if (isDrillMode) idList = idList.slice(0, 40)
       } else if (trialActive) {
         // Trial ≤30 questions — populate cache directly, no two-stage needed.
         const data = await fetchTrialQuestions('specialist')
@@ -168,13 +190,14 @@ export default function SpecialistQuiz() {
         data.forEach(q => contentCacheRef.current.set(q.id, q))
         idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      const shuffled = shuffle(idList)
-      setShuffledIds(shuffled)
+      // Non-paid paths were already shuffled above; paid uses sortAdaptive.
+      const ordered = planAllowed ? idList : shuffle(idList)
+      setShuffledIds(ordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
       // Stage 2: prefetch first window (paid path only — trial/anon already in cache).
-      if (planAllowed && shuffled.length > 0) {
-        prefetchBatch(shuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      if (planAllowed && ordered.length > 0) {
+        prefetchBatch(ordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       }
     } catch {
       setError('Failed to load questions. Check your connection.')
@@ -253,11 +276,13 @@ export default function SpecialistQuiz() {
   async function handleRestart() {
     questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'specialist' || plan === 'all_access')) {
-      const reshuffled = shuffle([...shuffledIds])
-      setShuffledIds(reshuffled)
+      // Re-fetch progress summary so newly answered questions influence the new ordering.
+      const summary = await fetchUserProgressSummary('specialist')
+      const reordered = sortAdaptive([...shuffledIds], summary)
+      setShuffledIds(reordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      prefetchBatch(reordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
     const status = await fetchTrialStatus()
@@ -397,7 +422,12 @@ export default function SpecialistQuiz() {
           Free trial · {trialStatus.remaining} of {trialStatus.limit} questions left
         </div>
       )}
-      {planAllowed && topics.length > 1 && (
+      {isDrillMode && (
+        <div className="qui-drill-badge" role="status">
+          Drill mode · {total} questions · weak topics only
+        </div>
+      )}
+      {planAllowed && !isDrillMode && topics.length > 1 && (
         <div className="filter-pills-scroll" aria-label="Filter by topic">
           <div className="filter-pills">
             {topics.map(t => (
@@ -444,6 +474,7 @@ export default function SpecialistQuiz() {
       chromeBookmark={chromeBookmark}
       backPath={isAnon ? '/' : '/dashboard'}
       backLabel={isAnon ? 'Home' : 'Dashboard'}
+      isPaid={planAllowed}
     />
   )
 }

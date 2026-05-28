@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useReducer, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   supabase,
   fetchQuestionIdList,
@@ -11,6 +11,9 @@ import {
   fetchTrialQuestions,
   fetchTrialStatus,
   fetchPreviewQuestions,
+  fetchUserProgressSummary,
+  sortAdaptive,
+  primaryTopic,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -57,6 +60,7 @@ function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
 
 export default function GPQuiz() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { bookmarks, toggle } = useBookmarks('gp')
   const [systems, setSystems] = useState(['All'])
   const [activeSystem, setActiveSystem] = useState('All')
@@ -119,6 +123,7 @@ export default function GPQuiz() {
   }, [])
 
   const planAllowed = isAnon === false && isPaid === true && (plan === 'gp' || plan === 'all_access')
+  const isDrillMode = planAllowed && searchParams.get('drill') === '1'
   const trialActive = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining > 0
   const trialExhausted = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining === 0
   const wrongPlan = isAnon === false && isPaid === true && plan !== 'gp' && plan !== 'all_access'
@@ -156,9 +161,24 @@ export default function GPQuiz() {
     try {
       let idList = []
       if (planAllowed) {
-        // Stage 1: sub-100KB id+topic list — replaces the 7.4MB full-bank fetch.
-        // GP system filter is server-side (.eq('broad_topic', ...)) — no JS filtering needed.
-        idList = await fetchQuestionIdList('gp', activeSystem === 'All' ? null : activeSystem)
+        const systemFilter = isDrillMode ? null : (activeSystem === 'All' ? null : activeSystem)
+        const [rawIds, summary] = await Promise.all([
+          fetchQuestionIdList('gp', systemFilter),
+          fetchUserProgressSummary('gp'),
+        ])
+        let pool = rawIds
+        if (isDrillMode) {
+          const weakTopics = Object.entries(summary.topicAccuracy)
+            .filter(([, a]) => a.total >= 3 && (a.correct / a.total) < 0.75)
+            .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
+            .slice(0, 3)
+            .map(([t]) => t)
+          if (weakTopics.length > 0) {
+            pool = rawIds.filter(q => weakTopics.includes(primaryTopic(q.topic)))
+          }
+        }
+        idList = sortAdaptive(pool, summary)
+        if (isDrillMode) idList = idList.slice(0, 40)
       } else if (trialActive) {
         // Trial ≤30 questions — populate cache directly, no two-stage needed.
         const data = await fetchTrialQuestions('gp')
@@ -171,13 +191,12 @@ export default function GPQuiz() {
         data.forEach(q => contentCacheRef.current.set(q.id, q))
         idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      const shuffled = shuffle(idList)
-      setShuffledIds(shuffled)
+      const ordered = planAllowed ? idList : shuffle(idList)
+      setShuffledIds(ordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      // Stage 2: prefetch first window (paid path only — trial/anon already in cache).
-      if (planAllowed && shuffled.length > 0) {
-        prefetchBatch(shuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      if (planAllowed && ordered.length > 0) {
+        prefetchBatch(ordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       }
     } catch {
       setError('Failed to load questions. Check your connection.')
@@ -256,11 +275,12 @@ export default function GPQuiz() {
   async function handleRestart() {
     questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'gp' || plan === 'all_access')) {
-      const reshuffled = shuffle([...shuffledIds])
-      setShuffledIds(reshuffled)
+      const summary = await fetchUserProgressSummary('gp')
+      const reordered = sortAdaptive([...shuffledIds], summary)
+      setShuffledIds(reordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      prefetchBatch(reordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
     const status = await fetchTrialStatus()
@@ -400,7 +420,12 @@ export default function GPQuiz() {
           Free trial · {trialStatus.remaining} of {trialStatus.limit} questions left
         </div>
       )}
-      {planAllowed && systems.length > 1 && (
+      {isDrillMode && (
+        <div className="qui-drill-badge" role="status">
+          Drill mode · {total} questions · weak topics only
+        </div>
+      )}
+      {planAllowed && !isDrillMode && systems.length > 1 && (
         <div className="filter-pills-scroll" aria-label="Filter by system">
           <div className="filter-pills">
             {systems.map(s => (
@@ -447,6 +472,7 @@ export default function GPQuiz() {
       chromeBookmark={chromeBookmark}
       backPath={isAnon ? '/' : '/dashboard'}
       backLabel={isAnon ? 'Home' : 'Dashboard'}
+      isPaid={planAllowed}
     />
   )
 }

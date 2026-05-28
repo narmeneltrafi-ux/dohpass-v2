@@ -178,20 +178,13 @@ export default function AppNav() {
         ))}
         <div className="lp-nav__mobile-divider" />
         {isAuthed ? (
-          <>
-            {badge && (
-              <button
-                type="button"
-                className={`lp-nav__mobile-link${isPaid ? ' lp-nav__mobile-link--active' : ''}`}
-                onClick={() => navigate('/account')}
-              >
-                {badge}
-              </button>
-            )}
-            <button className="lp-nav__mobile-link" onClick={() => navigate('/account')}>
-              Account
-            </button>
-          </>
+          <button
+            className={`lp-nav__mobile-link${location.pathname === '/account' ? ' lp-nav__mobile-link--active' : ''}`}
+            onClick={() => navigate('/account')}
+          >
+            Account
+            {badge && <span className="lp-nav__mobile-badge">{badge}</span>}
+          </button>
         ) : (
           <>
             <button className="lp-nav__mobile-link" onClick={() => navigate('/login')}>

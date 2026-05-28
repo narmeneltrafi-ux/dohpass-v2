@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
-import { supabase, getProfile, fetchQuestionIdList, fetchQuestionsByIds, saveProgress, primaryTopic } from '../lib/supabase'
+import { useState, useEffect, useRef } from 'react'
+import { fetchQuestionIdList, fetchQuestionsByIds, saveProgress, primaryTopic } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
 
@@ -39,16 +39,6 @@ const IconX = () => (
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
-
-function planBadge(profile) {
-  if (!profile) return null
-  const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
-    return { label: 'All Access', cls: 'plan-badge--all' }
-  if (plan === 'specialist') return { label: 'Specialist', cls: 'plan-badge--gold' }
-  if (plan === 'gp') return { label: 'GP Plan', cls: 'plan-badge--blue' }
-  return { label: 'Free', cls: 'plan-badge--free' }
-}
 
 /* ── Selection Phase ──────────────────────────────────────────── */
 function SelectPhase({ onStart }) {
@@ -295,7 +285,6 @@ function ExamResults({ answers, questions, track, onRestart, onDashboard, onRevi
 /* ── Main Component ───────────────────────────────────────────── */
 export default function MockExam() {
   const navigate = useNavigate()
-  const [profile, setProfile] = useState(null)
   const [phase, setPhase] = useState('select') // select | exam | results | review
   const [examTrack, setExamTrack] = useState(null)
   const [questions, setQuestions] = useState([])
@@ -312,10 +301,6 @@ export default function MockExam() {
   const [timeRemaining, setTimeRemaining] = useState(EXAM_DURATION)
   const timerRef = useRef(null)
   const startTimeRef = useRef(null)
-
-  useEffect(() => {
-    getProfile().then(setProfile)
-  }, [])
 
   // Warn before leaving during exam
   useEffect(() => {

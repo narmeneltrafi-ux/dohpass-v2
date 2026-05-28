@@ -235,26 +235,6 @@ export default function QuestionCard({
           })}
         </div>
 
-        {!submitted && (
-          <div className="qui-actions">
-            {selectedOption === null ? (
-              <button className="qui-cta qui-cta--ghost" disabled aria-disabled="true" type="button">
-                Select an answer
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="qui-cta qui-cta--gold"
-                onClick={handleSubmitInternal}
-                disabled={submitting}
-                aria-label="Submit Answer"
-              >
-                {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
-              </button>
-            )}
-          </div>
-        )}
-
         {submitted && mode === 'timed' && (
           <div
             className={`qui-expl qui-expl--timed${
@@ -271,11 +251,6 @@ export default function QuestionCard({
                     ? `Correct — ${question.answer}`
                     : `Incorrect — correct answer: ${question.answer}`}
               </span>
-            </div>
-            <div className="qui-actions qui-actions--inline">
-              <button type="button" className="qui-cta qui-cta--gold" onClick={onNext}>
-                {index + 1 >= total ? 'Finish Exam' : 'Next Question'} <IconArrowRight />
-              </button>
             </div>
           </div>
         )}
@@ -313,18 +288,41 @@ export default function QuestionCard({
                 <p className="qui-expl__body">{question.explanation}</p>
               )
             )}
+          </div>
+        )}
 
-            <div className="qui-actions qui-actions--inline">
+        {/* Single CTA bar — sticky at viewport bottom on mobile for both
+            pre-submit (Submit Answer) and post-submit (Next Question).
+            On desktop it renders inline after the explanation panel. */}
+        <div className="qui-actions">
+          {!submitted ? (
+            selectedOption === null ? (
+              <button className="qui-cta qui-cta--ghost" disabled aria-disabled="true" type="button">
+                Select an answer
+              </button>
+            ) : (
               <button
                 type="button"
                 className="qui-cta qui-cta--gold"
-                onClick={onNext}
+                onClick={handleSubmitInternal}
+                disabled={submitting}
+                aria-label="Submit Answer"
               >
-                {index + 1 >= total ? 'Finish Session' : 'Next Question'} <IconArrowRight />
+                {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
               </button>
-            </div>
-          </div>
-        )}
+            )
+          ) : (
+            <button
+              type="button"
+              className="qui-cta qui-cta--gold"
+              onClick={onNext}
+            >
+              {index + 1 >= total
+                ? (mode === 'timed' ? 'Finish Exam' : 'Finish Session')
+                : 'Next Question'} <IconArrowRight />
+            </button>
+          )}
+        </div>
 
         <div className="qui-hint" aria-hidden="true">
           1–{Math.min(options.length, 5)} to select · Enter to submit · → for next

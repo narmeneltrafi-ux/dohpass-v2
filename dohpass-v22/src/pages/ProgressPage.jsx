@@ -1,144 +1,201 @@
-import { useEffect, useState } from 'react'
-import { useProgress } from '../hooks/useProgress'
+import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { fetchFullProgress, fetchAllQuestionsMinimal, primaryTopic } from '../lib/supabase'
 import { useBookmarks } from '../hooks/useBookmarks'
 
-const GOLD = '#D4AF37'
-const GOLD_DIM = 'rgba(212,175,55,0.15)'
-const CARD = 'rgba(255,255,255,0.04)'
-const BORDER = 'rgba(255,255,255,0.08)'
-
-function StatCard({ label, value, sub, color = GOLD }) {
-  return (
-    <div style={{
-      background: CARD, border: `1px solid ${BORDER}`,
-      borderRadius: '16px', padding: '24px', flex: 1, minWidth: '140px',
-    }}>
-      <p style={{ color: '#666', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 8px' }}>{label}</p>
-      <p style={{ color, fontSize: '36px', fontFamily: "'Playfair Display', serif", fontWeight: 700, margin: '0 0 4px' }}>{value}</p>
-      {sub && <p style={{ color: '#555', fontSize: '12px', margin: 0 }}>{sub}</p>}
-    </div>
-  )
-}
-
-function TopicBar({ topic, correct, total, pct }) {
-  const color = pct < 50 ? '#ef4444' : pct < 75 ? GOLD : '#22c55e'
-  return (
-    <div style={{ marginBottom: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ color: '#ccc', fontSize: '14px' }}>{topic}</span>
-        <span style={{ color, fontSize: '13px', fontWeight: 600 }}>{pct}% <span style={{ color: '#555', fontWeight: 400 }}>({correct}/{total})</span></span>
-      </div>
-      <div style={{ height: '6px', borderRadius: '99px', background: 'rgba(255,255,255,0.06)' }}>
-        <div style={{
-          height: '6px', borderRadius: '99px', width: `${pct}%`,
-          background: color, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
-        }} />
-      </div>
-    </div>
-  )
+function accuracyColor(pct) {
+  if (pct >= 70) return 'var(--green)'
+  if (pct >= 50) return 'var(--gold)'
+  return 'var(--red)'
 }
 
 export default function ProgressPage() {
-  const [track, setTrack] = useState('specialist')
-  const { getStats, loading } = useProgress()
-  const { getBookmarkedQuestions } = useBookmarks(track)
-  const [stats, setStats] = useState(null)
+  const navigate = useNavigate()
+  const [activeTrack, setActiveTrack] = useState('specialist')
+  const [activeTab, setActiveTab] = useState('analytics')
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState({
+    specialist: { progress: [], questionsMap: new Map() },
+    gp: { progress: [], questionsMap: new Map() },
+  })
   const [bookmarked, setBookmarked] = useState([])
-  const [tab, setTab] = useState('analytics')
+  const [bmLoading, setBmLoading] = useState(false)
+
+  const { getBookmarkedQuestions } = useBookmarks(activeTrack)
 
   useEffect(() => {
-    getStats(track).then(setStats)
-    getBookmarkedQuestions().then(setBookmarked)
-  }, [track])
+    setLoading(true)
+    Promise.all([
+      fetchFullProgress('specialist'),
+      fetchFullProgress('gp'),
+      fetchAllQuestionsMinimal('specialist'),
+      fetchAllQuestionsMinimal('gp'),
+    ]).then(([specProgress, gpProgress, specQuestions, gpQuestions]) => {
+      const buildMap = (qs) => {
+        const m = new Map()
+        qs.forEach(q => m.set(q.id, primaryTopic(q.topic)))
+        return m
+      }
+      setData({
+        specialist: { progress: specProgress, questionsMap: buildMap(specQuestions) },
+        gp: { progress: gpProgress, questionsMap: buildMap(gpQuestions) },
+      })
+      setLoading(false)
+    })
+  }, [])
 
-  const tabStyle = (t) => ({
-    padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-    fontSize: '14px', fontWeight: 600, transition: 'all 0.2s',
-    background: tab === t ? GOLD_DIM : 'transparent',
-    color: tab === t ? GOLD : '#666',
-    borderBottom: tab === t ? `2px solid ${GOLD}` : '2px solid transparent',
-  })
+  useEffect(() => {
+    if (activeTab !== 'bookmarks') return
+    setBmLoading(true)
+    getBookmarkedQuestions().then(qs => {
+      setBookmarked(qs)
+      setBmLoading(false)
+    })
+  }, [activeTab, activeTrack])
+
+  const { progress, questionsMap: qMap } = data[activeTrack]
+
+  const stats = useMemo(() => {
+    const total = progress.length
+    const correct = progress.filter(r => r.is_correct).length
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
+    return { total, correct, accuracy }
+  }, [progress])
+
+  const topicStats = useMemo(() => {
+    const map = {}
+    progress.forEach(row => {
+      const topic = qMap.get(row.question_id) || 'Unknown'
+      if (!map[topic]) map[topic] = { topic, total: 0, correct: 0 }
+      map[topic].total++
+      if (row.is_correct) map[topic].correct++
+    })
+    return Object.values(map)
+      .map(t => ({ ...t, accuracy: Math.round((t.correct / t.total) * 100) }))
+      .sort((a, b) => a.accuracy - b.accuracy)
+  }, [progress, qMap])
+
+  const accentVar = activeTrack === 'specialist' ? 'gold' : 'blue'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', padding: '40px 24px', color: '#fff' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '32px', fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
-            Your Progress
-          </h1>
-          <p style={{ color: '#555', fontSize: '14px', margin: 0 }}>Track performance and review saved questions</p>
-        </div>
+    <div className="an" style={{ paddingTop: '62px' }}>
+      <div className="hw-orb hw-orb--1" />
+      <div className="hw-orb hw-orb--2" />
+      <div className="hw-orb hw-orb--3" />
 
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
-          {['specialist', 'gp'].map(t => (
-            <button key={t} onClick={() => setTrack(t)} style={{
-              padding: '8px 20px', borderRadius: '99px', border: `1px solid ${track === t ? GOLD : BORDER}`,
-              background: track === t ? GOLD_DIM : 'transparent',
-              color: track === t ? GOLD : '#666', cursor: 'pointer', fontSize: '13px',
-              fontWeight: 600, textTransform: 'capitalize', transition: 'all 0.2s',
-            }}>
-              {t === 'specialist' ? 'Specialist' : 'GP'}
-            </button>
-          ))}
-        </div>
+      <div className="an-page">
+        <h1 className="an-title">Your Progress</h1>
 
-        <div style={{ display: 'flex', gap: '4px', borderBottom: `1px solid ${BORDER}`, marginBottom: '32px' }}>
-          <button style={tabStyle('analytics')} onClick={() => setTab('analytics')}>Analytics</button>
-          <button style={tabStyle('bookmarks')} onClick={() => setTab('bookmarks')}>
-            Bookmarks {bookmarked.length > 0 && <span style={{ color: GOLD, marginLeft: '4px' }}>({bookmarked.length})</span>}
+        {/* Track tabs */}
+        <div className="an-tabs">
+          <button
+            className={`an-tab an-tab--gold${activeTrack === 'specialist' ? ' active' : ''}`}
+            onClick={() => setActiveTrack('specialist')}
+          >
+            Specialist
+          </button>
+          <button
+            className={`an-tab an-tab--blue${activeTrack === 'gp' ? ' active' : ''}`}
+            onClick={() => setActiveTrack('gp')}
+          >
+            GP
           </button>
         </div>
 
-        {tab === 'analytics' && (
-          <>
-            {loading && <p style={{ color: '#555' }}>Loading...</p>}
-            {!loading && !stats?.totalAttempted && (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: '#444' }}>
-                <p style={{ fontSize: '40px', marginBottom: '12px' }}>📊</p>
-                <p style={{ fontSize: '16px' }}>No attempts yet on this track.</p>
-                <p style={{ fontSize: '13px' }}>Answer some questions to see your analytics here.</p>
+        {/* Content tabs */}
+        <div className="an-tabs" style={{ marginTop: '0', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0' }}>
+          <button
+            className={`an-tab an-tab--${accentVar}${activeTab === 'analytics' ? ' active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            Analytics
+          </button>
+          <button
+            className={`an-tab an-tab--${accentVar}${activeTab === 'bookmarks' ? ' active' : ''}`}
+            onClick={() => setActiveTab('bookmarks')}
+          >
+            Bookmarks
+          </button>
+        </div>
+
+        {/* Analytics tab */}
+        {activeTab === 'analytics' && (
+          loading ? (
+            <div className="loading"><div className={`spinner${accentVar === 'blue' ? ' blue' : ''}`} /></div>
+          ) : progress.length === 0 ? (
+            <div className="an-empty">
+              <p>No questions answered yet for this track.</p>
+              <button
+                className={`btn-primary ${accentVar}`}
+                onClick={() => navigate(activeTrack === 'specialist' ? '/specialist' : '/gp')}
+              >
+                Start Practising
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="an-stats">
+                <div className="an-stat-card">
+                  <span className={`an-stat-big ${accentVar}`}>{stats.accuracy}%</span>
+                  <span className="an-stat-label">Overall Accuracy</span>
+                </div>
+                <div className="an-stat-card">
+                  <span className="an-stat-big">{stats.total}</span>
+                  <span className="an-stat-label">Questions Answered</span>
+                </div>
+                <div className="an-stat-card">
+                  <span className="an-stat-big">{topicStats.length}</span>
+                  <span className="an-stat-label">Topics Covered</span>
+                </div>
               </div>
-            )}
-            {!loading && stats?.totalAttempted > 0 && (
-              <>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
-                  <StatCard label="Overall Score" value={`${stats.overallPct}%`} sub={`${stats.totalCorrect} of ${stats.totalAttempted} correct`} />
-                  <StatCard label="Attempted" value={stats.totalAttempted} sub="questions" color="#fff" />
-                  <StatCard label="Topics" value={stats.topics.length} sub="covered" color="#fff" />
+
+              <div className="an-card">
+                <h3 className="an-card-title">Topics — Weakest First</h3>
+                <div className="an-topic-list">
+                  {topicStats.map(t => (
+                    <div key={t.topic} className="an-topic-row an-topic-row--weak">
+                      <span className="an-topic-name">{t.topic}</span>
+                      <div className="an-topic-bar-wrap">
+                        <div
+                          className="an-topic-bar"
+                          style={{ width: `${t.accuracy}%`, background: accuracyColor(t.accuracy) }}
+                        />
+                      </div>
+                      <span className="an-topic-pct" style={{ color: accuracyColor(t.accuracy) }}>
+                        {t.accuracy}%
+                      </span>
+                      <span className="an-topic-count">{t.correct}/{t.total}</span>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '16px', padding: '28px' }}>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '18px', margin: '0 0 24px', color: '#fff' }}>
-                    Topics — Weakest First
-                  </h2>
-                  {stats.topics.map(s => <TopicBar key={s.topic} {...s} />)}
-                </div>
-              </>
-            )}
-          </>
+              </div>
+            </>
+          )
         )}
 
-        {tab === 'bookmarks' && (
-          <>
-            {bookmarked.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: '#444' }}>
-                <p style={{ fontSize: '40px', marginBottom: '12px' }}>★</p>
-                <p style={{ fontSize: '16px' }}>No bookmarks yet.</p>
-                <p style={{ fontSize: '13px' }}>Star questions while practising to save them here.</p>
-              </div>
-            )}
-            {bookmarked.map((q, i) => (
-              <div key={q.id} style={{
-                background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px',
-                padding: '20px', marginBottom: '12px',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ color: GOLD, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{q.topic}</span>
-                  <span style={{ color: '#444', fontSize: '12px' }}>Q{i + 1}</span>
+        {/* Bookmarks tab */}
+        {activeTab === 'bookmarks' && (
+          bmLoading ? (
+            <div className="loading"><div className={`spinner${accentVar === 'blue' ? ' blue' : ''}`} /></div>
+          ) : bookmarked.length === 0 ? (
+            <div className="an-empty">
+              <p>No bookmarks yet on this track.</p>
+              <p style={{ fontSize: '13px', opacity: 0.6 }}>Star questions while practising to save them here.</p>
+            </div>
+          ) : (
+            <div className="an-card">
+              <h3 className="an-card-title">Saved Questions ({bookmarked.length})</h3>
+              {bookmarked.map((q, i) => (
+                <div key={q.id} className="an-topic-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '16px 0' }}>
+                  <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                    <span className={`an-topic-pct`} style={{ color: 'var(--gold)', flexShrink: 0 }}>Q{i + 1}</span>
+                    <span className="an-topic-name" style={{ flex: 1, fontSize: '13px', opacity: 0.6 }}>{q.topic}</span>
+                  </div>
+                  <p className="an-topic-name" style={{ margin: 0, lineHeight: 1.6 }}>{q.q}</p>
                 </div>
-                <p style={{ color: '#ddd', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>{q.q}</p>
-              </div>
-            ))}
-          </>
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>

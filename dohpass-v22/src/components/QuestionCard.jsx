@@ -255,7 +255,32 @@ export default function QuestionCard({
           </div>
         )}
 
-        {submitted && (
+        {submitted && mode === 'timed' && (
+          <div
+            className={`qui-expl qui-expl--timed${
+              dataIssue ? ' qui-expl--issue' : feedback?.correct ? ' qui-expl--ok' : ' qui-expl--bad'
+            }`}
+            data-testid="feedback"
+            data-feedback-correct={feedback?.correct ? 'true' : 'false'}
+          >
+            <div className="qui-expl__head">
+              <span className={`qui-expl__pill${dataIssue ? ' qui-expl__pill--bad' : ' qui-expl__pill--ok'}`}>
+                {dataIssue
+                  ? 'Data issue'
+                  : feedback?.correct
+                    ? `Correct — ${question.answer}`
+                    : `Incorrect — correct answer: ${question.answer}`}
+              </span>
+            </div>
+            <div className="qui-actions qui-actions--inline">
+              <button type="button" className="qui-cta qui-cta--gold" onClick={onNext}>
+                {index + 1 >= total ? 'Finish Exam' : 'Next Question'} <IconArrowRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {submitted && mode !== 'timed' && (
           <div
             ref={explRef}
             className={`qui-expl${

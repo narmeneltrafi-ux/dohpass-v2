@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { supabase, getProfile, fetchSpecialistQuestions, fetchGPQuestions, saveProgress, primaryTopic } from '../lib/supabase'
+import { supabase, getProfile, fetchQuestionIdList, fetchQuestionsByIds, saveProgress, primaryTopic } from '../lib/supabase'
 import QuestionCard from '../components/QuestionCard'
 
 const EXAM_QUESTIONS = 100
@@ -209,9 +209,14 @@ export default function MockExam() {
     setLoadingExam(true)
     setExamTrack(track)
     try {
-      const fetcher = track === 'specialist' ? fetchSpecialistQuestions : fetchGPQuestions
-      const allQuestions = await fetcher(null)
-      const examQuestions = shuffle(allQuestions).slice(0, EXAM_QUESTIONS)
+      // Stage 1: fetch lightweight id+topic list, shuffle, pick 100 ids
+      const idList = await fetchQuestionIdList(track)
+      const selectedIds = shuffle(idList).slice(0, EXAM_QUESTIONS).map(r => r.id)
+      // Stage 2: fetch full content for only those 100 questions
+      const fetched = await fetchQuestionsByIds(track, selectedIds)
+      // Preserve the shuffled order from stage 1
+      const idOrder = new Map(selectedIds.map((id, i) => [id, i]))
+      const examQuestions = fetched.slice().sort((a, b) => idOrder.get(a.id) - idOrder.get(b.id))
       setQuestions(examQuestions)
       setCurrentIndex(0)
       setSelected(null)
@@ -328,6 +333,7 @@ export default function MockExam() {
               onNext={handleNext}
               feedback={feedback}
               track={accentVar}
+              mode="timed"
             />
           </div>
         )}

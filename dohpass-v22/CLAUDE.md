@@ -53,5 +53,17 @@ Same schema as `specialist_questions`, plus:
 ## Pending Work
 
 - [ ] Paywall with Stripe
-- [ ] Progress tracking
+- [x] Progress tracking — ProgressPage rewritten with design system + answered_at bug fixed
 - [ ] Bare domain fix: `dohpass.com` A record → `216.198.79.1`
+
+## `user_progress` Schema Notes
+
+- Conflict key: `(user_id, question_id)` — upserts overwrite the latest attempt
+- Timestamp column is `created_at` (NOT `answered_at` — do not select that column)
+- `track` values: `'specialist'` | `'gp'`
+
+## Key Invariants
+
+- `resolveCorrectIndex(options, answer)` in `src/lib/resolveCorrectIndex.js` — single source of truth for scoring; always use it, never inline letter comparison
+- `hasAccess(profile)` in `src/lib/supabase.js` — single gate for paid content; never bypass
+- `SELF_CHROMED_PATHS` in `src/App.jsx` — routes that suppress the global Header (they ship their own nav via AppNav or LandingNav)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase, getProfile, hasAccess } from "../lib/supabase";
+import { scheduleCard, RATING, RATING_CONFIG, isDue, nextReviewLabel } from "../lib/fsrs";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
@@ -36,8 +37,16 @@ function Skeleton() {
   );
 }
 
+// Pre-compute next interval label for a given rating without mutating state
+function previewLabel(fsrsData, rating) {
+  try {
+    const result = scheduleCard(fsrsData, rating)
+    return nextReviewLabel(result.due_date)
+  } catch { return '?' }
+}
+
 // ─── FLIP CARD ────────────────────────────────────────────────────────────────
-function FlipCard({ card, isKnown, onToggleKnown, saving }) {
+function FlipCard({ card, fsrsData, onRate, saving }) {
   const [flipped, setFlipped] = useState(false);
   const cfg = TYPE_CONFIG[card.card_type] || TYPE_CONFIG.concept;
   useEffect(() => { setFlipped(false); }, [card.id]);
@@ -100,19 +109,26 @@ function FlipCard({ card, isKnown, onToggleKnown, saving }) {
           <div style={{ flex: 1, overflowY: "auto" }}>
             {renderBack(card.back)}
           </div>
-          <div
-            onClick={e => { e.stopPropagation(); if (!saving) onToggleKnown(card.id, isKnown); }}
-            style={{
-              marginTop: 14, padding: "9px 0", borderRadius: 8, textAlign: "center",
-              fontSize: 12, fontWeight: 600, fontFamily: "'IBM Plex Mono',monospace",
-              letterSpacing: "0.06em",
-              background: isKnown ? "rgba(52,211,153,0.15)" : "rgba(100,116,139,0.15)",
-              border: `1px solid ${isKnown ? "#34D399" : "#475569"}`,
-              color: isKnown ? "#34D399" : "#94A3B8",
-              cursor: saving ? "wait" : "pointer",
-              opacity: saving ? 0.6 : 1, transition: "all 0.2s",
-            }}>
-            {saving ? "Saving..." : isKnown ? "✓ Got it" : "Mark as known"}
+          <div style={{ marginTop: 14, display: "flex", gap: 6 }}>
+            {[RATING.AGAIN, RATING.HARD, RATING.GOOD, RATING.EASY].map(rating => {
+              const rc = RATING_CONFIG[rating];
+              return (
+                <button
+                  key={rating}
+                  onClick={e => { e.stopPropagation(); if (!saving) onRate(card.id, rating); }}
+                  style={{
+                    flex: 1, padding: "8px 4px", borderRadius: 8,
+                    background: rc.bg, border: `1px solid ${rc.border}`,
+                    color: rc.color, cursor: saving ? "wait" : "pointer",
+                    opacity: saving ? 0.6 : 1, transition: "all 0.2s",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                  }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.04em" }}>{rc.label}</span>
+                  <span style={{ fontSize: 10, opacity: 0.75, fontFamily: "'IBM Plex Mono',monospace" }}>{previewLabel(fsrsData, rating)}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -177,7 +193,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const [activeTab,   setActiveTab]   = useState("flashcards");
   const [filter,      setFilter]      = useState("all");
   const [cards,       setCards]       = useState([]);
-  const [knownIds,    setKnownIds]    = useState(new Set());
+  // Map<flashcard_id, fsrs_row> — source of truth for scheduling state
+  const [fsrsMap,     setFsrsMap]     = useState(new Map());
   const [currentIdx,  setCurrentIdx]  = useState(0);
   const [loading,     setLoading]     = useState(true);
   const [saving,      setSaving]      = useState(false);
@@ -218,51 +235,72 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
 
   useEffect(() => {
     if (!userId || cards.length === 0) return;
-    async function fetchProgress() {
+    async function fetchFsrsProgress() {
       const { data, error } = await supabase
         .from("flashcard_progress")
-        .select("flashcard_id, is_known")
+        .select("flashcard_id, is_known, stability, difficulty, due_date, last_review, reps, lapses, fsrs_state")
         .eq("user_id", userId)
         .in("flashcard_id", cards.map(c => c.id));
 
-      if (!error) {
-        setKnownIds(new Set((data || []).filter(r => r.is_known).map(r => r.flashcard_id)));
+      if (!error && data) {
+        const map = new Map();
+        data.forEach(r => map.set(r.flashcard_id, r));
+        setFsrsMap(map);
       }
     }
-    fetchProgress();
+    fetchFsrsProgress();
   }, [userId, cards]);
 
-  const toggleKnown = useCallback(async (cardId, currentlyKnown) => {
-    setKnownIds(prev => {
-      const next = new Set(prev);
-      currentlyKnown ? next.delete(cardId) : next.add(cardId);
+  const rateCard = useCallback(async (cardId, rating) => {
+    if (!userId || saving) return;
+    const prev = fsrsMap.get(cardId) ?? null;
+    const updates = scheduleCard(prev, rating);
+
+    // Optimistic update
+    setFsrsMap(map => {
+      const next = new Map(map);
+      next.set(cardId, { ...(prev || {}), flashcard_id: cardId, ...updates });
       return next;
     });
-
-    if (!userId) return;
-
     setSaving(true);
+
     const { error } = await supabase
       .from("flashcard_progress")
       .upsert(
-        { user_id: userId, flashcard_id: cardId, is_known: !currentlyKnown, marked_at: new Date().toISOString() },
+        { user_id: userId, flashcard_id: cardId, ...updates },
         { onConflict: "user_id,flashcard_id" }
       );
 
     if (error) {
-      setKnownIds(prev => {
-        const next = new Set(prev);
-        currentlyKnown ? next.add(cardId) : next.delete(cardId);
+      // Revert optimistic update
+      setFsrsMap(map => {
+        const next = new Map(map);
+        prev ? next.set(cardId, prev) : next.delete(cardId);
         return next;
       });
-      console.error("Save error:", error);
+      console.error("FSRS save error:", error);
+    } else {
+      // Auto-advance to next card
+      setCurrentIdx(i => i + 1);
     }
     setSaving(false);
-  }, [userId]);
+  }, [userId, saving, fsrsMap]);
 
-  const filtered   = filter === "all" ? cards : cards.filter(c => c.card_type === filter);
+  const baseFiltered = filter === "all" ? cards : cards.filter(c => c.card_type === filter);
+  // Sort: due cards first (ascending due_date), then future cards (ascending due_date)
+  const filtered = [...baseFiltered].sort((a, b) => {
+    const aRow = fsrsMap.get(a.id);
+    const bRow = fsrsMap.get(b.id);
+    const aDue = isDue(aRow) ? 0 : 1;
+    const bDue = isDue(bRow) ? 0 : 1;
+    if (aDue !== bDue) return aDue - bDue;
+    const aDate = aRow?.due_date ? new Date(aRow.due_date).getTime() : 0;
+    const bDate = bRow?.due_date ? new Date(bRow.due_date).getTime() : 0;
+    return aDate - bDate;
+  });
   const safeIdx    = Math.min(currentIdx, Math.max(0, filtered.length - 1));
-  const knownCount = cards.filter(c => knownIds.has(c.id)).length;
+  const knownCount = cards.filter(c => fsrsMap.get(c.id)?.is_known).length;
+  const dueCount   = filtered.filter(c => isDue(fsrsMap.get(c.id))).length;
   const pct        = cards.length === 0 ? 0 : Math.round((knownCount / cards.length) * 100);
   const displaySystem = cards[0]?.system || system;
 
@@ -293,6 +331,9 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{track === 'gp' ? 'General Practitioner' : displaySystem}</h1>
             <div style={{ fontSize: 12, color: "#475569", marginTop: 4, fontFamily: "'IBM Plex Mono',monospace" }}>
               {loading ? "Loading..." : `${cards.length} flashcards`}
+              {!loading && dueCount > 0 && (
+                <span style={{ marginLeft: 8, color: "#FBBF24", fontWeight: 700 }}>· {dueCount} due</span>
+              )}
               {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}
             </div>
           </div>
@@ -383,8 +424,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               <FlipCard
                 key={filtered[safeIdx]?.id}
                 card={filtered[safeIdx]}
-                isKnown={knownIds.has(filtered[safeIdx]?.id)}
-                onToggleKnown={toggleKnown}
+                fsrsData={fsrsMap.get(filtered[safeIdx]?.id) ?? null}
+                onRate={rateCard}
                 saving={saving}
               />
 
@@ -450,7 +491,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                   {filtered.map((c, i) => {
                     const cfg = TYPE_CONFIG[c.card_type] || TYPE_CONFIG.concept;
                     const isActive = i === safeIdx;
-                    const isKnown  = knownIds.has(c.id);
+                    const isKnown  = fsrsMap.get(c.id)?.is_known ?? false;
                     return (
                       <button key={c.id} onClick={() => setCurrentIdx(i)} style={{
                         width: 28, height: 28, borderRadius: 6,

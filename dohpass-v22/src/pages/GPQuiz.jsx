@@ -11,6 +11,8 @@ import {
   fetchTrialQuestions,
   fetchTrialStatus,
   fetchPreviewQuestions,
+  fetchUserProgressSummary,
+  sortAdaptive,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -156,9 +158,11 @@ export default function GPQuiz() {
     try {
       let idList = []
       if (planAllowed) {
-        // Stage 1: sub-100KB id+topic list — replaces the 7.4MB full-bank fetch.
-        // GP system filter is server-side (.eq('broad_topic', ...)) — no JS filtering needed.
-        idList = await fetchQuestionIdList('gp', activeSystem === 'All' ? null : activeSystem)
+        const [rawIds, summary] = await Promise.all([
+          fetchQuestionIdList('gp', activeSystem === 'All' ? null : activeSystem),
+          fetchUserProgressSummary('gp'),
+        ])
+        idList = sortAdaptive(rawIds, summary)
       } else if (trialActive) {
         // Trial ≤30 questions — populate cache directly, no two-stage needed.
         const data = await fetchTrialQuestions('gp')
@@ -171,13 +175,12 @@ export default function GPQuiz() {
         data.forEach(q => contentCacheRef.current.set(q.id, q))
         idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      const shuffled = shuffle(idList)
-      setShuffledIds(shuffled)
+      const ordered = planAllowed ? idList : shuffle(idList)
+      setShuffledIds(ordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      // Stage 2: prefetch first window (paid path only — trial/anon already in cache).
-      if (planAllowed && shuffled.length > 0) {
-        prefetchBatch(shuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      if (planAllowed && ordered.length > 0) {
+        prefetchBatch(ordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       }
     } catch {
       setError('Failed to load questions. Check your connection.')
@@ -256,11 +259,12 @@ export default function GPQuiz() {
   async function handleRestart() {
     questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'gp' || plan === 'all_access')) {
-      const reshuffled = shuffle([...shuffledIds])
-      setShuffledIds(reshuffled)
+      const summary = await fetchUserProgressSummary('gp')
+      const reordered = sortAdaptive([...shuffledIds], summary)
+      setShuffledIds(reordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      prefetchBatch(reordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
     const status = await fetchTrialStatus()

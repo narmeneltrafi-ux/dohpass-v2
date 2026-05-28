@@ -11,6 +11,8 @@ import {
   fetchTrialQuestions,
   fetchTrialStatus,
   fetchPreviewQuestions,
+  fetchUserProgressSummary,
+  sortAdaptive,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -154,8 +156,12 @@ export default function SpecialistQuiz() {
     try {
       let idList = []
       if (planAllowed) {
-        // Stage 1: sub-100KB id+topic list — replaces the 7.4MB full-bank fetch.
-        idList = await fetchQuestionIdList('specialist', activeTopic === 'All' ? null : activeTopic)
+        // Stage 1: fetch id list + progress summary in parallel, then sort adaptively.
+        const [rawIds, summary] = await Promise.all([
+          fetchQuestionIdList('specialist', activeTopic === 'All' ? null : activeTopic),
+          fetchUserProgressSummary('specialist'),
+        ])
+        idList = sortAdaptive(rawIds, summary)
       } else if (trialActive) {
         // Trial ≤30 questions — populate cache directly, no two-stage needed.
         const data = await fetchTrialQuestions('specialist')
@@ -168,13 +174,14 @@ export default function SpecialistQuiz() {
         data.forEach(q => contentCacheRef.current.set(q.id, q))
         idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      const shuffled = shuffle(idList)
-      setShuffledIds(shuffled)
+      // Non-paid paths were already shuffled above; paid uses sortAdaptive.
+      const ordered = planAllowed ? idList : shuffle(idList)
+      setShuffledIds(ordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
       // Stage 2: prefetch first window (paid path only — trial/anon already in cache).
-      if (planAllowed && shuffled.length > 0) {
-        prefetchBatch(shuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      if (planAllowed && ordered.length > 0) {
+        prefetchBatch(ordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       }
     } catch {
       setError('Failed to load questions. Check your connection.')
@@ -253,11 +260,13 @@ export default function SpecialistQuiz() {
   async function handleRestart() {
     questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'specialist' || plan === 'all_access')) {
-      const reshuffled = shuffle([...shuffledIds])
-      setShuffledIds(reshuffled)
+      // Re-fetch progress summary so newly answered questions influence the new ordering.
+      const summary = await fetchUserProgressSummary('specialist')
+      const reordered = sortAdaptive([...shuffledIds], summary)
+      setShuffledIds(reordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
-      prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      prefetchBatch(reordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
     const status = await fetchTrialStatus()

@@ -475,6 +475,54 @@ export async function completeDiagnostic(track) {
   }).eq('id', user.id)
 }
 
+// ── ADAPTIVE QUESTION SELECTION ───────────────────────────────────────────────
+
+// Fetches the current user's answered-question summary for a track.
+// Returns seenIds (Set), wrongIds (Set), topicAccuracy ({topic: {correct, total}}).
+// Used by sortAdaptive to score and prioritise the question id list.
+export async function fetchUserProgressSummary(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('question_id, is_correct, topic')
+    .eq('user_id', user.id)
+    .eq('track', track)
+
+  if (error || !data) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const seenIds = new Set(data.map(r => r.question_id))
+  const wrongIds = new Set(data.filter(r => !r.is_correct).map(r => r.question_id))
+
+  const topicAccuracy = {}
+  for (const row of data) {
+    const topic = primaryTopic(row.topic) || 'Unknown'
+    if (!topicAccuracy[topic]) topicAccuracy[topic] = { correct: 0, total: 0 }
+    topicAccuracy[topic].total++
+    if (row.is_correct) topicAccuracy[topic].correct++
+  }
+
+  return { seenIds, wrongIds, topicAccuracy }
+}
+
+// Scores each question in idList and returns a sorted copy (highest priority first).
+// Scoring weights: topic weakness 0.40, unseen bonus 0.35, wrong bonus 0.25, jitter 0.08.
+// Pre-computes all scores before sorting so jitter is fixed per question per call.
+export function sortAdaptive(idList, { seenIds, wrongIds, topicAccuracy }) {
+  const scored = idList.map(q => {
+    const topic = primaryTopic(q.topic) || 'Unknown'
+    const acc = topicAccuracy[topic]
+    const topicScore  = acc ? 1 - (acc.correct / acc.total) : 0.5
+    const unseenScore = seenIds.has(q.id) ? 0 : 1
+    const wrongScore  = wrongIds.has(q.id) ? 1 : 0
+    const score = topicScore * 0.40 + unseenScore * 0.35 + wrongScore * 0.25 + Math.random() * 0.08
+    return { q, score }
+  })
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map(s => s.q)
+}
+
 export async function fetchTrialQuestions(track) {
   const { data, error } = await supabase.rpc('get_trial_questions', {
     p_track: track,

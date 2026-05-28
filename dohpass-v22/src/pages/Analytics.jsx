@@ -9,6 +9,55 @@ const IconCross = () => (
   </svg>
 )
 
+// DOH blueprint weights per track (topic → fractional weight, sums to 1).
+// Sources: DOH exam content specifications and question-bank frequency analysis.
+const BLUEPRINT = {
+  specialist: {
+    'Cardiology': 0.18, 'Endocrinology': 0.12, 'Respiratory Medicine': 0.12,
+    'Nephrology': 0.10, 'Gastroenterology': 0.10, 'Rheumatology': 0.08,
+    'Neurology': 0.08, 'Haematology': 0.08, 'Infectious Disease': 0.08,
+    'Dermatology': 0.06,
+  },
+  gp: {
+    'Family Medicine': 0.18, 'Psychiatry': 0.12, 'Paediatrics': 0.12,
+    'Obstetrics & Gynaecology': 0.10, 'Community Medicine': 0.09,
+    'Dermatology': 0.08, 'ENT': 0.08, 'Ophthalmology': 0.07,
+    'Orthopaedics': 0.07, 'General Medicine': 0.09,
+  },
+}
+
+// Bayesian-smoothed, blueprint-weighted pass prediction with sigmoid centred at
+// the 60% exam pass mark. Returns 0-100.
+function computePassProb(topicStats, track) {
+  const weights = BLUEPRINT[track] || {}
+  // Bayesian prior: 5 correct out of 10 (= 50% baseline before any evidence)
+  const PRIOR_CORRECT = 5
+  const PRIOR_TOTAL   = 10
+
+  let weightedSum = 0
+  let weightTotal  = 0
+
+  for (const [topic, w] of Object.entries(weights)) {
+    const stat = topicStats.find(t => t.topic === topic)
+    const correct = (stat?.correct ?? 0) + PRIOR_CORRECT
+    const total   = (stat?.total   ?? 0) + PRIOR_TOTAL
+    weightedSum  += w * (correct / total)
+    weightTotal  += w
+  }
+
+  // Any residual blueprint weight goes to topics not in our hardcoded list.
+  // Fall back to prior for those.
+  if (weightTotal < 1) {
+    weightedSum += (1 - weightTotal) * (PRIOR_CORRECT / PRIOR_TOTAL)
+  }
+
+  // Sigmoid centred at the 60% pass mark; steepness = 8 so ±10pp of raw accuracy
+  // maps to ±57pp of pass probability — appropriately sensitive around the threshold.
+  const centered = (weightedSum - 0.60) * 8
+  const sigmoid  = 1 / (1 + Math.exp(-centered))
+  return Math.round(sigmoid * 100)
+}
+
 function planBadge(profile) {
   if (!profile) return null
   const { plan, is_paid } = profile
@@ -59,12 +108,22 @@ export default function Analytics() {
   const qMap = trackData.questionsMap
 
   const stats = useMemo(() => {
-    const total = progress.length
+    const total   = progress.length
     const correct = progress.filter(r => r.is_correct).length
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
-    const confidence = Math.min(1, total / 100)
-    const passProb = Math.round(accuracy * confidence)
-    return { total, correct, accuracy, passProb }
+
+    // Improvement trend: compare last 20 vs preceding 20 answers
+    const recent  = progress.slice(-20)
+    const prior   = progress.slice(-40, -20)
+    const recentAcc = recent.length  > 0 ? recent.filter(r => r.is_correct).length  / recent.length  : null
+    const priorAcc  = prior.length   > 0 ? prior.filter(r => r.is_correct).length   / prior.length   : null
+    let trend = null
+    if (recentAcc !== null && priorAcc !== null) {
+      const delta = recentAcc - priorAcc
+      trend = delta > 0.03 ? '↑' : delta < -0.03 ? '↓' : '→'
+    }
+
+    return { total, correct, accuracy, trend }
   }, [progress])
 
   // Per-topic breakdown
@@ -106,7 +165,8 @@ export default function Analytics() {
 
   const maxDaily = Math.max(1, ...dailyData.map(d => d.correct + d.wrong))
 
-  const badge = planBadge(profile)
+  const passProb  = topicStats.length > 0 ? computePassProb(topicStats, activeTrack) : null
+  const badge     = planBadge(profile)
   const accentVar = activeTrack === 'specialist' ? 'gold' : 'blue'
 
   function accuracyColor(pct) {
@@ -154,14 +214,22 @@ export default function Analytics() {
             {/* Top stats */}
             <div className="an-stats">
               <div className="an-stat-card">
-                <span className={`an-stat-big ${accentVar}`}>{stats.accuracy}%</span>
+                <span className={`an-stat-big ${accentVar}`}>
+                  {stats.accuracy}%
+                  {stats.trend && (
+                    <span style={{
+                      marginLeft: 6, fontSize: '0.55em', verticalAlign: 'middle',
+                      color: stats.trend === '↑' ? 'var(--green)' : stats.trend === '↓' ? 'var(--red)' : 'var(--muted)',
+                    }}>{stats.trend}</span>
+                  )}
+                </span>
                 <span className="an-stat-label">Overall Accuracy</span>
               </div>
               <div className="an-stat-card">
-                <span className="an-stat-big" style={{ color: accuracyColor(stats.passProb) }}>
-                  {stats.passProb}%
+                <span className="an-stat-big" style={{ color: passProb !== null ? accuracyColor(passProb) : 'inherit' }}>
+                  {passProb !== null ? `${passProb}%` : '—'}
                 </span>
-                <span className="an-stat-label">Pass Probability</span>
+                <span className="an-stat-label">Est. Pass Probability</span>
               </div>
               <div className="an-stat-card">
                 <span className="an-stat-big">{stats.total}</span>

@@ -301,6 +301,7 @@ export default function MockExam() {
   const [timeRemaining, setTimeRemaining] = useState(EXAM_DURATION)
   const timerRef = useRef(null)
   const startTimeRef = useRef(null)
+  const questionStartedAt = useRef(null)
 
   // Warn before leaving during exam
   useEffect(() => {
@@ -350,6 +351,7 @@ export default function MockExam() {
       setWrong(0)
       setAnswers(new Map())
       setTimeRemaining(EXAM_DURATION)
+      questionStartedAt.current = Date.now()
       setPhase('exam')
     } catch {
       alert('Failed to load questions. Please try again.')
@@ -371,6 +373,9 @@ export default function MockExam() {
     const q = questions[currentIndex]
     const correctIdx = resolveCorrectIndex(q.options, q.answer)
     const isCorrect = selected === correctIdx
+    const responseTimeMs = questionStartedAt.current
+      ? Math.round(Date.now() - questionStartedAt.current)
+      : null
     if (isCorrect) setCorrect(c => c + 1)
     else setWrong(w => w + 1)
 
@@ -386,7 +391,7 @@ export default function MockExam() {
       return next
     })
 
-    saveProgress(examTrack, q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
+    saveProgress(examTrack, q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer, responseTimeMs)
   }
 
   function handleNext() {
@@ -395,6 +400,7 @@ export default function MockExam() {
       return
     }
     setCurrentIndex(i => i + 1)
+    questionStartedAt.current = Date.now()
     setSelected(null)
     setSubmitted(false)
     setFeedback(null)

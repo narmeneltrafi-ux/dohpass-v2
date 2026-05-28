@@ -307,19 +307,44 @@ export function hasAccess(profile) {
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
-export async function saveProgress(track, questionId, isCorrect, topic = null, selectedAnswer = null, correctAnswer = null) {
+
+// Dual-write on every answer submission:
+//   1. question_attempts — append-only log, never overwritten (source of truth
+//      for SRS, adaptive selection, and performance trajectory)
+//   2. user_progress — latest-state cache; a DB trigger maintains total_attempts,
+//      consecutive_correct, and last_attempt_at automatically
+export async function saveProgress(
+  track, questionId, isCorrect,
+  topic = null, selectedAnswer = null, correctAnswer = null,
+  responseTimeMs = null
+) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  const { error } = await supabase.from('user_progress').upsert({
-    user_id: user.id,
-    track,
-    question_id: questionId,
-    is_correct: isCorrect,
-    topic,
-    selected_answer: selectedAnswer,
-    correct_answer: correctAnswer,
-  }, { onConflict: 'user_id,question_id' })
-  if (error) console.error('saveProgress error:', error.message)
+
+  const [{ error: attemptErr }, { error: progressErr }] = await Promise.all([
+    supabase.from('question_attempts').insert({
+      user_id:          user.id,
+      track,
+      question_id:      questionId,
+      is_correct:       isCorrect,
+      topic,
+      selected_answer:  selectedAnswer,
+      correct_answer:   correctAnswer,
+      response_time_ms: responseTimeMs ?? null,
+    }),
+    supabase.from('user_progress').upsert({
+      user_id:        user.id,
+      track,
+      question_id:    questionId,
+      is_correct:     isCorrect,
+      topic,
+      selected_answer: selectedAnswer,
+      correct_answer:  correctAnswer,
+    }, { onConflict: 'user_id,question_id' }),
+  ])
+
+  if (attemptErr)  console.error('saveProgress attempt insert error:', attemptErr.message)
+  if (progressErr) console.error('saveProgress upsert error:', progressErr.message)
 }
 
 // Returns true if the current user has content access (paid or in grace period).

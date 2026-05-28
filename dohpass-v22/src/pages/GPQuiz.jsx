@@ -66,6 +66,7 @@ export default function GPQuiz() {
   // Stage 2: full content cache keyed by id. Refs avoid stale closures in prefetchBatch.
   const contentCacheRef = useRef(new Map())
   const prefetchingRef = useRef(new Set())
+  const questionStartedAt = useRef(Date.now())
   // Bumped after each prefetch batch to trigger a re-render so currentQuestion updates.
   const [, bumpCache] = useReducer(x => x + 1, 0)
 
@@ -228,6 +229,7 @@ export default function GPQuiz() {
       })
       return
     }
+    const responseTimeMs = Math.round(Date.now() - questionStartedAt.current)
     setSubmitted(true)
     const isCorrect = selected === correctIdx
     if (isCorrect) {
@@ -240,19 +242,20 @@ export default function GPQuiz() {
     if (isAnon) {
       setAnonUsed(incrementAnonCount())
     } else {
-      await saveProgress('gp', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
+      await saveProgress('gp', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer, responseTimeMs)
     }
   }
 
   function handleNext() {
     if (index + 1 >= total) { setDone(true); return }
     setIndex(i => i + 1)
+    questionStartedAt.current = Date.now()
     setSelected(null); setSubmitted(false); setFeedback(null)
   }
 
   async function handleRestart() {
+    questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'gp' || plan === 'all_access')) {
-      // Paid: reshuffle ids — content cache stays valid (keyed by id, not position).
       const reshuffled = shuffle([...shuffledIds])
       setShuffledIds(reshuffled)
       setIndex(0); setCorrect(0); setWrong(0)
@@ -260,7 +263,6 @@ export default function GPQuiz() {
       prefetchBatch(reshuffled.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
-    // Trial: refetch status + questions
     const status = await fetchTrialStatus()
     setTrialStatus(status)
     if (status.remaining === 0) {

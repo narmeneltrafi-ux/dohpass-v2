@@ -6834,3 +6834,442 @@ a.lp-contact__value:hover { color: var(--gold); }
   .lp-nav__hamburger { display: none; }
   .lp-nav__mobile { display: none; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DIAGNOSTIC ASSESSMENT
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page shell ───────────────────────────────────────────────── */
+.diag-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Brand mark (shared by setup + results) ───────────────────── */
+.diag-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+.diag-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #c9a227, #e2b43c);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+}
+.diag-brand-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.diag-brand-name span { color: var(--gold, #c9a227); }
+
+/* ── Setup card ───────────────────────────────────────────────── */
+.diag-setup-card {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.diag-setup-header { margin-bottom: 2rem; }
+
+.diag-setup-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.diag-setup-sub {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gold, #c9a227);
+  margin: 0 0 0.75rem;
+}
+
+.diag-setup-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Track selection ──────────────────────────────────────────── */
+.diag-track-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.diag-track-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1rem;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  text-align: center;
+}
+.diag-track-btn:hover { border-color: var(--gold, #c9a227); transform: translateY(-1px); }
+.diag-track-btn--active.gold {
+  border-color: var(--gold, #c9a227);
+  background: color-mix(in srgb, var(--gold, #c9a227) 10%, var(--surface));
+}
+.diag-track-btn--active.blue {
+  border-color: var(--blue, #3b82f6);
+  background: color-mix(in srgb, var(--blue, #3b82f6) 10%, var(--surface));
+}
+.diag-track-btn__icon { color: var(--text-muted); line-height: 1; }
+.diag-track-btn--active .diag-track-btn__icon { color: var(--text); }
+.diag-track-btn__label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.diag-track-btn__sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Begin button ─────────────────────────────────────────────── */
+.diag-begin-btn {
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(135deg, #c9a227, #e2b43c);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-bottom: 0.75rem;
+}
+.diag-begin-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.diag-begin-btn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ── Skip link ────────────────────────────────────────────────── */
+.diag-skip {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.15s;
+}
+.diag-skip:hover { color: var(--text); }
+
+/* ── Running phase timer strip ────────────────────────────────── */
+.diag-running-wrap { width: 100%; }
+
+.diag-timer-strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.diag-timer-strip__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+}
+.diag-timer-strip__label { font-weight: 500; }
+.diag-timer-strip__count { font-weight: 500; }
+
+/* ── Results card ─────────────────────────────────────────────── */
+.diag-results-card {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 2rem;
+}
+
+.diag-results-header { margin-bottom: 1.5rem; }
+
+.diag-results-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gold, #c9a227);
+  margin-bottom: 0.4rem;
+}
+
+.diag-results-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+/* ── Score card ───────────────────────────────────────────────── */
+.diag-score-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.diag-score-num {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.3rem;
+}
+
+.diag-score-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── Readiness statement ──────────────────────────────────────── */
+.diag-readiness-stmt {
+  font-size: 0.93rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0 0 1.75rem;
+}
+
+/* ── Section headers ──────────────────────────────────────────── */
+.diag-section { margin-bottom: 1.75rem; }
+
+.diag-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.diag-section-title--warn { color: #ef4444; }
+
+/* ── Topic list ───────────────────────────────────────────────── */
+.diag-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.diag-topic-row {}
+.diag-topic-row__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+.diag-topic-row__icon { display: flex; align-items: center; width: 16px; flex-shrink: 0; }
+.diag-icon-ok { color: #22c55e; display: flex; }
+.diag-icon-warn { color: #ef4444; display: flex; }
+.diag-icon-mid { color: var(--gold, #c9a227); font-weight: 700; font-size: 1.1rem; line-height: 1; }
+.diag-topic-row__name {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.diag-topic-row__score {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.diag-topic-row__pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  width: 36px;
+  text-align: right;
+}
+
+.diag-topic-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.diag-topic-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
+
+/* ── Gaps section ─────────────────────────────────────────────── */
+.diag-gaps-section {
+  background: color-mix(in srgb, #ef4444 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, #ef4444 25%, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 1.1rem 1.25rem;
+}
+.diag-gaps-section .diag-section-title {
+  border-bottom-color: color-mix(in srgb, #ef4444 25%, var(--border));
+}
+
+.diag-gaps-body {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.diag-gaps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.diag-gaps-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.87rem;
+}
+.diag-gaps-item__topic { font-weight: 600; color: var(--text); }
+.diag-gaps-item__pct {
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── CTA block ────────────────────────────────────────────────── */
+.diag-cta-block {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.diag-cta-pitch {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+  padding: 1rem 1.15rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--gold, #c9a227);
+}
+
+.diag-cta-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.diag-cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ── Dashboard banner ─────────────────────────────────────────── */
+.diag-dash-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--gold, #c9a227) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--gold, #c9a227) 30%, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.diag-dash-banner__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.diag-dash-banner__title {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+.diag-dash-banner__sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.diag-dash-banner__cta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #c9a227, #e2b43c);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.diag-dash-banner__cta:hover { opacity: 0.9; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .diag-setup-card { padding: 1.5rem; }
+  .diag-setup-title { font-size: 1.4rem; }
+  .diag-score-num { font-size: 2.8rem; }
+  .diag-track-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .diag-dash-banner { flex-direction: column; align-items: flex-start; }
+  .diag-dash-banner__cta { width: 100%; justify-content: center; }
+}

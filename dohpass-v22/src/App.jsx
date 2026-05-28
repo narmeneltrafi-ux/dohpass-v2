@@ -27,6 +27,7 @@ import Analytics from './pages/Analytics.jsx'
 import MockExam from './pages/MockExam.jsx'
 import OncologyPage from './pages/OncologyPage.jsx'
 import ProgressPage from './pages/ProgressPage'
+import Diagnostic from './pages/Diagnostic.jsx'
 
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
@@ -80,7 +81,7 @@ function GuardedContent({ children }) {
 
 /* Routes that ship their own glass nav/footer — global chrome is suppressed */
 const SELF_CHROMED_PATHS = new Set([
-  '/', '/dashboard', '/pricing',
+  '/', '/dashboard', '/pricing', '/diagnostic',
   '/terms', '/privacy', '/contact', '/about', '/features',
   '/specialist', '/gp', '/checkout',
 ])
@@ -137,6 +138,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/contact'  element={<Contact />} />
           <Route path='/about'    element={<About />} />
           <Route path='/features' element={<Features />} />
+          <Route path='/diagnostic' element={<ProtectedRoute user={user}><Diagnostic /></ProtectedRoute>} />
           <Route path='/payment-success' element={<ProtectedRoute user={user}><PaymentSuccess /></ProtectedRoute>} />
           <Route path='/account' element={<ProtectedRoute user={user}><Account /></ProtectedRoute>} />
           <Route path='/progress' element={<ProtectedRoute user={user}><ProgressPage /></ProtectedRoute>} />

@@ -137,6 +137,8 @@ export default function QuestionCard({
 
   function getOptionState(i) {
     if (!submitted) return selectedOption === i ? 'selected' : 'idle'
+    // Diagnostic mode: reveal nothing — selected stays highlighted, no correct/incorrect
+    if (mode === 'diagnostic') return selectedOption === i ? 'selected' : 'idle'
     if (dataIssue) return 'idle'
     if (i === correctIdx) return 'correct'
     if (i === selectedOption && i !== correctIdx) return 'incorrect'
@@ -235,7 +237,7 @@ export default function QuestionCard({
           })}
         </div>
 
-        {submitted && mode === 'timed' && (
+        {submitted && mode !== 'diagnostic' && mode === 'timed' && (
           <div
             className={`qui-expl qui-expl--timed${
               dataIssue ? ' qui-expl--issue' : feedback?.correct ? ' qui-expl--ok' : ' qui-expl--bad'
@@ -255,7 +257,7 @@ export default function QuestionCard({
           </div>
         )}
 
-        {submitted && mode !== 'timed' && (
+        {submitted && mode !== 'timed' && mode !== 'diagnostic' && (
           <div
             ref={explRef}
             className={`qui-expl${

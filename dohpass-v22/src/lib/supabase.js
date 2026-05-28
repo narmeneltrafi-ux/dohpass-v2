@@ -307,19 +307,44 @@ export function hasAccess(profile) {
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
-export async function saveProgress(track, questionId, isCorrect, topic = null, selectedAnswer = null, correctAnswer = null) {
+
+// Dual-write on every answer submission:
+//   1. question_attempts — append-only log, never overwritten (source of truth
+//      for SRS, adaptive selection, and performance trajectory)
+//   2. user_progress — latest-state cache; a DB trigger maintains total_attempts,
+//      consecutive_correct, and last_attempt_at automatically
+export async function saveProgress(
+  track, questionId, isCorrect,
+  topic = null, selectedAnswer = null, correctAnswer = null,
+  responseTimeMs = null
+) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  const { error } = await supabase.from('user_progress').upsert({
-    user_id: user.id,
-    track,
-    question_id: questionId,
-    is_correct: isCorrect,
-    topic,
-    selected_answer: selectedAnswer,
-    correct_answer: correctAnswer,
-  }, { onConflict: 'user_id,question_id' })
-  if (error) console.error('saveProgress error:', error.message)
+
+  const [{ error: attemptErr }, { error: progressErr }] = await Promise.all([
+    supabase.from('question_attempts').insert({
+      user_id:          user.id,
+      track,
+      question_id:      questionId,
+      is_correct:       isCorrect,
+      topic,
+      selected_answer:  selectedAnswer,
+      correct_answer:   correctAnswer,
+      response_time_ms: responseTimeMs ?? null,
+    }),
+    supabase.from('user_progress').upsert({
+      user_id:        user.id,
+      track,
+      question_id:    questionId,
+      is_correct:     isCorrect,
+      topic,
+      selected_answer: selectedAnswer,
+      correct_answer:  correctAnswer,
+    }, { onConflict: 'user_id,question_id' }),
+  ])
+
+  if (attemptErr)  console.error('saveProgress attempt insert error:', attemptErr.message)
+  if (progressErr) console.error('saveProgress upsert error:', progressErr.message)
 }
 
 // Returns true if the current user has content access (paid or in grace period).
@@ -408,6 +433,46 @@ export async function fetchQuestionsByIds(track, ids) {
     .in('id', ids)
   if (error) throw error
   return data || []
+}
+
+// ── DIAGNOSTIC ASSESSMENT ─────────────────────────────────────────────────────
+
+// Selects 20 questions spread across the 10 most-represented topics for a track.
+// Topic frequency is a reliable proxy for exam weight since AI generation targets
+// blueprint proportions. Free to call — no hasAccess() gate (diagnostic is free).
+export async function fetchDiagnosticQuestions(track) {
+  const allIds = await fetchQuestionIdList(track)
+
+  // Group by normalized topic
+  const byTopic = new Map()
+  for (const r of allIds) {
+    const topic = primaryTopic(r.topic)
+    if (!topic) continue
+    if (!byTopic.has(topic)) byTopic.set(topic, [])
+    byTopic.get(topic).push(r.id)
+  }
+
+  // Sort topics by question count descending (high-frequency = high exam weight)
+  const sortedTopics = [...byTopic.entries()].sort((a, b) => b[1].length - a[1].length)
+
+  // Sample 2 from each of the top 10 topics
+  const selectedIds = []
+  for (const [, pool] of sortedTopics.slice(0, 10)) {
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    selectedIds.push(...shuffled.slice(0, 2))
+  }
+
+  const questions = await fetchQuestionsByIds(track, selectedIds)
+  return questions.sort(() => Math.random() - 0.5)
+}
+
+export async function completeDiagnostic(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({
+    diagnostic_completed_at: new Date().toISOString(),
+    diagnostic_track: track,
+  }).eq('id', user.id)
 }
 
 export async function fetchTrialQuestions(track) {

@@ -6188,17 +6188,6 @@ a.lp-contact__value:hover { color: var(--gold); }
   .qui-actions .qui-cta { width: 100%; }
   .qui-cta--ghost { width: 100%; }
 
-  /* The Next-question CTA inside the explanation panel stays inline */
-  .qui-actions--inline {
-    position: static;
-    background: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-top: none;
-    padding: 0;
-    margin-top: 1.25rem;
-  }
-
   .qui-expl {
     margin: 1.25rem -0.9rem 0;
     max-width: none;

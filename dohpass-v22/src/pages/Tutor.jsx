@@ -52,6 +52,19 @@ const IconAccuracy = () => (
 /* ── Single streaming message bubble ─────────────────────────── */
 function MsgBubble({ msg }) {
   const isUser = msg.role === 'user'
+
+  // Show thinking dots while waiting for the first content token
+  if (!isUser && msg.streaming && !msg.content) {
+    return (
+      <div className="tutor-msg tutor-msg--assistant">
+        <span className="tutor-msg__avatar" aria-hidden="true"><IconBot /></span>
+        <div className="tutor-bubble tutor-bubble--assistant tutor-bubble--thinking">
+          <span className="tutor-dot" /><span className="tutor-dot" /><span className="tutor-dot" />
+        </div>
+      </div>
+    )
+  }
+
   const html = renderHtml(msg.content)
   return (
     <div className={`tutor-msg tutor-msg--${msg.role}`}>
@@ -62,7 +75,9 @@ function MsgBubble({ msg }) {
       )}
       <div
         className={`tutor-bubble tutor-bubble--${msg.role}`}
-        dangerouslySetInnerHTML={{ __html: html + (msg.streaming && msg.content ? '<span class="tutor-cursor" aria-hidden="true"></span>' : '') }}
+        dangerouslySetInnerHTML={{
+          __html: html + (msg.streaming ? '<span class="tutor-cursor" aria-hidden="true"></span>' : '')
+        }}
       />
     </div>
   )
@@ -277,6 +292,7 @@ export default function Tutor() {
   }
 
   const isEmpty = messages.length === 0
+  const handleNewChat = () => setMessages([])
 
   return (
     <div className="tutor-root">
@@ -340,6 +356,25 @@ export default function Tutor() {
 
         {/* ── Main chat area ──────────────────────────────────── */}
         <main className="tutor-main">
+          {/* Topbar: title + new-chat action */}
+          <div className="tutor-topbar">
+            <span className="tutor-topbar__title">
+              <span className="tutor-topbar__mark" aria-hidden="true">✦</span>
+              Dr. Tutor
+            </span>
+            {!isEmpty && (
+              <button
+                type="button"
+                className="tutor-topbar__new"
+                onClick={handleNewChat}
+                disabled={isStreaming}
+                aria-label="Start a new conversation"
+              >
+                New chat
+              </button>
+            )}
+          </div>
+
           <div className="tutor-msgs" role="log" aria-live="polite" aria-label="Conversation with Dr. Tutor">
 
             {isEmpty && (
@@ -370,16 +405,13 @@ export default function Tutor() {
               <MsgBubble key={msg.id} msg={msg} />
             ))}
 
-            {isStreaming && messages[messages.length - 1]?.content === '' && (
-              <div className="tutor-msg tutor-msg--assistant">
-                <span className="tutor-msg__avatar" aria-hidden="true"><IconBot /></span>
-                <div className="tutor-bubble tutor-bubble--assistant tutor-bubble--thinking">
-                  <span className="tutor-dot" /><span className="tutor-dot" /><span className="tutor-dot" />
-                </div>
-              </div>
-            )}
-
             <div ref={msgsEndRef} aria-hidden="true" />
+          </div>
+
+          {/* Mobile-only track toggle (sidebar hidden at <768px) */}
+          <div className="tutor-mobile-track" aria-label="Question track">
+            <span className="tutor-mobile-track__label">Track:</span>
+            <TrackToggle track={track} onChange={handleTrackChange} />
           </div>
 
           {/* ── Input bar ───────────────────────────────────── */}

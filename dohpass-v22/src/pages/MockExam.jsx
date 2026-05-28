@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase, getProfile, fetchQuestionIdList, fetchQuestionsByIds, saveProgress, primaryTopic } from '../lib/supabase'
+import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
 
 const EXAM_QUESTIONS = 100
@@ -15,10 +16,27 @@ function formatTime(seconds) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-const IconCross = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
+function letterFor(i) { return String.fromCharCode(65 + i) }
+
+const IconArrowLeft = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M19 12H5M12 19l-7-7 7-7" />
+  </svg>
+)
+const IconArrowRight = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </svg>
+)
+const IconCheck = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+const IconX = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
 
@@ -60,8 +78,124 @@ function SelectPhase({ onStart }) {
   )
 }
 
+/* ── Review Phase — wrong-answer walk-through ─────────────────── */
+function ReviewPhase({ wrongEntries, track, onDone }) {
+  const [idx, setIdx] = useState(0)
+  const total = wrongEntries.length
+  const entry = wrongEntries[idx]
+  const q = entry?.question
+  const options = q?.options || []
+  const correctIdx = q ? resolveCorrectIndex(options, q.answer) : -1
+  const userIdx = entry?.selectedOption ?? -1
+  const accentClass = track === 'specialist' ? 'qui-gold' : 'qui-blue'
+  const pct = total > 0 ? ((idx + 1) / total) * 100 : 0
+
+  function advance() {
+    if (idx + 1 < total) setIdx(i => i + 1)
+    else onDone()
+  }
+
+  if (!q) return null
+
+  return (
+    <div className={`qui-page ${accentClass}`}>
+      <div className="qui-stickyhead">
+        <div
+          className="qui-progress"
+          role="progressbar"
+          aria-valuenow={Math.round(pct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Review progress"
+        >
+          <div className="qui-progress__fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="qui-topbar">
+          <button className="qui-back" onClick={onDone} type="button" aria-label="Back to results">
+            <IconArrowLeft />
+            <span className="qui-back__label">Results</span>
+          </button>
+          <div className="qui-counter" aria-live="polite">
+            Review {idx + 1} of {total}
+          </div>
+          <div className="qui-modepill">REVIEW</div>
+        </div>
+      </div>
+
+      <div className="qui-body">
+        <div className="qui-meta">
+          <div className="qui-meta__tags">
+            {q.topic && (
+              <span className="qui-meta__tag">{String(primaryTopic(q.topic)).toUpperCase()}</span>
+            )}
+            {q.difficulty && (
+              <>
+                <span className="qui-meta__sep" aria-hidden="true">·</span>
+                <span className="qui-meta__tag">{String(q.difficulty).toUpperCase()}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <p className="qui-stem">{q.q}</p>
+
+        <div className="qui-options" role="list" aria-label="Answer options">
+          {options.map((opt, i) => {
+            const isCorrect = i === correctIdx
+            const isUser = i === userIdx && i !== correctIdx
+            const state = isCorrect ? 'correct' : isUser ? 'incorrect' : 'idle'
+            return (
+              <div
+                key={i}
+                className={`qui-opt qui-opt--${state}`}
+                style={{ cursor: 'default' }}
+                role="listitem"
+              >
+                <span className="qui-opt__letter" aria-hidden="true">{letterFor(i)}</span>
+                <span className="qui-opt__text">{opt}</span>
+                {isCorrect && (
+                  <span className="qui-opt__icon qui-opt__icon--ok" aria-label="Correct answer">
+                    <IconCheck />
+                  </span>
+                )}
+                {isUser && (
+                  <span className="qui-opt__icon qui-opt__icon--bad" aria-label="Your incorrect answer">
+                    <IconX />
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Explanation */}
+        <div className="qui-expl qui-expl--bad" style={{ animation: 'none' }}>
+          <div className="qui-expl__head">
+            <span className="qui-expl__pill qui-expl__pill--ok">
+              Correct answer: {q.answer}
+            </span>
+            {q.source && <span className="qui-expl__source">{q.source}</span>}
+          </div>
+          {q.explanation && (
+            <p className="qui-expl__body">{q.explanation}</p>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div className="qui-actions">
+          <button type="button" className="qui-cta qui-cta--gold" onClick={advance}>
+            {idx + 1 < total ? 'Next Wrong Answer' : 'Back to Results'} <IconArrowRight />
+          </button>
+        </div>
+
+        <div className="qui-hint" aria-hidden="true">→ for next</div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Results Phase ────────────────────────────────────────────── */
-function ExamResults({ answers, questions, track, onRestart, onHome }) {
+function ExamResults({ answers, questions, track, onRestart, onDashboard, onReview }) {
   const correctCount = [...answers.values()].filter(a => a.isCorrect).length
   const total = answers.size
   const unanswered = EXAM_QUESTIONS - total
@@ -146,8 +280,13 @@ function ExamResults({ answers, questions, track, onRestart, onHome }) {
       </div>
 
       <div className="me-results-actions">
+        {wrongCount > 0 && (
+          <button className={`btn-primary ${accentVar}`} onClick={onReview}>
+            Review {wrongCount} Wrong {wrongCount === 1 ? 'Answer' : 'Answers'}
+          </button>
+        )}
         <button className={`btn-primary ${accentVar}`} onClick={onRestart}>Try Another Exam</button>
-        <button className="me-results-home" onClick={onHome}>Back to Home</button>
+        <button className="me-results-home" onClick={onDashboard}>Back to Dashboard</button>
       </div>
     </div>
   )
@@ -157,7 +296,7 @@ function ExamResults({ answers, questions, track, onRestart, onHome }) {
 export default function MockExam() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
-  const [phase, setPhase] = useState('select') // select | exam | results
+  const [phase, setPhase] = useState('select') // select | exam | results | review
   const [examTrack, setExamTrack] = useState(null)
   const [questions, setQuestions] = useState([])
   const [loadingExam, setLoadingExam] = useState(false)
@@ -203,7 +342,7 @@ export default function MockExam() {
       }
     }, 1000)
     return () => clearInterval(timerRef.current)
-  }, [phase])
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function startExam(track) {
     setLoadingExam(true)
@@ -245,15 +384,7 @@ export default function MockExam() {
   function handleSubmit() {
     if (selected === null) return
     const q = questions[currentIndex]
-    const correctIdx = (() => {
-      if (!q.answer) return -1
-      const prefixMatch = q.options.findIndex(opt =>
-        opt.trim().toUpperCase().startsWith(q.answer.trim().toUpperCase() + '.')
-      )
-      if (prefixMatch !== -1) return prefixMatch
-      return q.answer.trim().toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0)
-    })()
-
+    const correctIdx = resolveCorrectIndex(q.options, q.answer)
     const isCorrect = selected === correctIdx
     if (isCorrect) setCorrect(c => c + 1)
     else setWrong(w => w + 1)
@@ -284,7 +415,15 @@ export default function MockExam() {
     setFeedback(null)
   }
 
-  const badge = planBadge(profile)
+  // Build the wrong-answer entries for the review phase
+  const wrongEntries = [...answers.entries()]
+    .filter(([, ans]) => !ans.isCorrect)
+    .map(([idx, ans]) => ({
+      question: questions[idx],
+      selectedOption: ans.selectedOption,
+    }))
+    .filter(e => e.question != null)
+
   const accentVar = examTrack === 'specialist' ? 'gold' : 'blue'
 
   const timerClass = timeRemaining <= 300
@@ -292,6 +431,17 @@ export default function MockExam() {
     : timeRemaining <= 600
       ? 'me-timer me-timer--warning'
       : 'me-timer'
+
+  // Review phase fills the viewport like QuestionCard — skip wrapper chrome
+  if (phase === 'review') {
+    return (
+      <ReviewPhase
+        wrongEntries={wrongEntries}
+        track={examTrack}
+        onDone={() => setPhase('results')}
+      />
+    )
+  }
 
   return (
     <div className="me" style={{ paddingTop: '62px' }}>
@@ -344,7 +494,8 @@ export default function MockExam() {
             questions={questions}
             track={examTrack}
             onRestart={() => setPhase('select')}
-            onHome={() => navigate('/')}
+            onDashboard={() => navigate('/dashboard')}
+            onReview={() => setPhase('review')}
           />
         )}
       </div>

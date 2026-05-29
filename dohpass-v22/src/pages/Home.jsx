@@ -66,8 +66,8 @@ function Hero({ navigate, scrollToFeatures }) {
           <button className="aw-btn" onClick={scrollToFeatures}>
             See a real DOH question <IconArrow />
           </button>
-          <button className="lp-ghost" onClick={() => navigate('/pricing')}>
-            View Plans <IconArrow />
+          <button className="lp-ghost" onClick={() => navigate('/login?mode=signup')}>
+            Start Free <IconArrow />
           </button>
         </div>
 
@@ -643,8 +643,6 @@ export default function Home() {
       <CredibilityBar />
 
       <PricingTeaser stats={stats} navigate={navigate} />
-
-      <Testimonials />
 
       <FAQ />
 

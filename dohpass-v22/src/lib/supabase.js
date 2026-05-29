@@ -307,19 +307,44 @@ export function hasAccess(profile) {
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
-export async function saveProgress(track, questionId, isCorrect, topic = null, selectedAnswer = null, correctAnswer = null) {
+
+// Dual-write on every answer submission:
+//   1. question_attempts — append-only log, never overwritten (source of truth
+//      for SRS, adaptive selection, and performance trajectory)
+//   2. user_progress — latest-state cache; a DB trigger maintains total_attempts,
+//      consecutive_correct, and last_attempt_at automatically
+export async function saveProgress(
+  track, questionId, isCorrect,
+  topic = null, selectedAnswer = null, correctAnswer = null,
+  responseTimeMs = null
+) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  const { error } = await supabase.from('user_progress').upsert({
-    user_id: user.id,
-    track,
-    question_id: questionId,
-    is_correct: isCorrect,
-    topic,
-    selected_answer: selectedAnswer,
-    correct_answer: correctAnswer,
-  }, { onConflict: 'user_id,question_id' })
-  if (error) console.error('saveProgress error:', error.message)
+
+  const [{ error: attemptErr }, { error: progressErr }] = await Promise.all([
+    supabase.from('question_attempts').insert({
+      user_id:          user.id,
+      track,
+      question_id:      questionId,
+      is_correct:       isCorrect,
+      topic,
+      selected_answer:  selectedAnswer,
+      correct_answer:   correctAnswer,
+      response_time_ms: responseTimeMs ?? null,
+    }),
+    supabase.from('user_progress').upsert({
+      user_id:        user.id,
+      track,
+      question_id:    questionId,
+      is_correct:     isCorrect,
+      topic,
+      selected_answer: selectedAnswer,
+      correct_answer:  correctAnswer,
+    }, { onConflict: 'user_id,question_id' }),
+  ])
+
+  if (attemptErr)  console.error('saveProgress attempt insert error:', attemptErr.message)
+  if (progressErr) console.error('saveProgress upsert error:', progressErr.message)
 }
 
 // Returns true if the current user has content access (paid or in grace period).
@@ -359,6 +384,12 @@ export async function fetchOverallProgress() {
   }
 }
 
+export async function fetchStreak() {
+  const { data, error } = await supabase.rpc('get_user_streak')
+  if (error) return null
+  return data ?? 0
+}
+
 // Count of questions the current user has answered in the last 7 days.
 // Uses an exact head-only count for speed (no row payload).
 export async function fetchWeeklyAnswered() {
@@ -372,6 +403,167 @@ export async function fetchWeeklyAnswered() {
     .gte('created_at', since)
   if (error) return 0
   return count ?? 0
+}
+
+// ── TWO-STAGE QUIZ LOADING ────────────────────────────────────────────────────
+
+// Stage 1: fetch lightweight id list for the filtered set (~KB, not MB).
+// Specialist: fetches all id+topic rows then filters in JS via primaryTopic().
+//   The topic column stores composite values like "Cardiology/Sub" that require
+//   splitting + alias resolution — not cleanly replicable as a server-side .eq().
+//   Filtering a KB-sized id list in JS is negligible.
+// GP: filter is a broad_topic system name → server-side .eq(), no JS filtering needed.
+export async function fetchQuestionIdList(track, filter = null) {
+  if (track === 'specialist') {
+    const data = await fetchAllRows('specialist_questions', 'id, topic')
+    if (!filter) return data
+    return data.filter(r => primaryTopic(r.topic) === filter)
+  }
+  const filters = filter ? { broad_topic: filter } : {}
+  return fetchAllRows('gp_questions', 'id, topic, broad_topic', filters)
+}
+
+// Stage 2: fetch full question content for a specific batch of ids.
+export async function fetchQuestionsByIds(track, ids) {
+  if (!ids || ids.length === 0) return []
+  const table = track === 'specialist' ? 'specialist_questions' : 'gp_questions'
+  const { data, error } = await supabase
+    .from(table)
+    .select('id, topic, subtopic, q, options, answer, explanation')
+    .in('id', ids)
+  if (error) throw error
+  return data || []
+}
+
+// ── DIAGNOSTIC ASSESSMENT ─────────────────────────────────────────────────────
+
+// Selects 20 questions spread across the 10 most-represented topics for a track.
+// Topic frequency is a reliable proxy for exam weight since AI generation targets
+// blueprint proportions. Free to call — no hasAccess() gate (diagnostic is free).
+export async function fetchDiagnosticQuestions(track) {
+  const allIds = await fetchQuestionIdList(track)
+
+  // Group by normalized topic
+  const byTopic = new Map()
+  for (const r of allIds) {
+    const topic = primaryTopic(r.topic)
+    if (!topic) continue
+    if (!byTopic.has(topic)) byTopic.set(topic, [])
+    byTopic.get(topic).push(r.id)
+  }
+
+  // Sort topics by question count descending (high-frequency = high exam weight)
+  const sortedTopics = [...byTopic.entries()].sort((a, b) => b[1].length - a[1].length)
+
+  // Sample 2 from each of the top 10 topics
+  const selectedIds = []
+  for (const [, pool] of sortedTopics.slice(0, 10)) {
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    selectedIds.push(...shuffled.slice(0, 2))
+  }
+
+  const questions = await fetchQuestionsByIds(track, selectedIds)
+  return questions.sort(() => Math.random() - 0.5)
+}
+
+export async function completeDiagnostic(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({
+    diagnostic_completed_at: new Date().toISOString(),
+    diagnostic_track: track,
+  }).eq('id', user.id)
+}
+
+// Returns how many questions the current user answered today (calendar day, local time).
+export async function fetchTodayAnswered() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const { count, error } = await supabase
+    .from('user_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', todayStart.toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// ── FLASHCARD DUE COUNT ───────────────────────────────────────────────────────
+
+// Returns how many flashcards are due for review right now. Used by Dashboard.
+export async function fetchFlashcardDueCount() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const { count, error } = await supabase
+    .from('flashcard_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .lte('due_date', new Date().toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// Returns up to `limit` topics with the lowest accuracy for a track.
+// Requires at least `minAttempts` answers before a topic qualifies, and only
+// returns topics below 75% (genuinely weak — not just sparse data).
+export async function fetchWeakTopics(track, limit = 3, minAttempts = 3) {
+  const { topicAccuracy } = await fetchUserProgressSummary(track)
+  return Object.entries(topicAccuracy)
+    .filter(([, a]) => a.total >= minAttempts)
+    .map(([topic, a]) => ({ topic, accuracy: Math.round((a.correct / a.total) * 100), total: a.total }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .filter(t => t.accuracy < 75)
+    .slice(0, limit)
+}
+
+// ── ADAPTIVE QUESTION SELECTION ───────────────────────────────────────────────
+
+// Fetches the current user's answered-question summary for a track.
+// Returns seenIds (Set), wrongIds (Set), topicAccuracy ({topic: {correct, total}}).
+// Used by sortAdaptive to score and prioritise the question id list.
+export async function fetchUserProgressSummary(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('question_id, is_correct, topic')
+    .eq('user_id', user.id)
+    .eq('track', track)
+
+  if (error || !data) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+
+  const seenIds = new Set(data.map(r => r.question_id))
+  const wrongIds = new Set(data.filter(r => !r.is_correct).map(r => r.question_id))
+
+  const topicAccuracy = {}
+  for (const row of data) {
+    const topic = primaryTopic(row.topic) || 'Unknown'
+    if (!topicAccuracy[topic]) topicAccuracy[topic] = { correct: 0, total: 0 }
+    topicAccuracy[topic].total++
+    if (row.is_correct) topicAccuracy[topic].correct++
+  }
+
+  return { seenIds, wrongIds, topicAccuracy }
+}
+
+// Scores each question in idList and returns a sorted copy (highest priority first).
+// Scoring weights: topic weakness 0.40, unseen bonus 0.35, wrong bonus 0.25, jitter 0.08.
+// Pre-computes all scores before sorting so jitter is fixed per question per call.
+export function sortAdaptive(idList, { seenIds, wrongIds, topicAccuracy }) {
+  const scored = idList.map(q => {
+    const topic = primaryTopic(q.topic) || 'Unknown'
+    const acc = topicAccuracy[topic]
+    const topicScore  = acc ? 1 - (acc.correct / acc.total) : 0.5
+    const unseenScore = seenIds.has(q.id) ? 0 : 1
+    const wrongScore  = wrongIds.has(q.id) ? 1 : 0
+    const score = topicScore * 0.40 + unseenScore * 0.35 + wrongScore * 0.25 + Math.random() * 0.08
+    return { q, score }
+  })
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map(s => s.q)
 }
 
 export async function fetchTrialQuestions(track) {

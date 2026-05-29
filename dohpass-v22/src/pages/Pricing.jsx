@@ -101,7 +101,7 @@ function buildPlans(counts) {
       features: [
         `${liveCount(counts?.specialist)} specialist questions`,
         'Cardiology, Respiratory, Nephrology & more',
-        'MRCP-style format',
+        'Pearson VUE-style vignettes',
         'Detailed clinical explanations',
       ],
       ctaLabel: 'Start Specialist',
@@ -193,7 +193,7 @@ function TrustRow() {
   const items = [
     '7-day money-back guarantee',
     'No subscription · No auto-renew · No contracts',
-    'Secure payment · 256-bit encryption',
+    'Secure bank transfer · Manual activation · 7-day refund',
   ]
   return (
     <div className="lp-pp-trust">
@@ -309,11 +309,11 @@ const FAQS = [
   },
   {
     q: 'What payment methods do you accept?',
-    a: 'All major credit and debit cards via Lemon Squeezy. We support Visa, Mastercard, and Amex.',
+    a: 'We accept direct bank transfer or Wise. Select a plan, follow the transfer instructions on the checkout page, and access is activated within 24 hours of us confirming your transfer.',
   },
   {
     q: 'Can I switch between plans?',
-    a: 'Yes. Upgrade or downgrade from your account at any time. Prorated billing applies.',
+    a: "Yes — simply pay for the new plan by bank transfer. Email support@dohpass.com and we’ll adjust your access window manually.",
   },
   {
     q: 'Do prices include VAT?',

@@ -1,16 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback, useReducer, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   supabase,
-  fetchGPQuestions,
+  fetchQuestionIdList,
+  fetchQuestionsByIds,
   fetchGPSystems,
-  fetchGPQuestionsBySystem,
   saveProgress,
   getProfile,
   hasAccess,
   fetchTrialQuestions,
   fetchTrialStatus,
   fetchPreviewQuestions,
+  fetchUserProgressSummary,
+  sortAdaptive,
+  primaryTopic,
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
@@ -22,6 +25,7 @@ function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
 const ANON_KEY = 'dohpass_anon_trial'
 const ANON_LIMIT = 3
+const PREFETCH_WINDOW = 10
 
 function readAnonCount() {
   try {
@@ -56,10 +60,20 @@ function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
 
 export default function GPQuiz() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { bookmarks, toggle } = useBookmarks('gp')
   const [systems, setSystems] = useState(['All'])
   const [activeSystem, setActiveSystem] = useState('All')
-  const [bank, setBank] = useState([])
+
+  // Stage 1: shuffled [{id, topic}] list — loaded instantly, powers counter + progress bar.
+  const [shuffledIds, setShuffledIds] = useState([])
+  // Stage 2: full content cache keyed by id. Refs avoid stale closures in prefetchBatch.
+  const contentCacheRef = useRef(new Map())
+  const prefetchingRef = useRef(new Set())
+  const questionStartedAt = useRef(Date.now())
+  // Bumped after each prefetch batch to trigger a re-render so currentQuestion updates.
+  const [, bumpCache] = useReducer(x => x + 1, 0)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -78,7 +92,6 @@ export default function GPQuiz() {
   const [plan, setPlan] = useState(null)
   const [trialStatus, setTrialStatus] = useState(null) // { used, limit, remaining }
   const [anonUsed, setAnonUsed] = useState(0)
-  const [profile, setProfile] = useState(null)
   // Snapshot of anonUsed at mount, used to size the bank without retriggering
   // loadQuestions on every submit-driven increment.
   const anonUsedAtMountRef = useRef(0)
@@ -98,7 +111,6 @@ export default function GPQuiz() {
       setIsAnon(false)
       const p = await getProfile()
       if (cancelled) return
-      setProfile(p)
       const paid = hasAccess(p)
       setIsPaid(paid)
       setPlan(p?.plan ?? 'free')
@@ -111,6 +123,7 @@ export default function GPQuiz() {
   }, [])
 
   const planAllowed = isAnon === false && isPaid === true && (plan === 'gp' || plan === 'all_access')
+  const isDrillMode = planAllowed && searchParams.get('drill') === '1'
   const trialActive = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining > 0
   const trialExhausted = isAnon === false && isPaid === false && trialStatus !== null && trialStatus.remaining === 0
   const wrongPlan = isAnon === false && isPaid === true && plan !== 'gp' && plan !== 'all_access'
@@ -124,30 +137,73 @@ export default function GPQuiz() {
     }).catch(console.error)
   }, [planAllowed])
 
+  // Fetch full content for a batch of ids and populate the cache.
+  const prefetchBatch = useCallback(async (ids) => {
+    const toFetch = ids.filter(id =>
+      !contentCacheRef.current.has(id) && !prefetchingRef.current.has(id)
+    )
+    if (toFetch.length === 0) return
+    toFetch.forEach(id => prefetchingRef.current.add(id))
+    try {
+      const questions = await fetchQuestionsByIds('gp', toFetch)
+      questions.forEach(q => contentCacheRef.current.set(q.id, q))
+      bumpCache()
+    } finally {
+      toFetch.forEach(id => prefetchingRef.current.delete(id))
+    }
+  }, [bumpCache])
+
   const loadQuestions = useCallback(async () => {
     setLoading(true)
     setError(null)
+    contentCacheRef.current = new Map()
+    prefetchingRef.current = new Set()
     try {
-      let data = []
+      let idList = []
       if (planAllowed) {
-        data = activeSystem === 'All'
-          ? await fetchGPQuestions(null)
-          : await fetchGPQuestionsBySystem(activeSystem)
+        const systemFilter = isDrillMode ? null : (activeSystem === 'All' ? null : activeSystem)
+        const [rawIds, summary] = await Promise.all([
+          fetchQuestionIdList('gp', systemFilter),
+          fetchUserProgressSummary('gp'),
+        ])
+        let pool = rawIds
+        if (isDrillMode) {
+          const weakTopics = Object.entries(summary.topicAccuracy)
+            .filter(([, a]) => a.total >= 3 && (a.correct / a.total) < 0.75)
+            .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
+            .slice(0, 3)
+            .map(([t]) => t)
+          if (weakTopics.length > 0) {
+            pool = rawIds.filter(q => weakTopics.includes(primaryTopic(q.topic)))
+          }
+        }
+        idList = sortAdaptive(pool, summary)
+        if (isDrillMode) idList = idList.slice(0, 40)
       } else if (trialActive) {
-        data = await fetchTrialQuestions('gp')
+        // Trial ≤30 questions — populate cache directly, no two-stage needed.
+        const data = await fetchTrialQuestions('gp')
+        data.forEach(q => contentCacheRef.current.set(q.id, q))
+        idList = data.map(q => ({ id: q.id, topic: q.topic }))
       } else if (anonActive) {
+        // Anon preview ≤5 questions — populate cache directly.
         const remaining = Math.max(0, ANON_LIMIT - anonUsedAtMountRef.current)
-        data = await fetchPreviewQuestions('gp', remaining)
+        const data = await fetchPreviewQuestions('gp', remaining)
+        data.forEach(q => contentCacheRef.current.set(q.id, q))
+        idList = data.map(q => ({ id: q.id, topic: q.topic }))
       }
-      setBank(shuffle(data))
+      const ordered = planAllowed ? idList : shuffle(idList)
+      setShuffledIds(ordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
+      if (planAllowed && ordered.length > 0) {
+        prefetchBatch(ordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
+      }
     } catch {
       setError('Failed to load questions. Check your connection.')
     } finally {
       setLoading(false)
     }
-  }, [planAllowed, trialActive, anonActive, activeSystem])
+  }, [planAllowed, trialActive, anonActive, activeSystem, prefetchBatch])
 
   useEffect(() => {
     if (isAnon === null) return
@@ -162,11 +218,25 @@ export default function GPQuiz() {
     else setLoading(false)
   }, [isAnon, anonActive, isPaid, trialStatus, planAllowed, trialActive, loadQuestions])
 
+  // As the user advances, prefetch the next window so they never wait between questions.
+  useEffect(() => {
+    if (!planAllowed || shuffledIds.length === 0) return
+    const ids = shuffledIds.slice(index + 1, index + 1 + PREFETCH_WINDOW).map(r => r.id)
+    if (ids.length > 0) prefetchBatch(ids)
+  }, [index, shuffledIds, planAllowed, prefetchBatch])
+
+  // Derived from Stage 1 data — available immediately after id-list loads.
+  const currentEntry = shuffledIds[index] ?? null
+  const currentQuestion = currentEntry
+    ? contentCacheRef.current.get(currentEntry.id) ?? null
+    : null
+  const total = shuffledIds.length
+
   function handleSelect(i) { if (!submitted) setSelected(i) }
 
   async function handleSubmit() {
-    if (selected === null) return
-    const q = bank[index]
+    if (selected === null || !currentQuestion) return
+    const q = currentQuestion
     const correctIdx = resolveCorrectIndex(q.options, q.answer)
     if (correctIdx === -1) {
       console.error('Unresolvable answer for question', q.id, q.answer)
@@ -178,6 +248,7 @@ export default function GPQuiz() {
       })
       return
     }
+    const responseTimeMs = Math.round(Date.now() - questionStartedAt.current)
     setSubmitted(true)
     const isCorrect = selected === correctIdx
     if (isCorrect) {
@@ -190,34 +261,39 @@ export default function GPQuiz() {
     if (isAnon) {
       setAnonUsed(incrementAnonCount())
     } else {
-      await saveProgress('gp', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer)
+      await saveProgress('gp', q.id, isCorrect, q.topic, String.fromCharCode(65 + selected), q.answer, responseTimeMs)
     }
   }
 
   function handleNext() {
-    if (index + 1 >= bank.length) { setDone(true); return }
+    if (index + 1 >= total) { setDone(true); return }
     setIndex(i => i + 1)
+    questionStartedAt.current = Date.now()
     setSelected(null); setSubmitted(false); setFeedback(null)
   }
 
   async function handleRestart() {
+    questionStartedAt.current = Date.now()
     if (isPaid && plan && (plan === 'gp' || plan === 'all_access')) {
-      // Paid user: reshuffle existing bank
-      setBank(b => shuffle(b))
+      const summary = await fetchUserProgressSummary('gp')
+      const reordered = sortAdaptive([...shuffledIds], summary)
+      setShuffledIds(reordered)
       setIndex(0); setCorrect(0); setWrong(0)
       setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
+      prefetchBatch(reordered.slice(0, PREFETCH_WINDOW).map(r => r.id))
       return
     }
-    // Free user: refetch trial status + questions
     const status = await fetchTrialStatus()
     setTrialStatus(status)
     if (status.remaining === 0) {
-      // Component will re-render to PaywallGate based on trialStatus state
       setDone(false)
       return
     }
     const data = await fetchTrialQuestions('gp')
-    setBank(shuffle(data))
+    contentCacheRef.current = new Map()
+    data.forEach(q => contentCacheRef.current.set(q.id, q))
+    const idList = data.map(q => ({ id: q.id, topic: q.topic }))
+    setShuffledIds(shuffle(idList))
     setIndex(0); setCorrect(0); setWrong(0)
     setSelected(null); setSubmitted(false); setFeedback(null); setDone(false)
   }
@@ -313,10 +389,19 @@ export default function GPQuiz() {
       </div>
     )
   }
-  if (bank.length === 0) {
+  if (total === 0) {
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>
         <div className="loading">No questions found for this system.</div>
+      </div>
+    )
+  }
+  // Rare: prefetch hasn't arrived yet for the current question. Spinner only —
+  // prefetchBatch is already in-flight from the index-advance useEffect.
+  if (!currentQuestion) {
+    return (
+      <div className="quiz-page" style={{ paddingTop: '62px' }}>
+        <div className="loading"><div className="spinner blue" />Loading question...</div>
       </div>
     )
   }
@@ -335,7 +420,12 @@ export default function GPQuiz() {
           Free trial · {trialStatus.remaining} of {trialStatus.limit} questions left
         </div>
       )}
-      {planAllowed && systems.length > 1 && (
+      {isDrillMode && (
+        <div className="qui-drill-badge" role="status">
+          Drill mode · {total} questions · weak topics only
+        </div>
+      )}
+      {planAllowed && !isDrillMode && systems.length > 1 && (
         <div className="filter-pills-scroll" aria-label="Filter by system">
           <div className="filter-pills">
             {systems.map(s => (
@@ -353,10 +443,11 @@ export default function GPQuiz() {
     </>
   )
 
+  // currentEntry.topic is available from Stage 1 — no need to wait for full content.
   const chromeBookmark = (
     <BookmarkButton
-      questionId={bank[index].id}
-      topic={bank[index].topic}
+      questionId={currentEntry.id}
+      topic={currentEntry.topic}
       bookmarks={bookmarks}
       toggle={toggle}
     />
@@ -364,9 +455,9 @@ export default function GPQuiz() {
 
   return (
     <QuestionCard
-      question={bank[index]}
+      question={currentQuestion}
       index={index}
-      total={bank.length}
+      total={total}
       correct={correct}
       wrong={wrong}
       selectedOption={selected}
@@ -379,8 +470,9 @@ export default function GPQuiz() {
       mode="tutor"
       chromeTop={chromeTop}
       chromeBookmark={chromeBookmark}
-      tutorTrack="gp"
-      profile={profile}
+      backPath={isAnon ? '/' : '/dashboard'}
+      backLabel={isAnon ? 'Home' : 'Dashboard'}
+      isPaid={planAllowed}
     />
   )
 }

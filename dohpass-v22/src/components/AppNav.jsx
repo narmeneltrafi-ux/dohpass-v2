@@ -42,6 +42,8 @@ const AUTH_LINKS = [
   { label: 'Specialist', path: '/specialist' },
   { label: 'GP',         path: '/gp'         },
   { label: 'Flashcards', path: '/gems'       },
+  { label: 'Progress',   path: '/progress'   },
+  { label: 'Analytics',  path: '/analytics'  },
   { label: 'Pricing',    path: '/pricing'    },
 ]
 
@@ -91,10 +93,13 @@ export default function AppNav() {
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   const isAuthed = !!user
-  const links = isAuthed ? AUTH_LINKS : PUBLIC_LINKS
   const badge = planBadge(profile)
   const initials = deriveInitials(profile, user)
   const isPaid = PAID_BADGES.has(badge)
+  // Paid users get a Tutor entry appended to the nav
+  const links = isAuthed
+    ? [...AUTH_LINKS, ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : [])]
+    : PUBLIC_LINKS
 
   return (
     <>
@@ -163,52 +168,36 @@ export default function AppNav() {
         </div>
       </nav>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer — single flat column, no nested containers */}
       <div className={`lp-nav__mobile${mobileOpen ? ' lp-nav__mobile--open' : ''}`}>
-        <nav className="lp-nav__mobile-nav" aria-label="Mobile">
-          {links.map((l) => (
-            <button
-              key={l.path}
-              className={`lp-nav__mobile-link${location.pathname === l.path ? ' lp-nav__mobile-link--active' : ''}`}
-              onClick={() => navigate(l.path)}
-            >
-              {l.label}
+        {links.map((l) => (
+          <button
+            key={l.path}
+            className={`lp-nav__mobile-link${location.pathname === l.path ? ' lp-nav__mobile-link--active' : ''}`}
+            onClick={() => navigate(l.path)}
+          >
+            {l.label}
+          </button>
+        ))}
+        <div className="lp-nav__mobile-divider" />
+        {isAuthed ? (
+          <button
+            className={`lp-nav__mobile-link${location.pathname === '/account' ? ' lp-nav__mobile-link--active' : ''}`}
+            onClick={() => navigate('/account')}
+          >
+            Account
+            {badge && <span className="lp-nav__mobile-badge">{badge}</span>}
+          </button>
+        ) : (
+          <>
+            <button className="lp-nav__mobile-link" onClick={() => navigate('/login')}>
+              Sign In
             </button>
-          ))}
-        </nav>
-
-        <div className="lp-nav__mobile-actions">
-          {isAuthed ? (
-            <>
-              {badge && (
-                <button
-                  type="button"
-                  className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-                  style={{ alignSelf: 'flex-start' }}
-                  onClick={() => navigate('/account')}
-                  aria-label={`${badge} plan, open account`}
-                >
-                  {badge}
-                </button>
-              )}
-              <button
-                className="lp-nav__mobile-link"
-                onClick={() => navigate('/account')}
-              >
-                Account
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="lp-nav__signin" onClick={() => navigate('/login')} style={{ width: '100%' }}>
-                Sign In
-              </button>
-              <button className="lp-nav__cta" onClick={() => navigate('/pricing')} style={{ width: '100%' }}>
-                View Plans
-              </button>
-            </>
-          )}
-        </div>
+            <button className="lp-nav__mobile-cta" onClick={() => navigate('/pricing')}>
+              View Plans
+            </button>
+          </>
+        )}
       </div>
     </>
   )

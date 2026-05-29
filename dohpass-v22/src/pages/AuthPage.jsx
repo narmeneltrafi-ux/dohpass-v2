@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 // Where Supabase sends users after they click the email-confirmation link.
@@ -28,7 +28,8 @@ const IconArrow = () => (
 
 export default function AuthPage() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState('login')
+  const [params] = useSearchParams()
+  const [mode, setMode] = useState(params.get('mode') === 'signup' ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -39,6 +40,7 @@ export default function AuthPage() {
   const [awaitingConfirm, setAwaitingConfirm] = useState(false)
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   async function handleSubmit() {
     setLoading(true)
@@ -56,8 +58,8 @@ export default function AuthPage() {
         options: { emailRedirectTo: EMAIL_REDIRECT_URL },
       })
       if (error) setError(error.message)
-      else if (data.session) navigate('/')         // confirmations off → straight in
-      else setAwaitingConfirm(true)                // confirmation required → show confirm screen
+      else if (data.session) navigate('/diagnostic') // new account → readiness check first
+      else setAwaitingConfirm(true)                  // confirmation required → show confirm screen
     }
     setLoading(false)
   }
@@ -86,6 +88,16 @@ export default function AuthPage() {
 
   function handleKey(e) {
     if (e.key === 'Enter') handleSubmit()
+  }
+
+  async function handleReset() {
+    if (!email) { setError('Enter your email address above, then tap Forgot password.'); return }
+    setLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: EMAIL_REDIRECT_URL })
+    setLoading(false)
+    if (error) setError(error.message)
+    else setResetSent(true)
   }
 
   return (
@@ -203,6 +215,15 @@ export default function AuthPage() {
             />
           </div>
         </div>
+
+        {mode === 'login' && !resetSent && (
+          <button type="button" className="aw-forgot" onClick={handleReset} disabled={loading}>
+            Forgot password?
+          </button>
+        )}
+        {resetSent && (
+          <div className="auth-success">Reset link sent — check your email.</div>
+        )}
 
         {error && <div className="auth-error">{error}</div>}
         {message && <div className="auth-success">{message}</div>}

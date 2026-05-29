@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom'
+
 export default function ResultsScreen({ correct, wrong, track, onRestart }) {
+  const navigate = useNavigate()
   const total = correct + wrong
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
 
@@ -42,6 +45,12 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
 
         <button className={btnClass} onClick={onRestart}>
           Restart Session
+        </button>
+        <button className="results-nav-btn" onClick={() => navigate('/progress')}>
+          Review Weak Topics
+        </button>
+        <button className="results-nav-btn results-nav-btn--ghost" onClick={() => navigate('/dashboard')}>
+          Back to Dashboard
         </button>
       </div>
     </div>

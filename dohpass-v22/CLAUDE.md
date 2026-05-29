@@ -53,5 +53,37 @@ Same schema as `specialist_questions`, plus:
 ## Pending Work
 
 - [ ] Paywall with Stripe
-- [ ] Progress tracking
+- [x] Progress tracking — ProgressPage rewritten with design system + answered_at bug fixed
 - [ ] Bare domain fix: `dohpass.com` A record → `216.198.79.1`
+
+## Progress Tracking Architecture
+
+### `question_attempts` (append-only — source of truth)
+Every answer submission appends a row here — never overwritten.
+Use this table for SRS scheduling, adaptive question selection, performance trajectory, and pass prediction.
+
+| Column | Notes |
+|---|---|
+| `response_time_ms` | Milliseconds from question display to submit; `NULL` for data backfilled before this feature |
+| `track` | `'specialist'` \| `'gp'` |
+
+### `user_progress` (latest-state cache — fast reads)
+One row per `(user_id, question_id)` — always the most recent attempt.
+Use this for dashboard stats, weekly counts, topic accuracy, and streak calculations.
+A DB trigger (`trg_maintain_progress_summary`) auto-maintains the summary columns on every write — **never set them manually**.
+
+| Column | Maintained by |
+|---|---|
+| `total_attempts` | trigger — increments on every upsert |
+| `consecutive_correct` | trigger — resets to 0 on wrong, increments on correct |
+| `last_attempt_at` | trigger — always `now()` at write time |
+| `created_at` | application — timestamp of first attempt only |
+
+- `track` values: `'specialist'` \| `'gp'`
+- Timestamp column is `created_at` (NOT `answered_at` — do not select that column)
+
+## Key Invariants
+
+- `resolveCorrectIndex(options, answer)` in `src/lib/resolveCorrectIndex.js` — single source of truth for scoring; always use it, never inline letter comparison
+- `hasAccess(profile)` in `src/lib/supabase.js` — single gate for paid content; never bypass
+- `SELF_CHROMED_PATHS` in `src/App.jsx` — routes that suppress the global Header (they ship their own nav via AppNav or LandingNav)

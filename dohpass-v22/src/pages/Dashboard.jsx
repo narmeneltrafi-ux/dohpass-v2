@@ -8,18 +8,17 @@ import {
   fetchOverallProgress,
   fetchWeeklyAnswered,
   fetchQuestionCounts,
+  fetchStreak,
+  fetchFlashcardDueCount,
+  fetchWeakTopics,
+  fetchTodayAnswered,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
+import AppNav from '../components/AppNav.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS (monochrome line, gold-tinted via currentColor)
    ─────────────────────────────────────────────────────────────── */
-const IconCross = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
 const IconArrow = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -56,6 +55,14 @@ const IconClipboard = () => (
     <path d="M9 11h6M9 15h4" />
   </svg>
 )
+/* Drill / target — crosshair */
+const IconTarget = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+)
 /* Lock — gated content badge */
 const IconLock = ({ size = 13 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -63,30 +70,6 @@ const IconLock = ({ size = 13 }) => (
     <path d="M8 11V8a4 4 0 0 1 8 0v3" />
   </svg>
 )
-
-/* ───────────────────────────────────────────────────────────────
-   PLAN BADGE
-   ─────────────────────────────────────────────────────────────── */
-function planBadge(profile) {
-  if (!profile) return null
-  const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
-    return 'All Access'
-  if (plan === 'specialist') return 'Specialist'
-  if (plan === 'gp') return 'GP'
-  return 'Free'
-}
-const PAID_BADGES = new Set(['All Access', 'Specialist', 'GP'])
-
-function deriveInitials(profile, user) {
-  const src = profile?.full_name?.trim() || user?.email || ''
-  if (!src) return '?'
-  if (profile?.full_name) {
-    const parts = src.split(/\s+/).filter(Boolean)
-    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
-  }
-  return src.slice(0, 2).toUpperCase()
-}
 
 function titleCase(s) {
   if (!s) return ''
@@ -114,76 +97,16 @@ function deriveFirstName(profile, user) {
   return 'there'
 }
 
-/* ───────────────────────────────────────────────────────────────
-   AUTHED NAVBAR
-   ─────────────────────────────────────────────────────────────── */
-function AuthNavBar({ navigate, profile, user, currentPath }) {
-  const links = [
-    { label: 'Dashboard',  path: '/dashboard' },
-    { label: 'Specialist', path: '/specialist' },
-    { label: 'GP',         path: '/gp' },
-    { label: 'Flashcards', path: '/gems' },
-    { label: 'Progress',   path: '/progress' },
-  ]
-  const badge = planBadge(profile)
-  const initials = deriveInitials(profile, user)
-  const isPaid = PAID_BADGES.has(badge)
-
-  return (
-    <nav className="lp-nav lp-nav--auth" aria-label="Primary">
-      <div className="lp-nav__brand" onClick={() => navigate('/dashboard')}>
-        <span className="lp-nav__cross"><IconCross /></span>
-        <span className="lp-nav__name">
-          <span className="lp-nav__doh">DOH</span>
-          <span className="lp-nav__pass">Pass</span>
-        </span>
-      </div>
-      <div className="lp-nav__links">
-        {links.map(l => (
-          <button
-            key={l.path}
-            className={`lp-nav__link${currentPath === l.path ? ' lp-nav__link--active' : ''}`}
-            onClick={() => navigate(l.path)}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
-      <div className="lp-nav__right">
-        {badge && (
-          <button
-            type="button"
-            className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-            onClick={() => navigate('/account')}
-            title={`${badge} plan — open account`}
-            aria-label={`${badge} plan, open account`}
-          >
-            {badge}
-          </button>
-        )}
-        <button
-          type="button"
-          className="lp-nav__avatar"
-          onClick={() => navigate('/account')}
-          aria-label="Open account"
-          title="Account"
-        >
-          {initials}
-        </button>
-      </div>
-    </nav>
-  )
-}
 
 /* ───────────────────────────────────────────────────────────────
    STATS BAR — same shape as the landing-page stats
    ─────────────────────────────────────────────────────────────── */
-function DashStatsBar({ weekly, totalAnswered, accuracy, bankSize }) {
+function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
   const cells = [
+    { label: 'Day Streak',     value: streak,        suffix: '' },
     { label: 'This Week',      value: weekly,        suffix: '' },
     { label: 'Total Answered', value: totalAnswered, suffix: '' },
     { label: 'Accuracy',       value: accuracy,      suffix: '%' },
-    { label: 'Bank Size',      value: bankSize,      suffix: '+' },
   ]
   return (
     <div className="lp-stats" role="region" aria-label="Your progress at a glance">
@@ -202,7 +125,7 @@ function DashStatsBar({ weekly, totalAnswered, accuracy, bankSize }) {
 /* ───────────────────────────────────────────────────────────────
    GLASS TRACK CARD
    ─────────────────────────────────────────────────────────────── */
-function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progress, total }) {
+function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progress, total, due }) {
   const pct = (progress && total > 0) ? Math.round((progress.answered / total) * 100) : 0
   const hasProgress = progress && progress.answered > 0
   return (
@@ -216,12 +139,13 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
       <div className="lp-track__top">
         <span className="lp-track__icon"><Icon /></span>
         <span className="lp-track__eyebrow">{eyebrow}</span>
+        {due > 0 && <span className="lp-track__due">{due} due</span>}
       </div>
       <h3 className="lp-track__title">{title}</h3>
       <p className="lp-track__desc">{desc}</p>
 
       <div className="lp-track__meta">
-        <span className="lp-track__count">{count != null ? count.toLocaleString() : '—'} questions</span>
+        <span className="lp-track__count">{count != null ? count.toLocaleString() : '—'} {eyebrow === 'Flashcards' ? 'cards' : 'questions'}</span>
         {hasProgress && <span className="lp-track__pct">{pct}%</span>}
       </div>
       {hasProgress && (
@@ -231,7 +155,7 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
       )}
 
       <button className="lp-track__cta" type="button">
-        {hasProgress ? 'Continue' : 'Start'}
+        {due > 0 && eyebrow === 'Flashcards' ? `Review ${due} due` : hasProgress ? 'Continue' : 'Start'}
         <IconArrow />
       </button>
     </article>
@@ -245,11 +169,17 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [user, setUser] = useState(null)
-  const [counts, setCounts] = useState({ specialist: 0, gp: 0, flashcards: 0 })
+  const [counts, setCounts] = useState(null)
   const [weekly, setWeekly] = useState(null)
   const [overall, setOverall] = useState(null)
+  const [streak, setStreak] = useState(null)
   const [progSpecialist, setProgSpecialist] = useState(null)
   const [progGP, setProgGP] = useState(null)
+  const [flashcardDue, setFlashcardDue] = useState(null)
+  const [todayCount, setTodayCount] = useState(null)
+  const [drillData, setDrillData] = useState(null)  // { track, topics: [{topic, accuracy}] } | null
+
+  const DAILY_GOAL = 20
 
   useEffect(() => {
     let cancelled = false
@@ -262,16 +192,30 @@ export default function Dashboard() {
       fetchQuestionCounts(),
       fetchOverallProgress(),
       fetchWeeklyAnswered(),
+      fetchStreak(),
       fetchProgress('specialist'),
       fetchProgress('gp'),
-    ]).then(([p, c, o, w, ps, pg]) => {
+      fetchFlashcardDueCount(),
+      fetchTodayAnswered(),
+    ]).then(([p, c, o, w, s, ps, pg, fd, td]) => {
       if (cancelled) return
       setProfile(p)
       setCounts(c)
       setOverall(o)
       setWeekly(w)
+      setStreak(s)
       setProgSpecialist(ps)
       setProgGP(pg)
+      setFlashcardDue(fd)
+      setTodayCount(td)
+
+      // Fetch weak topics for the track the user primarily uses
+      if (!p || !hasAccess(p)) return
+      const drillTrack = p.diagnostic_track
+        || (ps?.answered >= pg?.answered ? 'specialist' : 'gp')
+      fetchWeakTopics(drillTrack).then(topics => {
+        if (!cancelled && topics.length > 0) setDrillData({ track: drillTrack, topics })
+      })
     })
     return () => { cancelled = true }
   }, [])
@@ -284,14 +228,16 @@ export default function Dashboard() {
   const accuracy = overall && overall.answered > 0
     ? Math.round((overall.correct / overall.answered) * 100)
     : null
-  const bankSize = (counts.specialist || 0) + (counts.gp || 0)
   const totalAnswered = overall?.answered ?? null
 
   let subhead
   if (weekly == null) {
     subhead = 'Loading your weekly progress…'
   } else if (weekly === 0) {
-    subhead = 'No questions answered this week — pick up where you left off.'
+    const isFirstVisit = overall == null || overall.answered === 0
+    subhead = isFirstVisit
+      ? 'Your exam prep starts here. Pick a track below to answer your first question.'
+      : 'No questions answered this week — pick up where you left off.'
   } else {
     subhead = `You've answered ${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} this week.`
   }
@@ -302,12 +248,25 @@ export default function Dashboard() {
       <div className="hw-orb hw-orb--2 lp-orb-dim" />
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
-      <AuthNavBar
-        navigate={navigate}
-        profile={profile}
-        user={user}
-        currentPath="/dashboard"
-      />
+      <AppNav />
+
+      {profile && !profile.diagnostic_completed_at && (
+        <div className="diag-dash-banner" role="banner" aria-label="Readiness check prompt">
+          <div className="diag-dash-banner__body">
+            <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
+            <span className="diag-dash-banner__sub">
+              20 questions · 10 topics · ~10 min — see exactly where to focus.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="diag-dash-banner__cta"
+            onClick={() => navigate('/diagnostic')}
+          >
+            Start <IconArrow size={13} />
+          </button>
+        </div>
+      )}
 
       <header className="lp-dash__hero">
         <h1 className="lp-dash__h1">
@@ -318,12 +277,36 @@ export default function Dashboard() {
 
       <div className="lp-statswrap lp-dash__statswrap">
         <DashStatsBar
+          streak={streak}
           weekly={weekly}
           totalAnswered={totalAnswered}
           accuracy={accuracy}
-          bankSize={bankSize > 0 ? bankSize : null}
         />
       </div>
+
+      {todayCount !== null && (
+        <div className="lp-goal" role="region" aria-label="Daily goal progress">
+          <div className="lp-goal__left">
+            <span className="lp-goal__label">Today's goal</span>
+            <span className={`lp-goal__count${todayCount >= DAILY_GOAL ? ' lp-goal__count--met' : ''}`}>
+              {todayCount} <span className="lp-goal__target">/ {DAILY_GOAL}</span>
+            </span>
+          </div>
+          <div className="lp-goal__track" aria-hidden="true">
+            <div
+              className={`lp-goal__fill${todayCount >= DAILY_GOAL ? ' lp-goal__fill--met' : ''}`}
+              style={{ width: `${Math.min(100, Math.round((todayCount / DAILY_GOAL) * 100))}%` }}
+            />
+          </div>
+          <span className="lp-goal__msg">
+            {todayCount === 0
+              ? 'Start answering to hit your goal'
+              : todayCount >= DAILY_GOAL
+                ? 'Goal met today!'
+                : `${DAILY_GOAL - todayCount} to go`}
+          </span>
+        </div>
+      )}
 
       <section className="lp-dash__section" aria-labelledby="lp-tracks-h">
         <h2 className="lp-dash__h2" id="lp-tracks-h">Your tracks</h2>
@@ -333,36 +316,87 @@ export default function Dashboard() {
             eyebrow="Specialist"
             title="Internal Medicine Specialist"
             desc="Cardiology, Respiratory, Nephrology and the rest of the specialist blueprint."
-            count={counts.specialist}
+            count={counts?.specialist}
             route="/specialist"
             navigate={navigate}
             progress={progSpecialist}
-            total={counts.specialist}
+            total={counts?.specialist}
           />
           <TrackCard
             Icon={IconHeartPulse}
             eyebrow="GP"
             title="General Practice"
             desc="Broad primary-care coverage mapped to the DOH GP blueprint."
-            count={counts.gp}
+            count={counts?.gp}
             route="/gp"
             navigate={navigate}
             progress={progGP}
-            total={counts.gp}
+            total={counts?.gp}
           />
           <TrackCard
             Icon={IconLayers}
             eyebrow="Flashcards"
             title="Concept &amp; Drug Cards"
             desc="High-yield concept, drug and anatomy cards across both tracks."
-            count={counts.flashcards}
+            count={counts?.flashcards}
             route="/gems"
             navigate={navigate}
             progress={null}
             total={null}
+            due={flashcardDue ?? 0}
           />
         </div>
       </section>
+
+      {drillData && (
+        <section className="lp-dash__section" aria-labelledby="lp-drill-h">
+          <h2 className="lp-dash__h2" id="lp-drill-h">Focus drill</h2>
+          <div
+            className="lp-drill"
+            onClick={() => navigate(`/${drillData.track}?drill=1`)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Start weak-topic drill for ${drillData.track}`}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/${drillData.track}?drill=1`) } }}
+          >
+            <span className="lp-drill__icon"><IconTarget /></span>
+            <div className="lp-drill__body">
+              <h3 className="lp-drill__title">Drill your weak spots</h3>
+              <p className="lp-drill__topics">
+                {drillData.topics.map(t => (
+                  <span key={t.topic} className="lp-drill__chip">
+                    {t.topic} <span className="lp-drill__chip-pct">{t.accuracy}%</span>
+                  </span>
+                ))}
+              </p>
+            </div>
+            <span className="lp-drill__arrow"><IconArrow size={18} /></span>
+          </div>
+        </section>
+      )}
+
+      {hasAccess(profile) && (
+        <section className="lp-dash__section" aria-labelledby="lp-tutor-h">
+          <h2 className="lp-dash__h2" id="lp-tutor-h">AI Tutor</h2>
+          <div
+            className="lp-tutor-cta"
+            onClick={() => navigate('/tutor')}
+            role="button"
+            tabIndex={0}
+            aria-label="Open your personal AI tutor"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/tutor') } }}
+          >
+            <span className="lp-tutor-cta__icon" aria-hidden="true">✦</span>
+            <div className="lp-tutor-cta__body">
+              <h3 className="lp-tutor-cta__title">Ask your personal tutor</h3>
+              <p className="lp-tutor-cta__desc">
+                Powered by your progress data — ask clinical questions, get practice problems, and understand your weak spots.
+              </p>
+            </div>
+            <span className="lp-tutor-cta__arrow"><IconArrow size={18} /></span>
+          </div>
+        </section>
+      )}
 
       <section className="lp-dash__section" aria-labelledby="lp-mock-h">
         <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>

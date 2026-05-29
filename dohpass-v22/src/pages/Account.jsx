@@ -158,7 +158,7 @@ export default function Account() {
               <span className="account-value">Free</span>
             </div>
             <p className="account-muted">
-              You're on the free tier (limited to 10 questions). Upgrade to unlock full access.
+              You're on the free tier. Upgrade to unlock full access to the question bank, flashcards, and analytics.
             </p>
             <button
               className="account-btn account-btn--primary"

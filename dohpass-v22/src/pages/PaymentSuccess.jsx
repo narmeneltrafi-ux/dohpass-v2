@@ -70,7 +70,7 @@ export default function PaymentSuccess() {
 
         <button
           className="ps-cta"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           disabled={status === 'polling'}
         >
           Go to Dashboard

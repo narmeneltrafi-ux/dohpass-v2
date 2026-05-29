@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
-import AiTutorChat from './AiTutorChat'
+import { supabase } from '../lib/supabase'
 
 /* ───────────────────────────────────────────────────────────────
    Premium question-taking interface.
@@ -49,13 +49,16 @@ export default function QuestionCard({
   mode = 'tutor',
   chromeTop = null,
   chromeBookmark = null,
-  tutorTrack = null,
-  profile = null,
+  backPath = '/dashboard',
+  backLabel = 'Dashboard',
+  isPaid = false,
 }) {
   const navigate = useNavigate()
   const explRef = useRef(null)
   const stemRef = useRef(null)
   const [submitting, setSubmitting] = useState(false)
+  const [aiExpl, setAiExpl] = useState(null)          // null | 'loading' | string
+  useEffect(() => { setAiExpl(null) }, [index])       // reset on every new question
 
   const options = question?.options || []
   const correctIdx = question ? resolveCorrectIndex(options, question.answer) : -1
@@ -92,7 +95,7 @@ export default function QuestionCard({
       if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return
 
       if (e.key === 'Escape') {
-        navigate('/dashboard')
+        navigate(backPath)
         return
       }
       if (!submitted) {
@@ -117,6 +120,25 @@ export default function QuestionCard({
     return () => document.removeEventListener('keydown', handleKey)
   }, [submitted, selectedOption, options.length, onNext, navigate, handleSelectInternal, handleSubmitInternal])
 
+  const handleAIExplain = useCallback(async () => {
+    if (!question || aiExpl) return
+    setAiExpl('loading')
+    const { data, error } = await supabase.functions.invoke('enhance-explanation', {
+      body: {
+        questionText: question.q,
+        options: question.options,
+        correctLetter: question.answer,
+        selectedLetter: selectedOption !== null ? String.fromCharCode(65 + selectedOption) : '',
+        existingExplanation: question.explanation ?? '',
+      },
+    })
+    if (error || !data?.explanation) {
+      setAiExpl('Sorry, could not load the AI explanation. Try again.')
+    } else {
+      setAiExpl(data.explanation)
+    }
+  }, [question, selectedOption, aiExpl])
+
   /* fade explanation panel into view */
   useEffect(() => {
     if (submitted && explRef.current) {
@@ -138,6 +160,8 @@ export default function QuestionCard({
 
   function getOptionState(i) {
     if (!submitted) return selectedOption === i ? 'selected' : 'idle'
+    // Diagnostic mode: reveal nothing — selected stays highlighted, no correct/incorrect
+    if (mode === 'diagnostic') return selectedOption === i ? 'selected' : 'idle'
     if (dataIssue) return 'idle'
     if (i === correctIdx) return 'correct'
     if (i === selectedOption && i !== correctIdx) return 'incorrect'
@@ -160,11 +184,12 @@ export default function QuestionCard({
         <div className="qui-topbar">
           <button
             className="qui-back"
-            onClick={() => navigate('/dashboard')}
-            aria-label="Back to dashboard"
+            onClick={() => navigate(backPath)}
+            aria-label={`Back to ${backLabel}`}
             type="button"
           >
             <IconArrowLeft />
+            <span className="qui-back__label">{backLabel}</span>
           </button>
           <div className="qui-counter" aria-live="polite">
             Question {index + 1} of {total}
@@ -230,35 +255,32 @@ export default function QuestionCard({
                     <IconX />
                   </span>
                 )}
-                {submitted && state === 'correct' && i !== selectedOption && (
-                  <span className="qui-opt__flag">CORRECT</span>
-                )}
               </button>
             )
           })}
         </div>
 
-        {!submitted && (
-          <div className="qui-actions">
-            {selectedOption === null ? (
-              <button className="qui-cta qui-cta--ghost" disabled aria-disabled="true" type="button">
-                Select an answer
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="qui-cta qui-cta--gold"
-                onClick={handleSubmitInternal}
-                disabled={submitting}
-                aria-label="Submit Answer"
-              >
-                {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
-              </button>
-            )}
+        {submitted && mode !== 'diagnostic' && mode === 'timed' && (
+          <div
+            className={`qui-expl qui-expl--timed${
+              dataIssue ? ' qui-expl--issue' : feedback?.correct ? ' qui-expl--ok' : ' qui-expl--bad'
+            }`}
+            data-testid="feedback"
+            data-feedback-correct={feedback?.correct ? 'true' : 'false'}
+          >
+            <div className="qui-expl__head">
+              <span className={`qui-expl__pill${dataIssue ? ' qui-expl__pill--bad' : ' qui-expl__pill--ok'}`}>
+                {dataIssue
+                  ? 'Data issue'
+                  : feedback?.correct
+                    ? `Correct — ${question.answer}`
+                    : `Incorrect — correct answer: ${question.answer}`}
+              </span>
+            </div>
           </div>
         )}
 
-        {submitted && (
+        {submitted && mode !== 'timed' && mode !== 'diagnostic' && (
           <div
             ref={explRef}
             className={`qui-expl${
@@ -292,21 +314,59 @@ export default function QuestionCard({
               )
             )}
 
-            {!dataIssue && tutorTrack && (
-              <AiTutorChat question={question} profile={profile} track={tutorTrack} />
+            {/* AI deeper explanation — paid users only, wrong answers only */}
+            {isPaid && !feedback?.correct && !dataIssue && (
+              <div className="qui-ai-expl">
+                {aiExpl === null && (
+                  <button type="button" className="qui-ai-expl__btn" onClick={handleAIExplain}>
+                    ✦ Explain in detail
+                  </button>
+                )}
+                {aiExpl === 'loading' && (
+                  <div className="qui-ai-expl__loading">
+                    <span className="qui-ai-expl__spinner" /> Generating explanation…
+                  </div>
+                )}
+                {aiExpl && aiExpl !== 'loading' && (
+                  <div className="qui-ai-expl__text">{aiExpl}</div>
+                )}
+              </div>
             )}
+          </div>
+        )}
 
-            <div className="qui-actions qui-actions--inline">
+        {/* Single CTA bar — sticky at viewport bottom on mobile for both
+            pre-submit (Submit Answer) and post-submit (Next Question).
+            On desktop it renders inline after the explanation panel. */}
+        <div className="qui-actions">
+          {!submitted ? (
+            selectedOption === null ? (
+              <button className="qui-cta qui-cta--ghost" disabled aria-disabled="true" type="button">
+                Select an answer
+              </button>
+            ) : (
               <button
                 type="button"
                 className="qui-cta qui-cta--gold"
-                onClick={onNext}
+                onClick={handleSubmitInternal}
+                disabled={submitting}
+                aria-label="Submit Answer"
               >
-                {index + 1 >= total ? 'Finish Session' : 'Next Question'} <IconArrowRight />
+                {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
               </button>
-            </div>
-          </div>
-        )}
+            )
+          ) : (
+            <button
+              type="button"
+              className="qui-cta qui-cta--gold"
+              onClick={onNext}
+            >
+              {index + 1 >= total
+                ? (mode === 'timed' ? 'Finish Exam' : 'Finish Session')
+                : 'Next Question'} <IconArrowRight />
+            </button>
+          )}
+        </div>
 
         <div className="qui-hint" aria-hidden="true">
           1–{Math.min(options.length, 5)} to select · Enter to submit · → for next

@@ -11,7 +11,7 @@ export function useProgress() {
 
     const { data, error } = await supabase
       .from('user_progress')
-      .select('topic, is_correct, answered_at')
+      .select('topic, is_correct')
       .eq('user_id', user.id)
       .eq('track', track)
       .not('topic', 'is', null)

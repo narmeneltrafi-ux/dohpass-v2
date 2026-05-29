@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
+import AiTutorChat from './AiTutorChat'
 
 /* ───────────────────────────────────────────────────────────────
    Premium question-taking interface.
@@ -48,6 +49,8 @@ export default function QuestionCard({
   mode = 'tutor',
   chromeTop = null,
   chromeBookmark = null,
+  tutorTrack = null,
+  profile = null,
 }) {
   const navigate = useNavigate()
   const explRef = useRef(null)
@@ -287,6 +290,10 @@ export default function QuestionCard({
               question.explanation && (
                 <p className="qui-expl__body">{question.explanation}</p>
               )
+            )}
+
+            {!dataIssue && tutorTrack && (
+              <AiTutorChat question={question} profile={profile} track={tutorTrack} />
             )}
 
             <div className="qui-actions qui-actions--inline">

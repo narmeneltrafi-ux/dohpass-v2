@@ -77,6 +77,7 @@ export default function SpecialistQuiz() {
   const [plan, setPlan] = useState(null)
   const [trialStatus, setTrialStatus] = useState(null) // { used, limit, remaining }
   const [anonUsed, setAnonUsed] = useState(0)
+  const [profile, setProfile] = useState(null)
   // Snapshot of anonUsed at mount, used to size the bank without retriggering
   // loadQuestions on every submit-driven increment.
   const anonUsedAtMountRef = useRef(0)
@@ -96,6 +97,7 @@ export default function SpecialistQuiz() {
       setIsAnon(false)
       const p = await getProfile()
       if (cancelled) return
+      setProfile(p)
       const paid = hasAccess(p)
       setIsPaid(paid)
       setPlan(p?.plan ?? 'free')
@@ -372,6 +374,8 @@ export default function SpecialistQuiz() {
       mode="tutor"
       chromeTop={chromeTop}
       chromeBookmark={chromeBookmark}
+      tutorTrack="specialist"
+      profile={profile}
     />
   )
 }

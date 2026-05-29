@@ -328,6 +328,8 @@ export default function MockExam() {
               onNext={handleNext}
               feedback={feedback}
               track={accentVar}
+              tutorTrack={examTrack}
+              profile={profile}
             />
           </div>
         )}

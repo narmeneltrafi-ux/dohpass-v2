@@ -12,11 +12,20 @@ const SB_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
 const MODEL = "claude-sonnet-4-6";
 const MAX_LOOPS = 4;
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://www.dohpass.com")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 function primaryTopic(topic: string): string {
   if (!topic) return "Unknown";
@@ -175,7 +184,8 @@ async function buildUserContext(
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const cors = corsFor(req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   // In-function auth — gateway verify_jwt = false per project convention
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -190,7 +200,7 @@ Deno.serve(async (req) => {
   if (authErr || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 
@@ -203,7 +213,7 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 
@@ -211,7 +221,7 @@ Deno.serve(async (req) => {
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response(JSON.stringify({ error: "messages array required" }), {
       status: 400,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 
@@ -265,7 +275,7 @@ ${userContext}
         JSON.stringify({
           error: `Claude error ${res.status}: ${errText.slice(0, 200)}`,
         }),
-        { status: 502, headers: { ...CORS, "Content-Type": "application/json" } }
+        { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -335,7 +345,7 @@ ${userContext}
 
   return new Response(stream, {
     headers: {
-      ...CORS,
+      ...cors,
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "X-Accel-Buffering": "no",

@@ -2,7 +2,7 @@
 // Changes from v1:
 //   - hasAccess gate (access_expires_at check) before any Anthropic call
 //   - Rate limit: 20 req/user/day via ai_requests table
-//   - CORS locked to https://www.dohpass.com
+//   - CORS driven by ALLOWED_ORIGINS env (comma-separated, falls back to https://www.dohpass.com)
 //   - Prompt caching on system prompt (ephemeral)
 //   - mode:'coach' → JSON response with 3-bullet daily plan
 //   - questionId → inject question stem+explanation as cached context
@@ -17,13 +17,21 @@ const SB_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
 const MODEL = "claude-sonnet-4-6";
 const MAX_LOOPS = 4;
 const DAILY_LIMIT = 20;
-const ALLOWED_ORIGIN = "https://www.dohpass.com";
 
-const CORS = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://www.dohpass.com")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 // deno-lint-ignore no-explicit-any
 type SvcClient = ReturnType<typeof createClient>;
@@ -35,10 +43,10 @@ function primaryTopic(topic: string): string {
   return topic.split(/\/|,/)[0].trim();
 }
 
-function jsonError(msg: string, status: number) {
+function jsonError(msg: string, status: number, cors: Record<string, string>) {
   return new Response(JSON.stringify({ error: msg }), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json" },
+    headers: { ...cors, "Content-Type": "application/json" },
   });
 }
 
@@ -269,7 +277,8 @@ async function fetchPracticeQuestion(
 async function runStudyCoach(
   userId: string,
   track: string,
-  svc: SvcClient
+  svc: SvcClient,
+  cors: Record<string, string>
 ): Promise<Response> {
   const userContext = await buildUserContext(userId, svc);
 
@@ -299,7 +308,7 @@ async function runStudyCoach(
 
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    return jsonError(`Claude error ${res.status}: ${errText.slice(0, 200)}`, 502);
+    return jsonError(`Claude error ${res.status}: ${errText.slice(0, 200)}`, 502, cors);
   }
 
   // deno-lint-ignore no-explicit-any
@@ -319,14 +328,15 @@ async function runStudyCoach(
 
   return new Response(
     JSON.stringify({ plan: bullets.length > 0 ? bullets : [text] }),
-    { headers: { ...CORS, "Content-Type": "application/json" } }
+    { headers: { ...cors, "Content-Type": "application/json" } }
   );
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const cors = corsFor(req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   // 1. Auth — manual check (verify_jwt=false per project convention)
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -338,7 +348,7 @@ Deno.serve(async (req) => {
     error: authErr,
   } = await anonClient.auth.getUser();
 
-  if (authErr || !user) return jsonError("Unauthorized", 401);
+  if (authErr || !user) return jsonError("Unauthorized", 401, cors);
 
   const svc = createClient(SUPABASE_URL, SB_SERVICE_ROLE_KEY);
 
@@ -351,7 +361,7 @@ Deno.serve(async (req) => {
         message:
           "AI Tutor is available to active subscribers. Upgrade to unlock personalised coaching.",
       }),
-      { status: 403, headers: { ...CORS, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...cors, "Content-Type": "application/json" } }
     );
   }
 
@@ -363,7 +373,7 @@ Deno.serve(async (req) => {
         error: "rate_limit",
         message: `Daily limit of ${DAILY_LIMIT} AI requests reached. Resets at midnight UTC.`,
       }),
-      { status: 429, headers: { ...CORS, "Content-Type": "application/json" } }
+      { status: 429, headers: { ...cors, "Content-Type": "application/json" } }
     );
   }
 
@@ -377,20 +387,20 @@ Deno.serve(async (req) => {
   try {
     body = await req.json();
   } catch {
-    return jsonError("Invalid JSON", 400);
+    return jsonError("Invalid JSON", 400, cors);
   }
 
   const { mode = "tutor", track = "specialist", questionId } = body;
 
   // 5. Study Coach mode — JSON response, no streaming
   if (mode === "coach") {
-    return runStudyCoach(user.id, track, svc);
+    return runStudyCoach(user.id, track, svc, cors);
   }
 
   // 6. Tutor mode
   const { messages } = body;
   if (!Array.isArray(messages) || messages.length === 0) {
-    return jsonError("messages array required for tutor mode", 400);
+    return jsonError("messages array required for tutor mode", 400, cors);
   }
 
   // Build system prompt (cached)
@@ -448,7 +458,7 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      return jsonError(`Claude error ${res.status}: ${errText.slice(0, 200)}`, 502);
+      return jsonError(`Claude error ${res.status}: ${errText.slice(0, 200)}`, 502, cors);
     }
 
     // deno-lint-ignore no-explicit-any
@@ -517,7 +527,7 @@ Deno.serve(async (req) => {
 
   return new Response(stream, {
     headers: {
-      ...CORS,
+      ...cors,
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "X-Accel-Buffering": "no",

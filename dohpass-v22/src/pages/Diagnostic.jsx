@@ -284,7 +284,7 @@ function ResultsPhase({ questions, answers, track, profile }) {
           )}
           {!isPaid && (
             <button type="button" className="diag-skip" onClick={() => navigate('/dashboard')}>
-              Already subscribed? Go to dashboard
+              Already have access? Go to dashboard
             </button>
           )}
         </div>

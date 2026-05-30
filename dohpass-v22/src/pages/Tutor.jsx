@@ -338,7 +338,7 @@ export default function Tutor() {
                     <span className="tutor-ctx__topic-name">{t.topic}</span>
                     <span
                       className="tutor-ctx__topic-pct"
-                      style={{ color: t.accuracy < 50 ? '#ef4444' : '#f97316' }}
+                      style={{ color: t.accuracy < 50 ? 'var(--red)' : 'var(--gold)' }}
                     >
                       {t.accuracy}%
                     </span>

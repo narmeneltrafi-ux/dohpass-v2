@@ -1,25 +1,26 @@
+const IconBookmark = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  </svg>
+)
+const IconBookmarkFilled = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  </svg>
+)
+
 export function BookmarkButton({ questionId, topic, bookmarks, toggle }) {
-  const isBookmarked = bookmarks.has(String(questionId))
+  const saved = bookmarks.has(String(questionId))
   return (
     <button
+      type="button"
+      className={`bm-btn${saved ? ' bm-btn--saved' : ''}`}
       onClick={(e) => { e.stopPropagation(); toggle(String(questionId), topic) }}
-      style={{
-        background: isBookmarked ? 'rgba(212,175,55,0.15)' : 'transparent',
-        border: `1px solid ${isBookmarked ? '#D4AF37' : 'rgba(255,255,255,0.15)'}`,
-        borderRadius: '8px',
-        padding: '6px 8px',
-        cursor: 'pointer',
-        color: isBookmarked ? '#D4AF37' : '#666',
-        transition: 'all 0.2s ease',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        fontSize: '13px',
-      }}
-      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+      title={saved ? 'Remove bookmark' : 'Bookmark this question'}
+      aria-pressed={saved}
     >
-      {isBookmarked ? '★' : '☆'}
-      {isBookmarked ? 'Saved' : 'Save'}
+      {saved ? <IconBookmarkFilled /> : <IconBookmark />}
+      {saved ? 'Saved' : 'Save'}
     </button>
   )
 }

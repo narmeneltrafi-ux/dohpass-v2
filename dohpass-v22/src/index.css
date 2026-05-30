@@ -8693,3 +8693,42 @@ a.lp-contact__value:hover { color: var(--gold); }
 .fc-back-bullet { padding-left: 16px; color: var(--text-secondary); font-size: 13px; line-height: 1.75; }
 .fc-back-spacer { height: 6px; }
 .fc-back-line   { color: var(--text); font-size: 13px; line-height: 1.75; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOKMARK BUTTON  (bm-btn)
+   ═══════════════════════════════════════════════════════════════ */
+.bm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-med);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.bm-btn:hover {
+  color: var(--gold);
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+}
+.bm-btn--saved {
+  background: var(--gold-dim);
+  border-color: var(--gold-border);
+  color: var(--gold);
+}
+
+/* ── Analytics trend indicator ───────────────────────────────── */
+.an-trend {
+  margin-left: 0.4em;
+  font-size: 0.55em;
+  vertical-align: middle;
+}
+
+/* ── Quiz explanation panel — disable entry animation ────────── */
+.qui-expl--no-anim { animation: none; }

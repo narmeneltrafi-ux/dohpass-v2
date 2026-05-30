@@ -217,10 +217,10 @@ export default function Analytics() {
                 <span className={`an-stat-big ${accentVar}`}>
                   {stats.accuracy}%
                   {stats.trend && (
-                    <span style={{
-                      marginLeft: 6, fontSize: '0.55em', verticalAlign: 'middle',
-                      color: stats.trend === '↑' ? 'var(--green)' : stats.trend === '↓' ? 'var(--red)' : 'var(--muted)',
-                    }}>{stats.trend}</span>
+                    <span
+                      className="an-trend"
+                      style={{ color: stats.trend === '↑' ? 'var(--green)' : stats.trend === '↓' ? 'var(--red)' : 'var(--text-muted)' }}
+                    >{stats.trend}</span>
                   )}
                 </span>
                 <span className="an-stat-label">Overall Accuracy</span>

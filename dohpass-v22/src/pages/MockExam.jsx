@@ -159,7 +159,7 @@ function ReviewPhase({ wrongEntries, track, onDone }) {
         </div>
 
         {/* Explanation */}
-        <div className="qui-expl qui-expl--bad" style={{ animation: 'none' }}>
+        <div className="qui-expl qui-expl--bad qui-expl--no-anim">
           <div className="qui-expl__head">
             <span className="qui-expl__pill qui-expl__pill--ok">
               Correct answer: {q.answer}

@@ -40,6 +40,11 @@ const IconX = ({ size = 12 }) => (
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
+const IconSparkle = ({ size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 1l2.753 8.527L23.5 12l-8.747 2.473L12 23l-2.753-8.527L.5 12l8.747-2.473z" />
+  </svg>
+)
 
 function letterFor(i) { return String.fromCharCode(65 + i) }
 
@@ -319,7 +324,8 @@ export default function QuestionCard({
               <div className="qui-ai-expl">
                 {aiExpl === null && (
                   <button type="button" className="qui-ai-expl__btn" onClick={handleAIExplain}>
-                    ✦ Explain in detail
+                    <IconSparkle size={11} />
+                    Deeper explanation
                   </button>
                 )}
                 {aiExpl === 'loading' && (

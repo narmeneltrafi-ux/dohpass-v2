@@ -1874,9 +1874,39 @@ nav {
   box-shadow: var(--shadow);
 }
 
-.results-emoji   { font-size: 2.75rem; margin-bottom: 1rem; }
-.results-title   { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: -0.3px; }
-.results-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+.results-verdict {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.26rem 0.7rem;
+  border-radius: 999px;
+  margin-bottom: 0.85rem;
+}
+.results-verdict--pass {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.results-verdict--near {
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+}
+.results-verdict--work {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+}
+.results-verdict--low {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.results-title   { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: -0.3px; }
+.results-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.55; }
 .results-score   { margin-bottom: 0.25rem; }
 
 .score-pct {
@@ -6439,7 +6469,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
-  color: #71717a;
+  color: var(--text-muted);
   text-align: right;
 }
 
@@ -6447,7 +6477,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   font-family: 'Inter', sans-serif;
   font-size: 1rem;
   line-height: 1.65;
-  color: #d4d4d8;
+  color: var(--text);
   margin: 0;
   white-space: pre-wrap;
 }
@@ -6458,7 +6488,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   text-align: left;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.7rem;
-  color: #52525b;
+  color: var(--text-dim);
   letter-spacing: 0.05em;
 }
 
@@ -7824,7 +7854,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   align-items: center;
   gap: 0.6rem;
   font-size: 0.82rem;
-  color: #71717a;
+  color: var(--text-muted);
 }
 .qui-ai-expl__spinner {
   display: inline-block;
@@ -7838,7 +7868,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 .qui-ai-expl__text {
   font-size: 0.88rem;
   line-height: 1.65;
-  color: #d4d4d8;
+  color: var(--text);
   white-space: pre-wrap;
 }
 

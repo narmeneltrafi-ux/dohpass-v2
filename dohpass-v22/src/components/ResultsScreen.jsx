@@ -1,26 +1,43 @@
 import { useNavigate } from 'react-router-dom'
 
+function getVerdict(pct) {
+  if (pct >= 80) return {
+    label: 'Strong performance',
+    sub: 'Your accuracy is above the DOH pass benchmark. Keep this up.',
+    mod: 'pass',
+  }
+  if (pct >= 65) return {
+    label: 'Approaching pass mark',
+    sub: "You're close to benchmark. Target your weak topics and review the explanations.",
+    mod: 'near',
+  }
+  if (pct >= 50) return {
+    label: 'More revision needed',
+    sub: 'Focus on the topics you missed. Review each explanation before moving on.',
+    mod: 'work',
+  }
+  return {
+    label: 'Foundational review needed',
+    sub: 'Work through the explanations systematically. Understanding the reasoning closes the gap faster than volume.',
+    mod: 'low',
+  }
+}
+
 export default function ResultsScreen({ correct, wrong, track, onRestart }) {
   const navigate = useNavigate()
   const total = correct + wrong
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
+  const verdict = getVerdict(pct)
 
-  function getMessage() {
-    if (pct >= 80) return { emoji: '🏆', text: 'Excellent. DOH-ready.' }
-    if (pct >= 60) return { emoji: '📈', text: 'Good effort. Keep pushing.' }
-    return { emoji: '📚', text: "More revision needed. You've got this." }
-  }
-
-  const { emoji, text } = getMessage()
   const scoreClass = `score-pct ${track === 'gold' ? 'gold' : 'blue'}`
   const btnClass = `btn-primary ${track === 'gold' ? 'gold' : 'blue'} results-restart`
 
   return (
     <div className="results-wrap">
       <div className="results-card">
-        <div className="results-emoji">{emoji}</div>
-        <h2 className="results-title">Session Complete</h2>
-        <p className="results-subtitle">{text}</p>
+        <p className={`results-verdict results-verdict--${verdict.mod}`}>{verdict.label}</p>
+        <h2 className="results-title">Session complete</h2>
+        <p className="results-subtitle">{verdict.sub}</p>
 
         <div className="results-score">
           <span className={scoreClass}>{pct}%</span>
@@ -44,13 +61,13 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
         </div>
 
         <button className={btnClass} onClick={onRestart}>
-          Restart Session
+          Practice again
         </button>
         <button className="results-nav-btn" onClick={() => navigate('/progress')}>
-          Review Weak Topics
+          Review weak topics
         </button>
         <button className="results-nav-btn results-nav-btn--ghost" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
+          Back to dashboard
         </button>
       </div>
     </div>

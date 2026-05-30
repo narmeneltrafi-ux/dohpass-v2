@@ -68,6 +68,28 @@ function planBadge(profile) {
   return { label: 'Free', cls: 'plan-badge--free' }
 }
 
+function PassProbSparkline({ data }) {
+  const W = 400, H = 80, PAD = 10
+  const toX = (i) => PAD + (i / Math.max(1, data.length - 1)) * (W - PAD * 2)
+  const toY = (p) => H - PAD - (p / 100) * (H - PAD * 2)
+  const passY = toY(60)
+  const pathD = data.map((pt, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(pt.prob)}`).join(' ')
+  const last  = data[data.length - 1].prob
+  const color = last >= 70 ? 'var(--green)' : last >= 60 ? 'var(--gold)' : 'var(--red)'
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="an-sparkline" aria-label="Pass probability over time">
+      <line x1={PAD} y1={passY} x2={W - PAD} y2={passY}
+        stroke="var(--muted)" strokeWidth="1" strokeDasharray="4 3" opacity="0.5" />
+      <text x={W - PAD + 2} y={passY + 3} fontSize="9" fill="var(--muted)">60%</text>
+      <path d={pathD} fill="none" stroke={color} strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={toX(data.length - 1)} cy={toY(last)} r="3.5" fill={color} />
+      <text x={toX(data.length - 1)} y={toY(last) - 7} fontSize="9"
+        fill={color} textAnchor="middle">{last}%</text>
+    </svg>
+  )
+}
+
 export default function Analytics() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
@@ -166,6 +188,27 @@ export default function Analytics() {
   const maxDaily = Math.max(1, ...dailyData.map(d => d.correct + d.wrong))
 
   const passProb  = topicStats.length > 0 ? computePassProb(topicStats, activeTrack) : null
+
+  // Pass probability at every 10-question milestone (progress is ordered by created_at
+  // since user_progress.created_at captures first-attempt time)
+  const passProbHistory = useMemo(() => {
+    if (progress.length < 20) return []
+    const sorted = [...progress].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    const points = []
+    for (let i = 10; i <= sorted.length; i += 10) {
+      const slice = sorted.slice(0, i)
+      const topicMap = {}
+      for (const row of slice) {
+        const topic = qMap.get(row.question_id) || 'Unknown'
+        if (!topicMap[topic]) topicMap[topic] = { topic, correct: 0, total: 0 }
+        topicMap[topic].total++
+        if (row.is_correct) topicMap[topic].correct++
+      }
+      points.push({ n: i, prob: computePassProb(Object.values(topicMap), activeTrack) })
+    }
+    return points
+  }, [progress, qMap, activeTrack])
+
   const badge     = planBadge(profile)
   const accentVar = activeTrack === 'specialist' ? 'gold' : 'blue'
 
@@ -236,6 +279,17 @@ export default function Analytics() {
                 <span className="an-stat-label">Questions Answered</span>
               </div>
             </div>
+
+            {/* Pass probability trend */}
+            {passProbHistory.length >= 2 && (
+              <div className="an-card">
+                <h3 className="an-card-title">Pass Probability Trend</h3>
+                <p className="an-card-sub">Estimated pass likelihood after every 10 questions answered</p>
+                <div className="an-sparkline-wrap">
+                  <PassProbSparkline data={passProbHistory} />
+                </div>
+              </div>
+            )}
 
             {/* Daily activity chart */}
             <div className="an-card">

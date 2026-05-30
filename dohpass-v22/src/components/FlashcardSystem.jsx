@@ -16,10 +16,10 @@ function renderBack(text) {
   return text.split("\n").map((line, i) => {
     const html = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     if (line.startsWith("·")) {
-      return <div key={i} style={{ paddingLeft: 16, color: "#CBD5E1", fontSize: 13, lineHeight: "1.75" }} dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div key={i} className="fc-back-bullet" dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    if (line.trim() === "") return <div key={i} style={{ height: 6 }} />;
-    return <div key={i} style={{ color: "#E2E8F0", fontSize: 13, lineHeight: "1.75" }} dangerouslySetInnerHTML={{ __html: html }} />;
+    if (line.trim() === "") return <div key={i} className="fc-back-spacer" />;
+    return <div key={i} className="fc-back-line" dangerouslySetInnerHTML={{ __html: html }} />;
   });
 }
 
@@ -80,7 +80,7 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
             {card.subtopic}
           </div>
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9", textAlign: "center", lineHeight: 1.4 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Inter',sans-serif", color: "var(--text)", textAlign: "center", lineHeight: 1.4, letterSpacing: "-0.02em" }}>
               {card.front}
             </div>
           </div>

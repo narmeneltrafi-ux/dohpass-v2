@@ -2,32 +2,22 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase, getProfile, hasAccess } from '../lib/supabase'
 
-const SYSTEM_ICONS = {
-  'Neurology':        '🧠',
-  'Cardiology':       '❤️',
-  'Haematology':      '🩸',
-  'GIT':              '🫃',
-  'Endocrinology':    '⚗️',
-  'Rheumatology':     '🦴',
-  'Nephrology':       '🫘',
-  'Respiratory':      '🫁',
-  'Infectious Disease': '🦠',
-  'Pharmacology':     '💊',
-  'Dermatology':      '🩹',
-  'Psychiatry':       '🧬',
-  'Oncology':         '🔬',
-  'Musculoskeletal':  '💪',
-  'Cardiovascular':   '🫀',
-  'Gastroenterology': '🫃',
-  'Obstetrics':       '🤰',
-  'Paediatrics':      '👶',
-  'Ophthalmology':    '👁️',
-  'ENT':              '👂',
-  'Primary Care':     '🩺',
-}
+const IconLock = ({ size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+)
+const IconArrowRight = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </svg>
+)
 
-function getIcon(system) {
-  return SYSTEM_ICONS[system] || '📋'
+function systemMonogram(name) {
+  const words = name.trim().split(/\s+/)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
 }
 
 export default function FlashcardsTrack() {
@@ -36,14 +26,15 @@ export default function FlashcardsTrack() {
 
   const [systems, setSystems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError]     = useState(null)
   const [profile, setProfile] = useState(undefined)
 
-  const trackKey = (track || '').toLowerCase() === 'specialist' ? 'specialist' : 'gp'
+  const trackKey    = (track || '').toLowerCase() === 'specialist' ? 'specialist' : 'gp'
   const isSpecialist = trackKey === 'specialist'
-  const trackLabel = isSpecialist ? 'Specialist' : 'General Practitioner'
-  const accentColor = isSpecialist ? '#F59E0B' : '#4FC3F7'
-  const accentBg = isSpecialist ? 'rgba(245,158,11,0.12)' : 'rgba(79,195,247,0.12)'
+  const trackLabel  = isSpecialist ? 'Specialist' : 'General Practitioner'
+  const accentColor = isSpecialist ? 'var(--gold)' : 'var(--blue-light)'
+  const accentBg    = isSpecialist ? 'var(--gold-dim)' : 'var(--blue-dim)'
+  const accentBorder = isSpecialist ? 'var(--gold-border)' : 'var(--blue-border)'
 
   const hasFullAccess = Boolean(
     hasAccess(profile) && (profile?.plan === 'all_access' || profile?.plan === trackKey)
@@ -63,11 +54,7 @@ export default function FlashcardsTrack() {
       }
       const result = (counts || [])
         .filter(r => r.track?.toLowerCase() === trackKey)
-        .map(r => ({
-          name: r.system,
-          total: r.total,
-          previewTotal: r.preview_total ?? 0,
-        }))
+        .map(r => ({ name: r.system, total: r.total, previewTotal: r.preview_total ?? 0 }))
         .sort((a, b) => b.total - a.total)
       setSystems(result)
       setLoading(false)
@@ -91,64 +78,49 @@ export default function FlashcardsTrack() {
   }
 
   return (
-      <div className="home-page" style={{ paddingTop: '62px' }}>
-        <div className="hero">
-          <h1 className="hero-title" style={{color: accentColor}}>{trackLabel}</h1>
-          <p className="hero-sub">Choose a system to start reviewing</p>
-        </div>
-
-        <div className="tracks">
-
-          {loading && (
-            <div className="loading">
-              <div className="spinner" />
-              Loading systems...
-            </div>
-          )}
-
-          {error && (
-            <div className="loading error">{error}</div>
-          )}
-
-          {!loading && !error && systems.length === 0 && (
-            <div className="loading">No flashcard systems available yet — check back soon.</div>
-          )}
-
-          {!loading && !error && systems.map(system => (
-            <div
-              key={system.name}
-              className="track-card"
-              onClick={() => navigate('/flashcards/' + track + '/' + system.name.toLowerCase())}
-              style={{
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                border: '1px solid ' + accentColor + '40',
-                cursor: 'pointer',
-              }}
-            >
-              <div className="track-icon">{getIcon(system.name)}</div>
-              <div className="track-info">
-                <h2 className="track-title" style={{color: accentColor}}>
-                  {system.name}
-                </h2>
-                <p className="track-desc">Tap to start reviewing</p>
-                <span
-                  className="track-badge"
-                  style={{
-                    background: accentBg,
-                    color: accentColor,
-                    border: '1px solid ' + accentColor + '30',
-                    opacity: hasFullAccess ? 1 : 0.85,
-                  }}
-                >
-                  {!hasFullAccess && <span style={{ marginRight: 4 }}>🔒</span>}
-                  {badgeText(system)}
-                </span>
-              </div>
-              <div className="track-arrow" style={{color: accentColor}}>→</div>
-            </div>
-          ))}
-
-        </div>
+    <div className="home-page" style={{ paddingTop: '62px' }}>
+      <div className="hero">
+        <h1 className="hero-title" style={{ color: accentColor }}>{trackLabel}</h1>
+        <p className="hero-sub">Choose a system to start reviewing</p>
       </div>
+
+      <div className="tracks">
+        {loading && (
+          <div className="loading"><div className="spinner" />Loading systems…</div>
+        )}
+        {error && <div className="loading error">{error}</div>}
+        {!loading && !error && systems.length === 0 && (
+          <div className="loading">No flashcard systems available yet — check back soon.</div>
+        )}
+
+        {!loading && !error && systems.map(system => (
+          <div
+            key={system.name}
+            className="track-card"
+            onClick={() => navigate('/flashcards/' + track + '/' + system.name.toLowerCase())}
+          >
+            <div className="track-icon" style={{ color: accentColor, background: accentBg, borderColor: accentBorder, fontSize: '0.88rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+              {systemMonogram(system.name)}
+            </div>
+            <div className="track-info">
+              <h2 className="track-title" style={{ color: accentColor }}>
+                {system.name}
+              </h2>
+              <p className="track-desc">Tap to start reviewing</p>
+              <span
+                className="track-badge"
+                style={{ background: accentBg, color: accentColor, borderColor: accentBorder }}
+              >
+                {!hasFullAccess && <IconLock size={11} />}
+                {badgeText(system)}
+              </span>
+            </div>
+            <div className="track-arrow" style={{ color: accentColor }}>
+              <IconArrowRight />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

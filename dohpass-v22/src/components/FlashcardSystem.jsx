@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase, getProfile, hasAccess } from "../lib/supabase";
 import { scheduleCard, RATING, RATING_CONFIG, isDue, nextReviewLabel } from "../lib/fsrs";
@@ -58,8 +58,26 @@ function previewLabel(fsrsData, rating) {
 // ─── FLIP CARD ────────────────────────────────────────────────────────────────
 function FlipCard({ card, fsrsData, onRate, saving }) {
   const [flipped, setFlipped] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const scrollRef = useRef(null);
   const cfg = TYPE_CONFIG[card.card_type] || TYPE_CONFIG.concept;
-  useEffect(() => { setFlipped(false); }, [card.id]);
+
+  useEffect(() => { setFlipped(false); setShowHint(false); }, [card.id]);
+
+  // Check for overflow after flip animation settles (500ms)
+  useEffect(() => {
+    if (!flipped) return;
+    const id = setTimeout(() => {
+      const el = scrollRef.current;
+      if (el) setShowHint(el.scrollHeight > el.clientHeight + 2);
+    }, 520);
+    return () => clearTimeout(id);
+  }, [card.id, flipped]);
+
+  function onScroll() {
+    const el = scrollRef.current;
+    if (el) setShowHint(el.scrollTop + el.clientHeight < el.scrollHeight - 8);
+  }
 
   return (
     <div onClick={() => setFlipped(f => !f)} style={{ cursor: "pointer", perspective: 1000, width: "100%", height: 340, userSelect: "none" }}>
@@ -117,14 +135,19 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
             {card.front}
           </div>
           <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", inset: 0, overflowY: "auto", paddingBottom: 4 }}>
+            <div ref={scrollRef} onScroll={onScroll} style={{ position: "absolute", inset: 0, overflowY: "auto", paddingBottom: 4 }}>
               {renderBack(card.back)}
             </div>
-            <div style={{
-              position: "absolute", bottom: 0, left: 0, right: 0, height: 28,
-              background: "linear-gradient(to bottom, transparent, rgba(10,18,36,0.88))",
-              pointerEvents: "none",
-            }} />
+            {showHint && (
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, height: 36,
+                background: "linear-gradient(to bottom, transparent, rgba(10,18,36,0.92))",
+                pointerEvents: "none",
+                display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 5,
+              }}>
+                <span style={{ fontSize: 9, color: "#475569", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.06em" }}>scroll ↓</span>
+              </div>
+            )}
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 6 }}>
             {[RATING.AGAIN, RATING.HARD, RATING.GOOD, RATING.EASY].map(rating => {
@@ -164,7 +187,7 @@ function ProgressBar({ known, total }) {
           {known}/{total} · {pct}%
         </span>
       </div>
-      <div style={{ height: 4, borderRadius: 2, background: "#1E293B", overflow: "hidden" }}>
+      <div style={{ height: 4, borderRadius: 2, background: "#2d3448", overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#d4a843,#f5d980)", borderRadius: 2, transition: "width 0.4s ease" }} />
       </div>
     </div>

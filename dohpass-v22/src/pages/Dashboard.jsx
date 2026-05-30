@@ -4,14 +4,10 @@ import {
   supabase,
   getProfile,
   hasAccess,
-  fetchProgress,
-  fetchOverallProgress,
-  fetchWeeklyAnswered,
   fetchQuestionCounts,
   fetchStreak,
-  fetchFlashcardDueCount,
   fetchWeakTopics,
-  fetchTodayAnswered,
+  fetchUserDashboardStats,
   saveExamDate,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
@@ -162,6 +158,34 @@ function ExamDateBanner({ onSave, onDismiss }) {
 }
 
 /* ───────────────────────────────────────────────────────────────
+   EXAM COUNTDOWN — days to exam + recommended daily question target
+   ─────────────────────────────────────────────────────────────── */
+function ExamCountdown({ profile, totalQuestions, totalAnswered }) {
+  if (!profile?.exam_date) return null
+  const daysLeft = Math.max(0, Math.ceil(
+    (new Date(profile.exam_date).getTime() - Date.now()) / 86400000
+  ))
+  if (daysLeft <= 0) return null
+  const remaining    = Math.max(0, (totalQuestions || 0) - (totalAnswered || 0))
+  const targetPerDay = remaining > 0 && daysLeft > 0 ? Math.ceil(remaining / daysLeft) : 0
+  const examLabel    = profile.exam_name || 'Your exam'
+  return (
+    <div className="exam-countdown" role="region" aria-label="Exam countdown">
+      <div className="exam-countdown__left">
+        <span className="exam-countdown__days">{daysLeft}</span>
+        <span className="exam-countdown__unit">days to {examLabel}</span>
+      </div>
+      {targetPerDay > 0 && (
+        <div className="exam-countdown__right">
+          <span className="exam-countdown__target">{targetPerDay}</span>
+          <span className="exam-countdown__target-label">questions/day to finish the bank</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
    STATS BAR — Accuracy leads; it's the most clinically relevant signal
    ─────────────────────────────────────────────────────────────── */
 function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
@@ -299,24 +323,24 @@ export default function Dashboard() {
     Promise.all([
       getProfile(),
       fetchQuestionCounts(),
-      fetchOverallProgress(),
-      fetchWeeklyAnswered(),
       fetchStreak(),
-      fetchProgress('specialist'),
-      fetchProgress('gp'),
-      fetchFlashcardDueCount(),
-      fetchTodayAnswered(),
-    ]).then(([p, c, o, w, s, ps, pg, fd, td]) => {
+      fetchUserDashboardStats(),
+    ]).then(([p, c, s, stats]) => {
       if (cancelled) return
       setProfile(p)
       setCounts(c)
-      setOverall(o)
-      setWeekly(w)
       setStreak(s)
-      setProgSpecialist(ps)
-      setProgGP(pg)
-      setFlashcardDue(fd)
-      setTodayCount(td)
+      if (stats) {
+        setOverall({
+          answered: stats.specialist.answered + stats.gp.answered,
+          correct:  stats.specialist.correct  + stats.gp.correct,
+        })
+        setWeekly(stats.weekly_answered)
+        setProgSpecialist(stats.specialist)
+        setProgGP(stats.gp)
+        setFlashcardDue(stats.flashcard_due)
+        setTodayCount(stats.today_answered)
+      }
 
       // Fetch weak topics for the track the user primarily uses
       if (!p || !hasAccess(p)) return
@@ -366,6 +390,18 @@ export default function Dashboard() {
             setExamDateDismissed(true)
           }}
           onDismiss={() => setExamDateDismissed(true)}
+        />
+      )}
+
+      {hasAccess(profile) && profile?.exam_date && (
+        <ExamCountdown
+          profile={profile}
+          totalQuestions={
+            (profile?.diagnostic_track === 'gp' ? counts?.gp : counts?.specialist) ?? 0
+          }
+          totalAnswered={
+            (profile?.diagnostic_track === 'gp' ? progGP?.answered : progSpecialist?.answered) ?? 0
+          }
         />
       )}
 

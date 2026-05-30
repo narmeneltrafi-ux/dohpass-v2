@@ -73,7 +73,8 @@ async function checkAndIncrementRate(userId: string, svc: SvcClient): Promise<nu
 // ─── User context — Fix 5: cached, rebuilt at most every 5 min ────────────────
 
 async function buildFreshContext(userId: string, svc: SvcClient): Promise<string> {
-  const [progressRes, dueRes, profileRes] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const [progressRes, dueRes, profileRes, velocityRes] = await Promise.all([
     svc.from("user_progress").select("topic, track, is_correct").eq("user_id", userId),
     svc
       .from("flashcard_progress")
@@ -81,6 +82,10 @@ async function buildFreshContext(userId: string, svc: SvcClient): Promise<string
       .eq("user_id", userId)
       .lte("due_date", new Date().toISOString()),
     svc.from("profiles").select("exam_date, exam_name").eq("id", userId).maybeSingle(),
+    svc.from("question_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", sevenDaysAgo),
   ]);
 
   const rows     = progressRes.data ?? [];
@@ -127,11 +132,15 @@ async function buildFreshContext(userId: string, svc: SvcClient): Promise<string
     else                      lines.push(`Exam: ${label} was ${Math.abs(daysUntil)} days ago`);
   }
 
+  const weeklyCount = velocityRes.count ?? 0;
+  const pace = weeklyCount > 0 ? (weeklyCount / 7).toFixed(1) : null;
+
   if (totalAnswered === 0) {
     lines.push("This student has not answered any questions yet.");
   } else {
     lines.push(`Total questions answered: ${totalAnswered}`);
     if (overallPct !== null) lines.push(`Overall accuracy: ${overallPct}%`);
+    if (pace) lines.push(`Study pace: ${pace} questions/day (last 7 days)`);
   }
 
   if (dueCount > 0) lines.push(`Flashcards due for review right now: ${dueCount}`);
@@ -236,25 +245,26 @@ const TOOLS = [
 async function fetchPracticeQuestion(
   topic: string,
   track: string,
+  userId: string,
   svc: SvcClient
 ): Promise<string> {
   const table = track === "gp" ? "gp_questions" : "specialist_questions";
 
   const { data: topicMatch } = await svc
     .from(table)
-    .select("q, options, answer, explanation, topic, subtopic")
+    .select("id, q, options, answer, explanation, topic, subtopic")
     .ilike("topic", `%${topic}%`)
     .eq("is_active", true)
-    .limit(30);
+    .limit(50);
 
   let pool = topicMatch ?? [];
 
   if (pool.length === 0) {
     const { data: fallback } = await svc
       .from(table)
-      .select("q, options, answer, explanation, topic, subtopic")
+      .select("id, q, options, answer, explanation, topic, subtopic")
       .eq("is_active", true)
-      .limit(10);
+      .limit(20);
     pool = fallback ?? [];
   }
 
@@ -262,7 +272,28 @@ async function fetchPracticeQuestion(
     return `No questions found for topic "${topic}" in the ${track} question bank.`;
   }
 
-  const q    = pool[Math.floor(Math.random() * pool.length)];
+  // Fetch user history for this candidate set: prioritise wrong > unseen > already-correct
+  const ids = pool.map((q) => q.id);
+  const { data: history } = await svc
+    .from("user_progress")
+    .select("question_id, is_correct")
+    .eq("user_id", userId)
+    .in("question_id", ids);
+
+  const histMap = new Map(
+    (history ?? []).map((h) => [h.question_id, h.is_correct as boolean])
+  );
+
+  const scored = pool.map((q) => {
+    const seen      = histMap.has(q.id);
+    const wasCorrect = seen ? histMap.get(q.id) : null;
+    // wrong = 2, unseen = 1, already-correct = 0  (+ small jitter prevents ties)
+    const priority  = !seen ? 1 : wasCorrect === false ? 2 : 0;
+    return { q, score: priority + Math.random() * 0.3 };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const q = scored[0].q;
+
   const opts = (q.options as string[])
     .map((o: string, i: number) => `${String.fromCharCode(65 + i)}. ${o}`)
     .join("\n");
@@ -514,6 +545,7 @@ async function runTutorStream(
                 result = await fetchPracticeQuestion(
                   tb.input.topic ?? "",
                   tb.input.track ?? track,
+                  userId,
                   svc
                 );
               } else {

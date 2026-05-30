@@ -5,7 +5,7 @@ import { scheduleCard, RATING, RATING_CONFIG, isDue, nextReviewLabel } from "../
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-  concept: { label: "Concept", color: "#4FC3F7", bg: "rgba(79,195,247,0.12)" },
+  concept: { label: "Concept", color: "#d4a843", bg: "rgba(212,168,67,0.12)" },
   drug:    { label: "Drug",    color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
   anatomy: { label: "Anatomy", color: "#34D399", bg: "rgba(52,211,153,0.12)" },
 };
@@ -14,11 +14,21 @@ const TYPE_CONFIG = {
 function renderBack(text) {
   if (!text) return null;
   return text.split("\n").map((line, i) => {
-    const html = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     if (line.startsWith("·")) {
-      return <div key={i} style={{ paddingLeft: 16, color: "#CBD5E1", fontSize: 13, lineHeight: "1.75" }} dangerouslySetInnerHTML={{ __html: html }} />;
+      const html = line.replace(/^·\s*/, "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      return (
+        <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "1px 0 1px 8px", color: "#CBD5E1", fontSize: 13, lineHeight: "1.75" }}>
+          <span style={{ color: "#d4a843", flexShrink: 0, lineHeight: "1.75" }}>›</span>
+          <span dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+      );
     }
     if (line.trim() === "") return <div key={i} style={{ height: 6 }} />;
+    // Split inline · separators into <br>-separated fragments
+    const html = line
+      .split(" · ")
+      .map(p => p.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>"))
+      .join("<br>");
     return <div key={i} style={{ color: "#E2E8F0", fontSize: 13, lineHeight: "1.75" }} dangerouslySetInnerHTML={{ __html: html }} />;
   });
 }
@@ -106,8 +116,15 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
           }}>
             {card.front}
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {renderBack(card.back)}
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, overflowY: "auto", paddingBottom: 4 }}>
+              {renderBack(card.back)}
+            </div>
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, right: 0, height: 28,
+              background: "linear-gradient(to bottom, transparent, rgba(10,18,36,0.88))",
+              pointerEvents: "none",
+            }} />
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 6 }}>
             {[RATING.AGAIN, RATING.HARD, RATING.GOOD, RATING.EASY].map(rating => {
@@ -143,12 +160,12 @@ function ProgressBar({ known, total }) {
     <div style={{ marginBottom: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: 12, color: "#64748B", fontFamily: "'IBM Plex Mono',monospace" }}>DECK PROGRESS</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#34D399", fontFamily: "'IBM Plex Mono',monospace" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#d4a843", fontFamily: "'IBM Plex Mono',monospace" }}>
           {known}/{total} · {pct}%
         </span>
       </div>
       <div style={{ height: 4, borderRadius: 2, background: "#1E293B", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#34D399,#4FC3F7)", borderRadius: 2, transition: "width 0.4s ease" }} />
+        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#d4a843,#f5d980)", borderRadius: 2, transition: "width 0.4s ease" }} />
       </div>
     </div>
   );
@@ -166,9 +183,9 @@ function FilterTabs({ active, onChange }) {
           <button key={t.key} onClick={() => onChange(t.key)} style={{
             padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600,
             cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace",
-            border: `1px solid ${isActive ? (cfg?.color || "#4FC3F7") : "#1E293B"}`,
-            background: isActive ? (cfg?.bg || "rgba(79,195,247,0.12)") : "transparent",
-            color: isActive ? (cfg?.color || "#4FC3F7") : "#475569",
+            border: `1px solid ${isActive ? (cfg?.color || "#d4a843") : "#1E293B"}`,
+            background: isActive ? (cfg?.bg || "rgba(212,168,67,0.12)") : "transparent",
+            color: isActive ? (cfg?.color || "#d4a843") : "#475569",
             transition: "all 0.2s",
           }}>
             {t.label}
@@ -324,7 +341,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
         <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
+          DOHPass / {trackLabel} / <span style={{ color: "#d4a843" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
@@ -337,8 +354,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}
             </div>
           </div>
-          <div style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 10, padding: "8px 16px", textAlign: "center", minWidth: 70 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#34D399", fontFamily: "'IBM Plex Mono',monospace" }}>{pct}%</div>
+          <div style={{ background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.2)", borderRadius: 10, padding: "8px 16px", textAlign: "center", minWidth: 70 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#d4a843", fontFamily: "'IBM Plex Mono',monospace" }}>{pct}%</div>
             <div style={{ fontSize: 10, color: "#475569", fontFamily: "'IBM Plex Mono',monospace" }}>KNOWN</div>
           </div>
         </div>
@@ -346,13 +363,13 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
           {["questions", "flashcards"].map(tab => (
             <button key={tab} onClick={() => handleTabSwitch(tab)} style={{
               padding: "10px 24px", background: "transparent", border: "none",
-              borderBottom: activeTab === tab ? "2px solid #4FC3F7" : "2px solid transparent",
-              color: activeTab === tab ? "#4FC3F7" : "#475569",
+              borderBottom: activeTab === tab ? "2px solid #d4a843" : "2px solid transparent",
+              color: activeTab === tab ? "#d4a843" : "#475569",
               fontSize: 13, fontWeight: 600, cursor: "pointer",
               fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase",
               letterSpacing: "0.08em", transition: "all 0.2s",
             }}>
-              {tab === "questions" ? "📋 Questions" : "🗂 Flashcards"}
+              {tab === "questions" ? "Questions" : "Flashcards"}
             </button>
           ))}
         </div>
@@ -432,7 +449,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 {[
                   { label: "← Prev", disabled: safeIdx === 0, onClick: () => setCurrentIdx(i => Math.max(0, i - 1)), activeColor: "#94A3B8", activeBg: "rgba(30,41,59,1)" },
-                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#4FC3F7", activeBg: "rgba(79,195,247,0.1)" },
+                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#d4a843", activeBg: "rgba(212,168,67,0.1)" },
                 ].map(btn => (
                   <button key={btn.label} onClick={btn.onClick} disabled={btn.disabled} style={{
                     flex: 1, padding: "12px 0", borderRadius: 10,

@@ -7689,6 +7689,46 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 .diag-dash-banner__cta:hover { opacity: 0.9; }
 
+/* Exam date banner variant — slightly wider to fit the inputs */
+.diag-dash-banner--exam { align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; }
+
+.exam-date-inputs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.exam-date-inputs__name,
+.exam-date-inputs__date {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(201,162,39,0.35);
+  background: rgba(201,162,39,0.06);
+  color: var(--text, #f4f0e8);
+  font-size: 0.8rem;
+  outline: none;
+}
+.exam-date-inputs__name { min-width: 180px; flex: 1; }
+.exam-date-inputs__date { min-width: 140px; }
+.exam-date-inputs__name:focus,
+.exam-date-inputs__date:focus { border-color: rgba(201,162,39,0.7); }
+.exam-date-inputs__error { font-size: 0.75rem; color: #ef4444; margin-top: 0.25rem; }
+.exam-date-inputs__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.diag-skip--inline {
+  background: none;
+  border: none;
+  color: rgba(244,240,232,0.45);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+.diag-skip--inline:hover { color: rgba(244,240,232,0.7); }
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .diag-setup-card { padding: 1.5rem; }
@@ -7697,6 +7737,9 @@ a.lp-contact__value:hover { color: var(--gold); }
   .diag-track-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
   .diag-dash-banner { flex-direction: column; align-items: flex-start; }
   .diag-dash-banner__cta { width: 100%; justify-content: center; }
+  .exam-date-inputs { flex-direction: column; }
+  .exam-date-inputs__name,
+  .exam-date-inputs__date { width: 100%; min-width: unset; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

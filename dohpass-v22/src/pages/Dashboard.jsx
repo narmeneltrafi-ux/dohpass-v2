@@ -12,6 +12,7 @@ import {
   fetchFlashcardDueCount,
   fetchWeakTopics,
   fetchTodayAnswered,
+  saveExamDate,
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
@@ -98,6 +99,67 @@ function deriveFirstName(profile, user) {
   return 'there'
 }
 
+
+/* ───────────────────────────────────────────────────────────────
+   EXAM DATE BANNER — shown once until user sets their exam date
+   ─────────────────────────────────────────────────────────────── */
+function ExamDateBanner({ onSave, onDismiss }) {
+  const [date, setDate]       = useState('')
+  const [name, setName]       = useState('')
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState(null)
+
+  const today = new Date().toISOString().split('T')[0]
+
+  async function handleSave(e) {
+    e.preventDefault()
+    if (!date) return
+    setSaving(true)
+    setError(null)
+    const { error: err } = await saveExamDate(date, name.trim() || null)
+    setSaving(false)
+    if (err) { setError('Could not save. Please try again.'); return }
+    onSave({ exam_date: date, exam_name: name.trim() || null })
+  }
+
+  return (
+    <div className="diag-dash-banner diag-dash-banner--exam" role="banner" aria-label="Set exam date">
+      <form className="diag-dash-banner__body" onSubmit={handleSave}>
+        <strong className="diag-dash-banner__title">When is your exam?</strong>
+        <span className="diag-dash-banner__sub">
+          Your AI coach uses this to prioritise what matters most.
+        </span>
+        <div className="exam-date-inputs">
+          <input
+            type="text"
+            className="exam-date-inputs__name"
+            placeholder="Exam name (e.g. DOH Specialist)"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            maxLength={60}
+          />
+          <input
+            type="date"
+            className="exam-date-inputs__date"
+            value={date}
+            min={today}
+            onChange={e => setDate(e.target.value)}
+            required
+          />
+        </div>
+        {error && <span className="exam-date-inputs__error">{error}</span>}
+        <div className="exam-date-inputs__actions">
+          <button type="submit" className="diag-dash-banner__cta" disabled={!date || saving}>
+            {saving ? 'Saving…' : <>Set date <IconArrow size={13} /></>}
+          </button>
+          <button type="button" className="diag-skip diag-skip--inline" onClick={onDismiss}>
+            Skip
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
 
 /* ───────────────────────────────────────────────────────────────
    STATS BAR — Accuracy leads; it's the most clinically relevant signal
@@ -224,6 +286,7 @@ export default function Dashboard() {
   const [flashcardDue, setFlashcardDue] = useState(null)
   const [todayCount, setTodayCount] = useState(null)
   const [drillData, setDrillData] = useState(null)  // { track, topics: [{topic, accuracy}] } | null
+  const [examDateDismissed, setExamDateDismissed] = useState(false)
 
   const DAILY_GOAL = 20
 
@@ -295,6 +358,16 @@ export default function Dashboard() {
       <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
       <AppNav />
+
+      {hasAccess(profile) && profile && !profile.exam_date && !examDateDismissed && (
+        <ExamDateBanner
+          onSave={({ exam_date, exam_name }) => {
+            setProfile(p => ({ ...p, exam_date, exam_name }))
+            setExamDateDismissed(true)
+          }}
+          onDismiss={() => setExamDateDismissed(true)}
+        />
+      )}
 
       {profile && !profile.diagnostic_completed_at && (
         <div className="diag-dash-banner" role="banner" aria-label="Readiness check prompt">

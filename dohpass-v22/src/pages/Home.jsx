@@ -434,6 +434,87 @@ function AuthorityStrip() {
 }
 
 /* ───────────────────────────────────────────────────────────────
+   5c. HOW IT WORKS — payment education before pricing
+   Bank transfer is unfamiliar for SaaS users. This section removes
+   the surprise by explaining the 3-step flow before they see CTAs.
+   ─────────────────────────────────────────────────────────────── */
+const IconBankTransfer = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+  </svg>
+)
+const IconMail = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <polyline points="22,4 12,13 2,4" />
+  </svg>
+)
+const IconUnlock = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+  </svg>
+)
+const IconLock = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+)
+
+const HOW_STEPS = [
+  {
+    icon: <IconBankTransfer />,
+    title: 'Choose a plan & transfer payment',
+    body: 'Select your track — GP, Specialist, or All Access. You\'ll see the exact IBAN and payment reference. One local bank transfer, no card required.',
+  },
+  {
+    icon: <IconMail />,
+    title: 'Send us your payment proof',
+    body: 'Forward your transfer receipt or screenshot to our email. We verify every transfer manually — no automated billing, no surprises.',
+  },
+  {
+    icon: <IconUnlock />,
+    title: 'Access activated within 24 hours',
+    body: 'Once we confirm your transfer, your 30-day access window opens immediately. Typical activation is under a few hours on weekdays.',
+  },
+]
+
+function HowItWorks({ navigate }) {
+  return (
+    <section className="lp-how" id="how-it-works" aria-label="How payment works">
+      <div className="lp-how__inner">
+        <span className="lp-how__eyebrow">Payment process</span>
+        <h2 className="lp-how__h2">How access works</h2>
+        <p className="lp-how__sub">
+          DOHPass uses bank transfer — no subscription, no auto-renew, no stored card.
+          Here&apos;s exactly what happens when you pay.
+        </p>
+
+        <div className="lp-how__steps">
+          {HOW_STEPS.map((step, i) => (
+            <div className="lp-how__step" key={i}>
+              <div className="lp-how__num">0{i + 1}</div>
+              <div className="lp-how__icon">{step.icon}</div>
+              <div className="lp-how__title">{step.title}</div>
+              <p className="lp-how__body">{step.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <span className="lp-how__note">
+            <span className="lp-how__note-icon"><IconLock /></span>
+            UAE bank transfer · Secure · No card stored · 7-day refund guarantee
+          </span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
    6. PRICING TEASER — strict subset of /pricing
    Aligned with Pricing.jsx so users see the same plan story on both
    pages: same plan names, same recommended tier (Specialist), same
@@ -708,6 +789,8 @@ export default function Home() {
       <CredibilityBar />
 
       <AuthorityStrip />
+
+      <HowItWorks navigate={navigate} />
 
       <PricingTeaser stats={stats} navigate={navigate} />
 

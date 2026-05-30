@@ -40,26 +40,28 @@ export default function FlashcardsHome() {
         <div
           className="track-card gold-card"
           onClick={() => navigate('/flashcards/specialist')}
+          style={{ borderLeft: '3px solid #d4a843' }}
         >
           <div className="track-icon">🏅</div>
           <div className="track-info">
-            <h2 className="track-title">Specialist</h2>
+            <h2 className="track-title" style={{ color: '#d4a843' }}>Specialist</h2>
             <p className="track-desc">Internal Medicine — Neurology, Cardiology, GIT, Haematology & more</p>
             <span className="track-badge" style={BADGE_STYLE}>{stats.specialistSystems} Systems</span>
           </div>
-          <div className="track-arrow">→</div>
+          <div className="track-arrow" style={{ color: '#d4a843' }}>→</div>
         </div>
         <div
           className="track-card blue-card"
           onClick={() => navigate('/flashcards/gp')}
+          style={{ borderLeft: '3px solid #14b8a6' }}
         >
           <div className="track-icon">🩺</div>
           <div className="track-info">
-            <h2 className="track-title">General Practitioner</h2>
+            <h2 className="track-title" style={{ color: '#14b8a6' }}>General Practitioner</h2>
             <p className="track-desc">GP track — broad primary care systems</p>
             <span className="track-badge" style={BADGE_STYLE}>{stats.gpCards.toLocaleString()} Cards</span>
           </div>
-          <div className="track-arrow">→</div>
+          <div className="track-arrow" style={{ color: '#14b8a6' }}>→</div>
         </div>
       </div>
     </div>

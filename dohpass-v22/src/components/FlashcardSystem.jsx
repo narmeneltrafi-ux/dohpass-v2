@@ -5,10 +5,34 @@ import { scheduleCard, RATING, RATING_CONFIG, isDue, nextReviewLabel } from "../
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-  concept: { label: "Concept", color: "#4FC3F7", bg: "rgba(79,195,247,0.12)" },
-  drug:    { label: "Drug",    color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
-  anatomy: { label: "Anatomy", color: "#34D399", bg: "rgba(52,211,153,0.12)" },
+  concept: { label: "Concept", colorVar: "var(--blue)",  bgVar: "rgba(59,130,246,0.1)",  borderVar: "rgba(59,130,246,0.25)" },
+  drug:    { label: "Drug",    colorVar: "var(--purple,#a78bfa)", bgVar: "rgba(167,139,250,0.1)", borderVar: "rgba(167,139,250,0.25)" },
+  anatomy: { label: "Anatomy", colorVar: "var(--green)", bgVar: "rgba(34,197,94,0.1)",   borderVar: "rgba(34,197,94,0.25)" },
 };
+
+// ─── ICONS ────────────────────────────────────────────────────────────────────
+const IconLock = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+)
+const IconQuestions = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+  </svg>
+)
+const IconFlashcards = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M8 4v16M2 9h6M2 15h6" />
+  </svg>
+)
+const IconWarning = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+)
 
 // ─── TEXT RENDERER ────────────────────────────────────────────────────────────
 function renderBack(text) {
@@ -26,14 +50,7 @@ function renderBack(text) {
 // ─── SKELETON ─────────────────────────────────────────────────────────────────
 function Skeleton() {
   return (
-    <>
-      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
-      <div style={{
-        width: "100%", height: 340, borderRadius: 16,
-        background: "linear-gradient(90deg,#0F172A 25%,#1E293B 50%,#0F172A 75%)",
-        backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite",
-      }} />
-    </>
+    <div className="fcs-skeleton" />
   );
 }
 
@@ -52,80 +69,75 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
   useEffect(() => { setFlipped(false); }, [card.id]);
 
   return (
-    <div onClick={() => setFlipped(f => !f)} style={{ cursor: "pointer", perspective: 1000, width: "100%", height: 340, userSelect: "none" }}>
-      <div style={{
-        position: "relative", width: "100%", height: "100%",
-        transformStyle: "preserve-3d",
-        transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)",
-        transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-      }}>
-
+    <div
+      className="fcs-flip-root"
+      onClick={() => setFlipped(f => !f)}
+    >
+      <div
+        className="fcs-flip-inner"
+        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
         {/* FRONT */}
-        <div style={{
-          position: "absolute", inset: 0, backfaceVisibility: "hidden",
-          background: "linear-gradient(135deg,#0F172A 0%,#1E293B 100%)",
-          border: `1px solid ${cfg.color}30`, borderRadius: 16,
-          display: "flex", flexDirection: "column", padding: 24,
-          boxShadow: `0 0 40px ${cfg.color}15`,
-        }}>
-          <div style={{
-            alignSelf: "flex-start", background: cfg.bg, border: `1px solid ${cfg.color}40`,
-            borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 700,
-            letterSpacing: "0.08em", color: cfg.color,
-            fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", marginBottom: 12,
-          }}>
+        <div
+          className="fcs-face fcs-face--front"
+          style={{
+            borderColor: cfg.borderVar,
+            boxShadow: `0 0 40px ${cfg.bgVar}`,
+          }}
+        >
+          <div
+            className="fcs-type-pill"
+            style={{
+              background: cfg.bgVar,
+              borderColor: cfg.borderVar,
+              color: cfg.colorVar,
+            }}
+          >
             {cfg.label}
           </div>
-          <div style={{ fontSize: 11, color: "#64748B", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'IBM Plex Mono',monospace", marginBottom: 16 }}>
-            {card.subtopic}
+          <div className="fcs-subtopic">{card.subtopic}</div>
+          <div className="fcs-front-body">
+            <div className="fcs-front-text">{card.front}</div>
           </div>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Inter',sans-serif", color: "var(--text)", textAlign: "center", lineHeight: 1.4, letterSpacing: "-0.02em" }}>
-              {card.front}
-            </div>
-          </div>
-          <div style={{ textAlign: "center", fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", marginTop: 12 }}>
-            tap to reveal →
-          </div>
+          <div className="fcs-tap-hint">tap to reveal →</div>
         </div>
 
         {/* BACK */}
-        <div style={{
-          position: "absolute", inset: 0, backfaceVisibility: "hidden",
-          transform: "rotateY(180deg)",
-          background: "linear-gradient(135deg,#0F172A 0%,#1A2744 100%)",
-          border: `1px solid ${cfg.color}40`, borderRadius: 16,
-          display: "flex", flexDirection: "column", padding: 20,
-          boxShadow: `0 0 40px ${cfg.color}20`,
-        }}>
-          <div style={{
-            fontSize: 12, fontWeight: 700, color: cfg.color,
-            fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase",
-            letterSpacing: "0.08em", marginBottom: 14,
-            borderBottom: `1px solid ${cfg.color}20`, paddingBottom: 10,
-          }}>
+        <div
+          className="fcs-face fcs-back"
+          style={{
+            borderColor: cfg.borderVar,
+            boxShadow: `0 0 40px ${cfg.bgVar}`,
+          }}
+        >
+          <div
+            className="fcs-back-question"
+            style={{ color: cfg.colorVar, borderBottomColor: cfg.borderVar }}
+          >
             {card.front}
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          <div className="fcs-back-content">
             {renderBack(card.back)}
           </div>
-          <div style={{ marginTop: 14, display: "flex", gap: 6 }}>
+          <div className="fcs-rate-row">
             {[RATING.AGAIN, RATING.HARD, RATING.GOOD, RATING.EASY].map(rating => {
               const rc = RATING_CONFIG[rating];
               return (
                 <button
                   key={rating}
+                  className="fcs-rate-btn"
                   onClick={e => { e.stopPropagation(); if (!saving) onRate(card.id, rating); }}
                   style={{
-                    flex: 1, padding: "8px 4px", borderRadius: 8,
-                    background: rc.bg, border: `1px solid ${rc.border}`,
-                    color: rc.color, cursor: saving ? "wait" : "pointer",
-                    opacity: saving ? 0.6 : 1, transition: "all 0.2s",
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                    background: rc.bg,
+                    borderColor: rc.border,
+                    color: rc.color,
+                    cursor: saving ? "wait" : "pointer",
+                    opacity: saving ? 0.6 : 1,
                   }}
+                  disabled={saving}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.04em" }}>{rc.label}</span>
-                  <span style={{ fontSize: 10, opacity: 0.75, fontFamily: "'IBM Plex Mono',monospace" }}>{previewLabel(fsrsData, rating)}</span>
+                  <span className="fcs-rate-label">{rc.label}</span>
+                  <span className="fcs-rate-interval">{previewLabel(fsrsData, rating)}</span>
                 </button>
               );
             })}
@@ -140,15 +152,16 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
 function ProgressBar({ known, total }) {
   const pct = total === 0 ? 0 : Math.round((known / total) * 100);
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 12, color: "#64748B", fontFamily: "'IBM Plex Mono',monospace" }}>DECK PROGRESS</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#34D399", fontFamily: "'IBM Plex Mono',monospace" }}>
-          {known}/{total} · {pct}%
-        </span>
+    <div className="fcs-progress">
+      <div className="fcs-progress__head">
+        <span className="fcs-progress__label">Deck progress</span>
+        <span className="fcs-progress__val">{known}/{total} · {pct}%</span>
       </div>
-      <div style={{ height: 4, borderRadius: 2, background: "#1E293B", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#34D399,#4FC3F7)", borderRadius: 2, transition: "width 0.4s ease" }} />
+      <div className="fcs-progress__track">
+        <div
+          className="fcs-progress__fill"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -158,19 +171,21 @@ function ProgressBar({ known, total }) {
 function FilterTabs({ active, onChange }) {
   const tabs = [{ key: "all", label: "All" }, ...Object.entries(TYPE_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))];
   return (
-    <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+    <div className="fcs-filter-row">
       {tabs.map(t => {
         const cfg = t.key !== "all" ? TYPE_CONFIG[t.key] : null;
         const isActive = active === t.key;
         return (
-          <button key={t.key} onClick={() => onChange(t.key)} style={{
-            padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-            cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace",
-            border: `1px solid ${isActive ? (cfg?.color || "#4FC3F7") : "#1E293B"}`,
-            background: isActive ? (cfg?.bg || "rgba(79,195,247,0.12)") : "transparent",
-            color: isActive ? (cfg?.color || "#4FC3F7") : "#475569",
-            transition: "all 0.2s",
-          }}>
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            className={`fcs-filter-btn${isActive ? ' fcs-filter-btn--active' : ''}`}
+            style={isActive ? {
+              borderColor: cfg?.borderVar || 'var(--blue-border,rgba(59,130,246,0.4))',
+              background: cfg?.bgVar || 'rgba(59,130,246,0.1)',
+              color: cfg?.colorVar || 'var(--blue)',
+            } : {}}
+          >
             {t.label}
           </button>
         );
@@ -193,13 +208,11 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const [activeTab,   setActiveTab]   = useState("flashcards");
   const [filter,      setFilter]      = useState("all");
   const [cards,       setCards]       = useState([]);
-  // Map<flashcard_id, fsrs_row> — source of truth for scheduling state
   const [fsrsMap,     setFsrsMap]     = useState(new Map());
   const [currentIdx,  setCurrentIdx]  = useState(0);
   const [loading,     setLoading]     = useState(true);
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState(null);
-  // null = loading, true = paid, false = free
   const [isPaid,      setIsPaid]      = useState(null);
 
   useEffect(() => {
@@ -223,7 +236,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
         .order("id", { ascending: true });
 
       if (error) {
-        setError("Could not load flashcards — check Supabase connection.");
+        setError("Could not load flashcards — check your connection.");
         console.error(error);
       } else {
         setCards(data || []);
@@ -256,7 +269,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
     const prev = fsrsMap.get(cardId) ?? null;
     const updates = scheduleCard(prev, rating);
 
-    // Optimistic update
     setFsrsMap(map => {
       const next = new Map(map);
       next.set(cardId, { ...(prev || {}), flashcard_id: cardId, ...updates });
@@ -272,7 +284,6 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       );
 
     if (error) {
-      // Revert optimistic update
       setFsrsMap(map => {
         const next = new Map(map);
         prev ? next.set(cardId, prev) : next.delete(cardId);
@@ -280,14 +291,12 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       });
       console.error("FSRS save error:", error);
     } else {
-      // Auto-advance to next card
       setCurrentIdx(i => i + 1);
     }
     setSaving(false);
   }, [userId, saving, fsrsMap]);
 
   const baseFiltered = filter === "all" ? cards : cards.filter(c => c.card_type === filter);
-  // Sort: due cards first (ascending due_date), then future cards (ascending due_date)
   const filtered = [...baseFiltered].sort((a, b) => {
     const aRow = fsrsMap.get(a.id);
     const bRow = fsrsMap.get(b.id);
@@ -311,48 +320,39 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#060E1A", fontFamily: "'IBM Plex Sans',sans-serif", color: "#E2E8F0" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
-        *{box-sizing:border-box}
-        ::-webkit-scrollbar{width:4px}
-        ::-webkit-scrollbar-track{background:#0F172A}
-        ::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
-        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-      `}</style>
-
+    <div className="fcs-root">
       {/* HEADER */}
-      <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
-        <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / {trackLabel} / <span style={{ color: "#4FC3F7" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
+      <div className="fcs-header">
+        <div className="fcs-breadcrumb">
+          DOHPass / {trackLabel} / <span className="fcs-breadcrumb__active">{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div className="fcs-header__row">
           <div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9" }}>{track === 'gp' ? 'General Practitioner' : displaySystem}</h1>
-            <div style={{ fontSize: 12, color: "#475569", marginTop: 4, fontFamily: "'IBM Plex Mono',monospace" }}>
-              {loading ? "Loading..." : `${cards.length} flashcards`}
+            <h1 className="fcs-title">{track === 'gp' ? 'General Practitioner' : displaySystem}</h1>
+            <div className="fcs-meta">
+              {loading ? "Loading…" : `${cards.length} flashcards`}
               {!loading && dueCount > 0 && (
-                <span style={{ marginLeft: 8, color: "#FBBF24", fontWeight: 700 }}>· {dueCount} due</span>
+                <span className="fcs-meta__due"> · {dueCount} due</span>
               )}
-              {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}
+              {!userId && <span className="fcs-meta__guest"> · guest mode</span>}
             </div>
           </div>
-          <div style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 10, padding: "8px 16px", textAlign: "center", minWidth: 70 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#34D399", fontFamily: "'IBM Plex Mono',monospace" }}>{pct}%</div>
-            <div style={{ fontSize: 10, color: "#475569", fontFamily: "'IBM Plex Mono',monospace" }}>KNOWN</div>
+          <div className="fcs-known-badge">
+            <div className="fcs-known-badge__pct">{pct}%</div>
+            <div className="fcs-known-badge__label">Known</div>
           </div>
         </div>
-        <div style={{ display: "flex" }}>
-          {["questions", "flashcards"].map(tab => (
-            <button key={tab} onClick={() => handleTabSwitch(tab)} style={{
-              padding: "10px 24px", background: "transparent", border: "none",
-              borderBottom: activeTab === tab ? "2px solid #4FC3F7" : "2px solid transparent",
-              color: activeTab === tab ? "#4FC3F7" : "#475569",
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-              fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase",
-              letterSpacing: "0.08em", transition: "all 0.2s",
-            }}>
-              {tab === "questions" ? "📋 Questions" : "🗂 Flashcards"}
+        <div className="fcs-tabs">
+          {[
+            { key: "questions",  icon: <IconQuestions />,  label: "Questions" },
+            { key: "flashcards", icon: <IconFlashcards />, label: "Flashcards" },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabSwitch(tab.key)}
+              className={`fcs-tab${activeTab === tab.key ? ' fcs-tab--active' : ''}`}
+            >
+              {tab.icon} {tab.label}
             </button>
           ))}
         </div>
@@ -360,53 +360,20 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
 
       {/* FLASHCARDS TAB */}
       {activeTab === "flashcards" && (
-        <div style={{ padding: "24px", maxWidth: 680, margin: "0 auto" }}>
+        <div className="fcs-body">
           {isPaid === false && (
-            <div style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-              marginBottom: 20,
-              padding: "12px 16px",
-              background: "linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%)",
-              border: "1px solid rgba(251, 191, 36, 0.4)",
-              borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              flexWrap: "wrap",
-              backdropFilter: "blur(6px)",
-            }}>
-              <div style={{
-                fontSize: 13,
-                color: "#FBBF24",
-                fontFamily: "'IBM Plex Mono',monospace",
-                flex: 1,
-                minWidth: 200,
-              }}>
-                🔒 Free preview mode. Upgrade to unlock all flashcards in this system.
-              </div>
-              <button onClick={() => navigate('/pricing')} style={{
-                padding: "8px 18px",
-                borderRadius: 8,
-                background: "#FBBF24",
-                border: "none",
-                color: "#0F172A",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "'IBM Plex Mono',monospace",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-              }}>
+            <div className="fcs-paywall-banner">
+              <span className="fcs-paywall-banner__text">
+                <IconLock /> Free preview — upgrade to unlock all flashcards in this system.
+              </span>
+              <button className="fcs-paywall-banner__cta" onClick={() => navigate('/pricing')}>
                 Upgrade
               </button>
             </div>
           )}
           {error && (
-            <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#FCA5A5", fontSize: 13, fontFamily: "'IBM Plex Mono',monospace" }}>
-              ⚠ {error}
+            <div className="fcs-error">
+              <IconWarning /> {error}
             </div>
           )}
 
@@ -414,12 +381,10 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
           <FilterTabs active={filter} onChange={handleFilter} />
 
           {loading ? <Skeleton /> : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#334155", padding: 60, fontFamily: "'IBM Plex Mono',monospace" }}>No cards in this filter.</div>
+            <div className="fcs-empty">No cards in this filter.</div>
           ) : (
             <>
-              <div style={{ textAlign: "center", fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", marginBottom: 16 }}>
-                {safeIdx + 1} / {filtered.length}
-              </div>
+              <div className="fcs-counter">{safeIdx + 1} / {filtered.length}</div>
 
               <FlipCard
                 key={filtered[safeIdx]?.id}
@@ -429,78 +394,49 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                 saving={saving}
               />
 
-              <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+              <div className="fcs-nav-row">
                 {[
-                  { label: "← Prev", disabled: safeIdx === 0, onClick: () => setCurrentIdx(i => Math.max(0, i - 1)), activeColor: "#94A3B8", activeBg: "rgba(30,41,59,1)" },
-                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#4FC3F7", activeBg: "rgba(79,195,247,0.1)" },
+                  { label: "← Prev", disabled: safeIdx === 0,                       onClick: () => setCurrentIdx(i => Math.max(0, i - 1)),                  mod: "prev" },
+                  { label: "Next →", disabled: safeIdx === filtered.length - 1,     onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), mod: "next" },
                 ].map(btn => (
-                  <button key={btn.label} onClick={btn.onClick} disabled={btn.disabled} style={{
-                    flex: 1, padding: "12px 0", borderRadius: 10,
-                    background: btn.disabled ? "rgba(30,41,59,0.3)" : btn.activeBg,
-                    border: `1px solid ${btn.disabled ? "#1E2940" : btn.activeColor + "30"}`,
-                    color: btn.disabled ? "#1E2940" : btn.activeColor,
-                    fontSize: 13, fontWeight: 600, cursor: btn.disabled ? "default" : "pointer",
-                    fontFamily: "'IBM Plex Mono',monospace",
-                  }}>
+                  <button
+                    key={btn.label}
+                    onClick={btn.onClick}
+                    disabled={btn.disabled}
+                    className={`fcs-nav-btn fcs-nav-btn--${btn.mod}${btn.disabled ? ' fcs-nav-btn--disabled' : ''}`}
+                  >
                     {btn.label}
                   </button>
                 ))}
               </div>
 
               {isPaid === false && safeIdx === filtered.length - 1 && filtered.length > 0 && (
-                <div style={{
-                  marginTop: 24,
-                  padding: "18px 20px",
-                  background: "linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.06) 100%)",
-                  border: "1px solid rgba(251, 191, 36, 0.5)",
-                  borderRadius: 12,
-                  textAlign: "center",
-                }}>
-                  <div style={{
-                    fontSize: 13,
-                    color: "#FBBF24",
-                    fontFamily: "'IBM Plex Mono',monospace",
-                    marginBottom: 12,
-                    letterSpacing: "0.04em",
-                  }}>
-                    That's the end of the free preview.
-                  </div>
-                  <button onClick={() => navigate('/pricing')} style={{
-                    padding: "10px 24px",
-                    borderRadius: 8,
-                    background: "#FBBF24",
-                    border: "none",
-                    color: "#0F172A",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "'IBM Plex Mono',monospace",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}>
+                <div className="fcs-preview-end">
+                  <p className="fcs-preview-end__text">That's the end of the free preview.</p>
+                  <button className="fcs-preview-end__cta" onClick={() => navigate('/pricing')}>
                     Upgrade to see the full deck
                   </button>
                 </div>
               )}
 
-              <div style={{ marginTop: 28 }}>
-                <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
-                  Deck Overview
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <div className="fcs-overview">
+                <div className="fcs-overview__label">Deck overview</div>
+                <div className="fcs-overview__grid">
                   {filtered.map((c, i) => {
                     const cfg = TYPE_CONFIG[c.card_type] || TYPE_CONFIG.concept;
                     const isActive = i === safeIdx;
                     const isKnown  = fsrsMap.get(c.id)?.is_known ?? false;
                     return (
-                      <button key={c.id} onClick={() => setCurrentIdx(i)} style={{
-                        width: 28, height: 28, borderRadius: 6,
-                        background: isKnown ? "rgba(52,211,153,0.2)" : isActive ? cfg.bg : "rgba(15,23,42,1)",
-                        border: `1px solid ${isActive ? cfg.color : isKnown ? "#34D39940" : "#1E293B"}`,
-                        cursor: "pointer", fontSize: 9, fontWeight: 700,
-                        color: isActive ? cfg.color : isKnown ? "#34D399" : "#334155",
-                        fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s",
-                      }}>
+                      <button
+                        key={c.id}
+                        onClick={() => setCurrentIdx(i)}
+                        className={`fcs-dot${isActive ? ' fcs-dot--active' : ''}${isKnown ? ' fcs-dot--known' : ''}`}
+                        style={isActive ? {
+                          borderColor: cfg.borderVar,
+                          background: cfg.bgVar,
+                          color: cfg.colorVar,
+                        } : {}}
+                      >
                         {i + 1}
                       </button>
                     );
@@ -514,10 +450,10 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
 
       {/* QUESTIONS TAB */}
       {activeTab === "questions" && (
-        <div style={{ padding: 48, textAlign: "center", color: "#334155", fontFamily: "'IBM Plex Mono',monospace" }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>📋</div>
-          <div style={{ fontSize: 14, color: "#475569", marginBottom: 8 }}>Questions Mode</div>
-          <div style={{ fontSize: 12 }}>Your existing question bank loads here.</div>
+        <div className="fcs-questions-empty">
+          <IconQuestions />
+          <div className="fcs-questions-empty__title">Questions Mode</div>
+          <div className="fcs-questions-empty__sub">Your existing question bank loads here.</div>
         </div>
       )}
     </div>

@@ -146,7 +146,7 @@ export default function AuthPage() {
             </ol>
 
             {error && <div className="auth-error">{error}</div>}
-            {resent && <div className="auth-success">Confirmation email resent ✓</div>}
+            {resent && <div className="auth-success">Confirmation email resent</div>}
 
             <button className="aw-btn" onClick={handleResend} disabled={resending}>
               {resending

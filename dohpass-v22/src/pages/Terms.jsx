@@ -20,10 +20,10 @@ const SECTIONS = [
   {
     title: '2. Description of Service',
     body: (
-      <p>DOHPass is a subscription-based medical exam preparation platform offering question
-        banks, explanations, and study tools mapped to the Department of Health (DOH) Abu Dhabi
-        licensing examinations. The Service is provided on a software-as-a-service basis and
-        is intended for individual study use.</p>
+      <p>DOHPass is a medical exam preparation platform offering question banks, explanations,
+        and study tools mapped to the Department of Health (DOH) Abu Dhabi licensing examinations.
+        Access is granted for a fixed term per payment, with no recurring billing. The Service is
+        intended for individual study use.</p>
     ),
   },
   {

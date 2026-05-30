@@ -190,7 +190,7 @@ export default function SampleQuestionDemo() {
       <div className="sqd-wrap">
         <div className="sqd-wall">
           <div className="sqd-wall__streak">
-            {streak >= 3 ? `🔥 ${streak} in a row` : `You answered ${answeredCount} questions`}
+            {streak >= 3 ? `${streak} in a row` : `You answered ${answeredCount} questions`}
           </div>
           <h3 className="sqd-wall__title">
             That was {answeredCount} of {TOTAL_BANK.toLocaleString()}.
@@ -214,7 +214,7 @@ export default function SampleQuestionDemo() {
         <div className="sqd-head">
           <span className="sqd-tag">{q.system} · {q.difficulty}</span>
           <span className="sqd-meta">
-            {streak > 0 && <span className="sqd-streak">🔥 {streak} streak</span>}
+            {streak > 0 && <span className="sqd-streak">{streak} streak</span>}
             <span className="sqd-counter">Q {answeredCount + (revealed ? 0 : 1)} / {FREE_LIMIT} free</span>
           </span>
         </div>
@@ -239,9 +239,15 @@ export default function SampleQuestionDemo() {
               >
                 <span className="sqd-opt__key">{opt.key}</span>
                 <span className="sqd-opt__text">{opt.text}</span>
-                {revealed && opt.key === q.correct && <span className="sqd-opt__icon">✓</span>}
+                {revealed && opt.key === q.correct && (
+                  <span className="sqd-opt__icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                )}
                 {revealed && opt.key === selected && opt.key !== q.correct && (
-                  <span className="sqd-opt__icon">✕</span>
+                  <span className="sqd-opt__icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </span>
                 )}
               </button>
             );

@@ -8,6 +8,22 @@ function hasAccess(profile) {
   return new Date(profile.access_expires_at) > new Date();
 }
 
+function formatBold(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+const IconRefresh = ({ spinning }) => (
+  <svg
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true"
+    style={{ animation: spinning ? 'spin 1s linear infinite' : 'none' }}
+  >
+    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+)
+
 export default function StudyCoach({ profile, track = "specialist" }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,22 +58,30 @@ export default function StudyCoach({ profile, track = "specialist" }) {
 
   if (!hasAccess(profile)) {
     return (
-      <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/50 p-5">
-        <div className="flex items-center gap-2 mb-2"><span className="text-xl">📋</span><h3 className="text-sm font-semibold text-indigo-800">AI Study Coach</h3></div>
-        <p className="text-sm text-indigo-600">Get a personalised daily study plan based on your weakest topics. <a href="/pricing" className="underline font-medium">Upgrade to unlock</a></p>
+      <div className="sc-card sc-card--locked">
+        <h3 className="sc-title">AI Study Coach</h3>
+        <p className="sc-body">
+          Get a personalised daily study plan based on your weakest topics.{' '}
+          <a href="/pricing" className="sc-link">Upgrade to unlock</a>
+        </p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-indigo-100 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2 mb-4"><span className="text-xl">📋</span><h3 className="text-sm font-semibold text-gray-800">Today's Study Plan</h3></div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex gap-3">
-              <div className="w-5 h-5 rounded-full bg-indigo-100 flex-shrink-0 animate-pulse mt-0.5" />
-              <div className="flex-1 space-y-1.5"><div className="h-3 bg-gray-100 rounded animate-pulse w-full" /><div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" /></div>
+      <div className="sc-card">
+        <div className="sc-head">
+          <h3 className="sc-title">Today's Study Plan</h3>
+        </div>
+        <div className="sc-skeleton-list">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="sc-skeleton-row">
+              <div className="sc-skeleton-dot" />
+              <div className="sc-skeleton-lines">
+                <div className="sc-skeleton-line sc-skeleton-line--full" />
+                <div className="sc-skeleton-line sc-skeleton-line--two-thirds" />
+              </div>
             </div>
           ))}
         </div>
@@ -67,42 +91,48 @@ export default function StudyCoach({ profile, track = "specialist" }) {
 
   if (error && error !== "paywall") {
     return (
-      <div className="rounded-xl border border-orange-100 bg-orange-50 p-5">
-        <div className="flex items-center gap-2 mb-2"><span className="text-xl">📋</span><h3 className="text-sm font-semibold text-orange-800">Today's Study Plan</h3></div>
-        <p className="text-sm text-orange-700 mb-3">{error}</p>
-        {!rateLimited && <button onClick={fetchPlan} className="text-xs font-medium text-orange-700 underline hover:text-orange-900">Try again</button>}
+      <div className="sc-card sc-card--error">
+        <div className="sc-head">
+          <h3 className="sc-title">Today's Study Plan</h3>
+        </div>
+        <p className="sc-error-msg">{error}</p>
+        {!rateLimited && (
+          <button onClick={fetchPlan} className="sc-retry">Try again</button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-indigo-100 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2"><span className="text-xl">📋</span><h3 className="text-sm font-semibold text-gray-800">Today's Study Plan</h3></div>
-        <button onClick={fetchPlan} disabled={loading} title="Refresh plan" className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-40" aria-label="Refresh study plan">
-          <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+    <div className="sc-card">
+      <div className="sc-head">
+        <h3 className="sc-title">Today's Study Plan</h3>
+        <button
+          onClick={fetchPlan}
+          disabled={loading}
+          title="Refresh plan"
+          className="sc-refresh"
+          aria-label="Refresh study plan"
+        >
+          <IconRefresh spinning={loading} />
         </button>
       </div>
       {plan && plan.length > 0 ? (
-        <ol className="space-y-3">
+        <ol className="sc-plan-list">
           {plan.map((bullet, i) => (
-            <li key={i} className="flex gap-3">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-              <p className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBold(bullet) }} />
+            <li key={i} className="sc-plan-item">
+              <span className="sc-plan-num">{i + 1}</span>
+              <p
+                className="sc-plan-text"
+                dangerouslySetInnerHTML={{ __html: formatBold(bullet) }}
+              />
             </li>
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-gray-500">No plan generated. Try refreshing.</p>
+        <p className="sc-empty">No plan generated. Try refreshing.</p>
       )}
-      <p className="mt-4 text-xs text-gray-400">Based on your recent quiz performance · Powered by AI</p>
+      <p className="sc-footnote">Based on your recent quiz performance · Powered by AI</p>
     </div>
   );
-}
-
-function formatBold(text) {
-  if (!text) return "";
-  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }

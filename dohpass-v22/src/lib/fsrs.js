@@ -102,8 +102,8 @@ export function nextReviewLabel(dueDateIso) {
 }
 
 export const RATING_CONFIG = {
-  [RATING.AGAIN]: { label: 'Again', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)' },
-  [RATING.HARD]:  { label: 'Hard',  color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.35)' },
-  [RATING.GOOD]:  { label: 'Good',  color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.35)'  },
-  [RATING.EASY]:  { label: 'Easy',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.35)' },
+  [RATING.AGAIN]: { label: 'Again', color: 'var(--red, #ef4444)',            bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)'   },
+  [RATING.HARD]:  { label: 'Hard',  color: 'var(--orange, #f97316)',         bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.35)'  },
+  [RATING.GOOD]:  { label: 'Good',  color: 'var(--green, #22c55e)',          bg: 'rgba(34,197,94,0.12)',   border: 'rgba(34,197,94,0.35)'   },
+  [RATING.EASY]:  { label: 'Easy',  color: 'var(--blue, #3b82f6)',           bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.35)'  },
 }

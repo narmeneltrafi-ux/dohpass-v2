@@ -18,6 +18,18 @@ function formatTime(seconds) {
 
 function letterFor(i) { return String.fromCharCode(65 + i) }
 
+const IconSpecialist = ({ size = 26 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 3v6a4 4 0 0 0 8 0V3" /><path d="M5 3H3M13 3h2" />
+    <path d="M9 13v2a5 5 0 0 0 5 5 5 5 0 0 0 5-5v-1" /><circle cx="19" cy="11" r="2" />
+  </svg>
+)
+const IconGP = ({ size = 26 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3.5 12h3.5l2-4 4 8 2-4h5.5" />
+    <path d="M21 12.5a5 5 0 0 0-9-3 5 5 0 0 0-9 3 5 5 0 0 0 1.5 3.5L12 21l7.5-5a5 5 0 0 0 1.5-3.5z" opacity=".25" />
+  </svg>
+)
 const IconArrowLeft = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -45,7 +57,7 @@ function SelectPhase({ onStart }) {
   return (
     <div className="me-select">
       <div className="me-select-card me-select-card--gold" onClick={() => onStart('specialist')}>
-        <div className="me-select-icon">🏅</div>
+        <div className="me-select-icon"><IconSpecialist /></div>
         <h3 className="me-select-title">Specialist Exam</h3>
         <p className="me-select-desc">Internal Medicine — Cardiology, Respiratory, Nephrology & more</p>
         <div className="me-select-meta">
@@ -55,7 +67,7 @@ function SelectPhase({ onStart }) {
         <button className="btn-primary gold">Start Exam</button>
       </div>
       <div className="me-select-card me-select-card--blue" onClick={() => onStart('gp')}>
-        <div className="me-select-icon">🩺</div>
+        <div className="me-select-icon"><IconGP /></div>
         <h3 className="me-select-title">GP Exam</h3>
         <p className="me-select-desc">General Practice — broad primary care question bank</p>
         <div className="me-select-meta">

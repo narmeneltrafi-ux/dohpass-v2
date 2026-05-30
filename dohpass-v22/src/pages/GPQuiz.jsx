@@ -47,7 +47,12 @@ function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
   return (
     <div className="paywall-wrap">
       <div className="paywall-card">
-        <div className="paywall-icon">🔒</div>
+        <div className="paywall-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
         <h2 className="paywall-title">{title}</h2>
         <p className="paywall-body">{body}</p>
         <button className="btn-primary blue paywall-cta" onClick={() => navigate(ctaPath)}>
@@ -253,7 +258,7 @@ export default function GPQuiz() {
     const isCorrect = selected === correctIdx
     if (isCorrect) {
       setCorrect(c => c + 1)
-      setFeedback({ correct: true, msg: 'Correct ✓' })
+      setFeedback({ correct: true, msg: 'Correct' })
     } else {
       setWrong(w => w + 1)
       setFeedback({ correct: false, msg: `Incorrect — Answer: ${q.answer}` })

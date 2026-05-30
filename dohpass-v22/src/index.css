@@ -8549,3 +8549,9 @@ a.lp-contact__value:hover { color: var(--gold); }
   height: 80px;
   display: block;
 }
+
+/* ── Drill badge topic list ─────────────────────────────────── */
+.qui-drill-badge__topics {
+  opacity: 0.85;
+  font-weight: 500;
+}

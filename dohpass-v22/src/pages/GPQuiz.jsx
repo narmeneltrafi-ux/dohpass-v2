@@ -12,6 +12,7 @@ import {
   fetchTrialStatus,
   fetchPreviewQuestions,
   fetchUserProgressSummary,
+  fetchWeakTopics,
   sortAdaptive,
   primaryTopic,
 } from '../lib/supabase'
@@ -64,6 +65,7 @@ export default function GPQuiz() {
   const { bookmarks, toggle } = useBookmarks('gp')
   const [systems, setSystems] = useState(['All'])
   const [activeSystem, setActiveSystem] = useState('All')
+  const [drillTopics, setDrillTopics] = useState([])
 
   // Stage 1: shuffled [{id, topic}] list — loaded instantly, powers counter + progress bar.
   const [shuffledIds, setShuffledIds] = useState([])
@@ -162,19 +164,19 @@ export default function GPQuiz() {
       let idList = []
       if (planAllowed) {
         const systemFilter = isDrillMode ? null : (activeSystem === 'All' ? null : activeSystem)
-        const [rawIds, summary] = await Promise.all([
+        const [rawIds, summary, weakTopicData] = await Promise.all([
           fetchQuestionIdList('gp', systemFilter),
           fetchUserProgressSummary('gp'),
+          // trajectory-based via question_attempts (last 5 per question) — consistent
+          // with the Dashboard drill widget; no extra latency since it's parallel
+          isDrillMode ? fetchWeakTopics('gp', 5) : Promise.resolve([]),
         ])
         let pool = rawIds
         if (isDrillMode) {
-          const weakTopics = Object.entries(summary.topicAccuracy)
-            .filter(([, a]) => a.total >= 3 && (a.correct / a.total) < 0.75)
-            .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
-            .slice(0, 3)
-            .map(([t]) => t)
-          if (weakTopics.length > 0) {
-            pool = rawIds.filter(q => weakTopics.includes(primaryTopic(q.topic)))
+          const weakTopicNames = weakTopicData.map(t => t.topic)
+          setDrillTopics(weakTopicNames)
+          if (weakTopicNames.length > 0) {
+            pool = rawIds.filter(q => weakTopicNames.includes(primaryTopic(q.topic)))
           }
         }
         idList = sortAdaptive(pool, summary)
@@ -422,7 +424,10 @@ export default function GPQuiz() {
       )}
       {isDrillMode && (
         <div className="qui-drill-badge" role="status">
-          Drill mode · {total} questions · weak topics only
+          Drill mode · {total} questions
+          {drillTopics.length > 0
+            ? <span className="qui-drill-badge__topics"> · {drillTopics.join(' · ')}</span>
+            : <span> · weak topics only</span>}
         </div>
       )}
       {planAllowed && !isDrillMode && systems.length > 1 && (

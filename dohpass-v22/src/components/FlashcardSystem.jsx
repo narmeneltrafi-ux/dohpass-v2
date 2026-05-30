@@ -108,7 +108,7 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
             {card.subtopic}
           </div>
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#F1F5F9", textAlign: "center", lineHeight: 1.4 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Playfair Display',serif", color: "#d4a843", textAlign: "center", lineHeight: 1.4 }}>
               {card.front}
             </div>
           </div>
@@ -140,12 +140,12 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
             </div>
             {showHint && (
               <div style={{
-                position: "absolute", bottom: 0, left: 0, right: 0, height: 36,
-                background: "linear-gradient(to bottom, transparent, rgba(10,18,36,0.92))",
+                position: "absolute", bottom: 0, left: 0, right: 0, height: 40,
+                background: "linear-gradient(transparent, #1e2235)",
                 pointerEvents: "none",
-                display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 5,
+                display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6,
               }}>
-                <span style={{ fontSize: 9, color: "#475569", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.06em" }}>scroll ↓</span>
+                <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.06em" }}>scroll ↓</span>
               </div>
             )}
           </div>

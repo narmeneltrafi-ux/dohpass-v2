@@ -87,8 +87,8 @@ function buildPlans(counts) {
       features: [
         `${liveCount(counts?.gp)} GP questions`,
         'Mapped to DOH GP blueprint',
-        'Detailed explanations',
-        'Mobile-friendly',
+        'Detailed explanations + guideline citations',
+        'One payment · No subscription · No auto-renew',
       ],
       ctaLabel: 'Start GP Track',
       variant: 'ghost',
@@ -383,9 +383,9 @@ function FinalCTA({ onSelect }) {
   return (
     <section className="lp-closer lp-pp-finale">
       <div className="lp-closer__glow" aria-hidden="true" />
-      <h2 className="lp-closer__h2">Still deciding?</h2>
+      <h2 className="lp-closer__h2">Ready to pass?</h2>
       <p className="lp-closer__sub">
-        Start with the Specialist plan. Full refund within 7 days of payment.
+        One payment. 30 days. Full access. 7-day refund if it&apos;s not for you.
       </p>
       <button
         type="button"

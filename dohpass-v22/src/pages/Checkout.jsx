@@ -20,6 +20,19 @@ const IconShield = ({ size = 14 }) => (
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 )
+const IconWarning = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+)
+
+const PLAN_FEATURES = {
+  gp:         ['GP question bank · DOH GP blueprint', 'Clinical explanations + guideline citations', '30 days full access — no subscription'],
+  specialist: ['3,000+ specialist questions', 'DOH 2026 Specialist blueprint · All specialties', '30 days full access — no subscription'],
+  all_access: ['GP + Specialist question banks', 'Flashcards included · All future content', '30 days full access — no subscription'],
+}
 
 /* Small copy-to-clipboard row used for bank fields + reference. */
 function CopyRow({ label, value, mono }) {
@@ -137,22 +150,38 @@ export default function Checkout() {
         <div className="bt-page">
           <div className="bt-card bt-card--narrow bt-card--center">
             <div className="bt-tick"><IconCheck size={26} /></div>
-            <h1 className="bt-h1">Order received</h1>
+            <h1 className="bt-h1">Transfer recorded</h1>
             <p className="bt-sub">
-              Thanks! Once we see your transfer we'll activate <strong>{plan.name}</strong> on your
-              account — usually within {ACTIVATION_WINDOW}.
+              We&apos;ve saved your order. Two more steps and you&apos;re in.
             </p>
 
-            <div className="bt-refbox">
-              <span className="bt-refbox__label">Your payment reference</span>
-              <span className="bt-refbox__value">{reference}</span>
-            </div>
+            <div className="bt-divider" />
 
-            <p className="bt-sub">
-              Make sure this reference is on your transfer, then email your proof of payment to{' '}
-              <a className="bt-link" href={`mailto:${SUPPORT_EMAIL}?subject=DOHPass payment ${reference}`}>{SUPPORT_EMAIL}</a>{' '}
-              so we can match and activate it faster.
-            </p>
+            <h2 className="bt-h2">What to do now</h2>
+            <ol className="bt-timeline">
+              <li>
+                <span className="bt-timeline__dot">1</span>
+                <div>
+                  Include your reference <strong>{reference}</strong> in the transfer memo — it&apos;s how we match your payment.
+                </div>
+              </li>
+              <li>
+                <span className="bt-timeline__dot">2</span>
+                <div>
+                  Email your transfer screenshot or confirmation to{' '}
+                  <a className="bt-link" href={`mailto:${SUPPORT_EMAIL}?subject=DOHPass%20payment%20${reference}`}>{SUPPORT_EMAIL}</a>
+                  {' '}with the reference in the subject line.
+                </div>
+              </li>
+              <li>
+                <span className="bt-timeline__dot">3</span>
+                <div>
+                  We&apos;ll activate <strong>{plan.name}</strong> on your account within {ACTIVATION_WINDOW}.
+                </div>
+              </li>
+            </ol>
+
+            <div className="bt-divider" />
 
             <button className="aw-btn" onClick={() => navigate('/dashboard')}>
               <span>Go to dashboard</span>
@@ -175,19 +204,29 @@ export default function Checkout() {
       <AppNav />
       <div className="bt-page">
         <div className="bt-card">
-          <span className="bt-eyebrow">Pay by bank transfer</span>
-          <h1 className="bt-h1">Complete your purchase</h1>
+          <span className="bt-eyebrow">Bank transfer · UAE local payment</span>
+          <h1 className="bt-h1">Get {plan.name}</h1>
 
           {/* Plan summary */}
           <div className="bt-plan">
-            <div className="bt-plan__name">{plan.name}</div>
+            <div className="bt-plan__info">
+              <div className="bt-plan__name">{plan.name}</div>
+              <div className="bt-plan__bullets">
+                {(PLAN_FEATURES[plan.id] || []).map(f => (
+                  <div className="bt-plan__bullet" key={f}>
+                    <span className="bt-plan__bullet-icon"><IconCheck size={10} /></span>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="bt-plan__price">
               <span className="bt-plan__cur">AED</span>
               <span className="bt-plan__num">{plan.amount}</span>
-              <span className="bt-plan__per">/ month</span>
+              <span className="bt-plan__per">/ 30 days</span>
             </div>
           </div>
-          <p className="bt-plan__note">One payment unlocks 30 days of full access. Renew anytime by transferring again.</p>
+          <p className="bt-plan__note">One payment · No subscription · No auto-renew · Renew anytime.</p>
 
           {/* What happens next */}
           <div className="bt-divider" />
@@ -203,10 +242,10 @@ export default function Checkout() {
           <h2 className="bt-h2">Bank details</h2>
 
           <div className="bt-warn" role="alert">
-            <span className="bt-warn__icon" aria-hidden="true">⚠️</span>
+            <span className="bt-warn__icon" aria-hidden="true"><IconWarning size={16} /></span>
             <p className="bt-warn__text">
-              Only transfer to the IBAN shown here, on this page, after logging in at dohpass.com.
-              We will <strong>never</strong> email, message, or DM you different bank details.
+              Only transfer to the IBAN shown on this page, after signing in at dohpass.com.
+              We will <strong>never</strong> send you different bank details by email, WhatsApp, or DM.
               Always include your payment reference in the transfer memo.
             </p>
           </div>
@@ -230,7 +269,7 @@ export default function Checkout() {
           {/* Reassurance */}
           <div className="bt-trust">
             <span className="bt-trust__icon"><IconShield /></span>
-            <span>Secure manual activation · 7-day money-back guarantee · Cancel anytime</span>
+            <span>No subscription · No auto-renew · 7-day money-back guarantee</span>
           </div>
 
           {error && <div className="auth-error">{error}</div>}

@@ -345,7 +345,7 @@ export default function Dashboard() {
       // Fetch weak topics for the track the user primarily uses
       if (!p || !hasAccess(p)) return
       const drillTrack = p.diagnostic_track
-        || (ps?.answered >= pg?.answered ? 'specialist' : 'gp')
+        || (stats?.specialist?.answered >= stats?.gp?.answered ? 'specialist' : 'gp')
       fetchWeakTopics(drillTrack).then(topics => {
         if (!cancelled && topics.length > 0) setDrillData({ track: drillTrack, topics })
       })

@@ -100,14 +100,14 @@ function deriveFirstName(profile, user) {
 
 
 /* ───────────────────────────────────────────────────────────────
-   STATS BAR — same shape as the landing-page stats
+   STATS BAR — Accuracy leads; it's the most clinically relevant signal
    ─────────────────────────────────────────────────────────────── */
 function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
   const cells = [
-    { label: 'Day Streak',     value: streak,        suffix: '' },
-    { label: 'This Week',      value: weekly,        suffix: '' },
-    { label: 'Total Answered', value: totalAnswered, suffix: '' },
-    { label: 'Accuracy',       value: accuracy,      suffix: '%' },
+    { label: 'Overall Accuracy', value: accuracy,      suffix: '%' },
+    { label: 'Day Streak',       value: streak,        suffix: '' },
+    { label: 'This Week',        value: weekly,        suffix: '' },
+    { label: 'Total Answered',   value: totalAnswered, suffix: '' },
   ]
   return (
     <div className="lp-stats" role="region" aria-label="Your progress at a glance">
@@ -119,6 +119,51 @@ function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
           </span>
         </div>
       ))}
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   READINESS BADGE — shown only when ≥ 20 attempts
+   ─────────────────────────────────────────────────────────────── */
+function ReadinessBadge({ accuracy, totalAnswered }) {
+  if (accuracy === null || totalAnswered === null || totalAnswered < 20) return null
+  let label, mod
+  if (accuracy >= 75)      { label = 'On track to pass';        mod = 'green' }
+  else if (accuracy >= 65) { label = 'Approaching pass mark';   mod = 'gold'  }
+  else if (accuracy >= 50) { label = 'Building readiness';      mod = 'blue'  }
+  else                     { label = 'Focus on fundamentals';   mod = 'muted' }
+  return (
+    <div className={`lp-dash__readiness lp-dash__readiness--${mod}`} role="status" aria-label={`Exam readiness: ${label}`}>
+      <span className="lp-dash__readiness-dot" aria-hidden="true" />
+      {label}
+      <span className="lp-dash__readiness-sep" aria-hidden="true">·</span>
+      {accuracy}% accuracy
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   UPGRADE PROMPT — free users only
+   ─────────────────────────────────────────────────────────────── */
+function UpgradePrompt({ navigate }) {
+  return (
+    <div className="lp-dash__upgrade-wrap">
+      <div className="lp-dash__upgrade" role="region" aria-label="Upgrade to full access">
+        <div className="lp-dash__upgrade__body">
+          <div className="lp-dash__upgrade__title">Unlock your full question bank</div>
+          <div className="lp-dash__upgrade__sub">
+            You&apos;re in free preview mode. Activate a plan for 30-day full access — one payment, no subscription.
+          </div>
+        </div>
+        <button
+          type="button"
+          className="lp-dash__upgrade__cta"
+          onClick={() => navigate('/pricing')}
+        >
+          View Plans
+        </button>
+      </div>
     </div>
   )
 }
@@ -233,14 +278,14 @@ export default function Dashboard() {
 
   let subhead
   if (weekly == null) {
-    subhead = 'Loading your weekly progress…'
+    subhead = null
   } else if (weekly === 0) {
     const isFirstVisit = overall == null || overall.answered === 0
     subhead = isFirstVisit
-      ? 'Your exam prep starts here. Pick a track below to answer your first question.'
-      : 'No questions answered this week — pick up where you left off.'
+      ? 'Pick a track below to answer your first question.'
+      : 'No questions this week — pick up where you left off.'
   } else {
-    subhead = `You've answered ${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} this week.`
+    subhead = `${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} answered this week.`
   }
 
   return (
@@ -270,10 +315,11 @@ export default function Dashboard() {
       )}
 
       <header className="lp-dash__hero">
+        <ReadinessBadge accuracy={accuracy} totalAnswered={totalAnswered} />
         <h1 className="lp-dash__h1">
           Welcome back, <span className="lp-dash__h1-name">{firstName}</span>
         </h1>
-        <p className="lp-dash__sub">{subhead}</p>
+        {subhead && <p className="lp-dash__sub">{subhead}</p>}
       </header>
 
       <div className="lp-statswrap lp-dash__statswrap">
@@ -307,6 +353,10 @@ export default function Dashboard() {
                 : `${DAILY_GOAL - todayCount} to go`}
           </span>
         </div>
+      )}
+
+      {!hasAccess(profile) && profile !== null && (
+        <UpgradePrompt navigate={navigate} />
       )}
 
       <section className="lp-dash__section" aria-labelledby="lp-tracks-h">

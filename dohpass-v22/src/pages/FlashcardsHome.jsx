@@ -57,7 +57,7 @@ export default function FlashcardsHome() {
         >
           <div className="track-icon">🩺</div>
           <div className="track-info">
-            <h2 className="track-title" style={{ color: '#14b8a6' }}>General Practitioner</h2>
+            <h2 className="track-title" style={{ color: '#d4a843' }}>General Practitioner</h2>
             <p className="track-desc">GP track — broad primary care systems</p>
             <span className="track-badge" style={BADGE_STYLE}>{stats.gpCards.toLocaleString()} Cards</span>
           </div>

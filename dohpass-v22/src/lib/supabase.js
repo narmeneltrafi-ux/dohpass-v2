@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { scheduleCard, RATING } from './fsrs.js'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -279,7 +280,7 @@ export async function getProfile() {
     if (!user) return null
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end, access_expires_at')
+      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end, access_expires_at, exam_date, exam_name')
       .eq('id', user.id)
       .single()
     if (error || !data) return null
@@ -312,7 +313,8 @@ export function hasAccess(profile) {
 //   1. question_attempts — append-only log, never overwritten (source of truth
 //      for SRS, adaptive selection, and performance trajectory)
 //   2. user_progress — latest-state cache; a DB trigger maintains total_attempts,
-//      consecutive_correct, and last_attempt_at automatically
+//      consecutive_correct, and last_attempt_at automatically. FSRS scheduling
+//      fields (stability, difficulty, due_date, fsrs_state) are written here too.
 export async function saveProgress(
   track, questionId, isCorrect,
   topic = null, selectedAnswer = null, correctAnswer = null,
@@ -320,6 +322,33 @@ export async function saveProgress(
 ) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+
+  // Fetch existing FSRS state for this question (single PK lookup, ~15ms).
+  // Only rows that have been scheduled before will have stability set.
+  const { data: existing } = await supabase
+    .from('user_progress')
+    .select('stability, difficulty, due_date, fsrs_state, last_attempt_at')
+    .eq('user_id', user.id)
+    .eq('question_id', questionId)
+    .maybeSingle()
+
+  // Map correctness to FSRS rating. GOOD for correct, AGAIN for wrong.
+  // HARD / EASY require explicit user input — not yet wired to the UI.
+  const rating = isCorrect ? RATING.GOOD : RATING.AGAIN
+
+  // Treat rows without stability as new cards so FSRS initialises cleanly
+  // rather than inheriting a stale stability=null default.
+  const card = (existing && existing.stability != null) ? {
+    stability:  existing.stability,
+    difficulty: existing.difficulty,
+    due_date:   existing.due_date,
+    reps:       0,   // reps/lapses not stored on user_progress — FSRS still
+    lapses:     0,   // computes correct stability from stability+difficulty+r
+    last_review: existing.last_attempt_at,
+    fsrs_state: existing.fsrs_state,
+  } : null
+
+  const fsrs = scheduleCard(card, rating)
 
   const [{ error: attemptErr }, { error: progressErr }] = await Promise.all([
     supabase.from('question_attempts').insert({
@@ -333,13 +362,18 @@ export async function saveProgress(
       response_time_ms: responseTimeMs ?? null,
     }),
     supabase.from('user_progress').upsert({
-      user_id:        user.id,
+      user_id:         user.id,
       track,
-      question_id:    questionId,
-      is_correct:     isCorrect,
+      question_id:     questionId,
+      is_correct:      isCorrect,
       topic,
       selected_answer: selectedAnswer,
       correct_answer:  correctAnswer,
+      // FSRS scheduling state
+      stability:  fsrs.stability,
+      difficulty: fsrs.difficulty,
+      due_date:   fsrs.due_date,
+      fsrs_state: fsrs.fsrs_state,
     }, { onConflict: 'user_id,question_id' }),
   ])
 
@@ -466,6 +500,18 @@ export async function fetchDiagnosticQuestions(track) {
   return questions.sort(() => Math.random() - 0.5)
 }
 
+// Save the user's target exam date and exam name to their profile.
+// Shown in AI coaching context to make plans time-aware.
+export async function saveExamDate(examDate, examName = null) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not signed in' }
+  const { error } = await supabase
+    .from('profiles')
+    .update({ exam_date: examDate, exam_name: examName })
+    .eq('id', user.id)
+  return { error: error ?? null }
+}
+
 export async function completeDiagnostic(track) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
@@ -506,11 +552,46 @@ export async function fetchFlashcardDueCount() {
 }
 
 // Returns up to `limit` topics with the lowest accuracy for a track.
-// Requires at least `minAttempts` answers before a topic qualifies, and only
-// returns topics below 75% (genuinely weak — not just sparse data).
+// Fix 6: Uses question_attempts (append-only log) rather than user_progress
+// (latest-state cache). Takes the last 5 attempts per question so a single
+// lucky correct answer no longer masks a pattern of wrong ones.
+// Requires at least `minAttempts` weighted attempts before a topic qualifies.
 export async function fetchWeakTopics(track, limit = 3, minAttempts = 3) {
-  const { topicAccuracy } = await fetchUserProgressSummary(track)
-  return Object.entries(topicAccuracy)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  // Last 500 attempts ordered newest first — covers most active users easily.
+  const { data, error } = await supabase
+    .from('question_attempts')
+    .select('question_id, is_correct, topic, created_at')
+    .eq('user_id', user.id)
+    .eq('track', track)
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  if (error || !data) return []
+
+  // For each question take only the last 5 attempts (trajectory, not lifetime average)
+  const byQuestion = new Map()
+  for (const row of data) {
+    if (!byQuestion.has(row.question_id)) {
+      byQuestion.set(row.question_id, { topic: primaryTopic(row.topic) || 'Unknown', attempts: [] })
+    }
+    const q = byQuestion.get(row.question_id)
+    if (q.attempts.length < 5) q.attempts.push(row.is_correct)
+  }
+
+  // Aggregate per topic
+  const topicStats = {}
+  for (const [, { topic, attempts }] of byQuestion) {
+    if (!topicStats[topic]) topicStats[topic] = { correct: 0, total: 0 }
+    for (const correct of attempts) {
+      topicStats[topic].total++
+      if (correct) topicStats[topic].correct++
+    }
+  }
+
+  return Object.entries(topicStats)
     .filter(([, a]) => a.total >= minAttempts)
     .map(([topic, a]) => ({ topic, accuracy: Math.round((a.correct / a.total) * 100), total: a.total }))
     .sort((a, b) => a.accuracy - b.accuracy)
@@ -521,45 +602,82 @@ export async function fetchWeakTopics(track, limit = 3, minAttempts = 3) {
 // ── ADAPTIVE QUESTION SELECTION ───────────────────────────────────────────────
 
 // Fetches the current user's answered-question summary for a track.
-// Returns seenIds (Set), wrongIds (Set), topicAccuracy ({topic: {correct, total}}).
+// Returns seenIds (Set), wrongIds (Set), topicAccuracy ({topic: {correct, total}}),
+// and progressMap (Map<questionId, {due_date, stability, fsrs_state}>).
 // Used by sortAdaptive to score and prioritise the question id list.
 export async function fetchUserProgressSummary(track) {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+  if (!user) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {}, progressMap: new Map() }
 
   const { data, error } = await supabase
     .from('user_progress')
-    .select('question_id, is_correct, topic')
+    .select('question_id, is_correct, topic, due_date, stability, fsrs_state')
     .eq('user_id', user.id)
     .eq('track', track)
 
-  if (error || !data) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {} }
+  if (error || !data) return { seenIds: new Set(), wrongIds: new Set(), topicAccuracy: {}, progressMap: new Map() }
 
   const seenIds = new Set(data.map(r => r.question_id))
   const wrongIds = new Set(data.filter(r => !r.is_correct).map(r => r.question_id))
 
   const topicAccuracy = {}
+  const progressMap = new Map()
+
   for (const row of data) {
     const topic = primaryTopic(row.topic) || 'Unknown'
     if (!topicAccuracy[topic]) topicAccuracy[topic] = { correct: 0, total: 0 }
     topicAccuracy[topic].total++
     if (row.is_correct) topicAccuracy[topic].correct++
+
+    progressMap.set(row.question_id, {
+      due_date:   row.due_date,
+      stability:  row.stability,
+      fsrs_state: row.fsrs_state,
+    })
   }
 
-  return { seenIds, wrongIds, topicAccuracy }
+  return { seenIds, wrongIds, topicAccuracy, progressMap }
 }
 
 // Scores each question in idList and returns a sorted copy (highest priority first).
-// Scoring weights: topic weakness 0.40, unseen bonus 0.35, wrong bonus 0.25, jitter 0.08.
-// Pre-computes all scores before sorting so jitter is fixed per question per call.
-export function sortAdaptive(idList, { seenIds, wrongIds, topicAccuracy }) {
+//
+// Scoring weights (Fix 4: FSRS-aware):
+//   FSRS due score   0.35 — questions past their scheduled review date rank highest
+//   Topic weakness   0.25 — low accuracy on this topic boosts priority
+//   Unseen bonus     0.25 — never-attempted questions get a lift
+//   Wrong bonus      0.15 — previously incorrect questions get a lift
+//   Jitter           0.08 — prevents identical scores from producing a fixed order
+//
+// progressMap is optional; callers that haven't migrated yet still work correctly.
+export function sortAdaptive(idList, { seenIds, wrongIds, topicAccuracy, progressMap }) {
+  const now = Date.now()
+
   const scored = idList.map(q => {
-    const topic = primaryTopic(q.topic) || 'Unknown'
-    const acc = topicAccuracy[topic]
+    const topic    = primaryTopic(q.topic) || 'Unknown'
+    const acc      = topicAccuracy[topic]
+    const prog     = progressMap?.get(q.id)
+
+    // FSRS due score: 1.0 = overdue/never seen; scales linearly over 7 days
+    // past due. 0.5 = no FSRS data yet. 0 = reviewed very recently.
+    let fsrsDue = 0.5
+    if (prog?.due_date) {
+      const daysOverdue = (now - new Date(prog.due_date).getTime()) / 86400000
+      fsrsDue = Math.min(1, Math.max(0, daysOverdue / 7 + 0.5))
+    } else if (!prog) {
+      fsrsDue = 0.5 // new card — unseen bonus handles it
+    }
+
     const topicScore  = acc ? 1 - (acc.correct / acc.total) : 0.5
     const unseenScore = seenIds.has(q.id) ? 0 : 1
     const wrongScore  = wrongIds.has(q.id) ? 1 : 0
-    const score = topicScore * 0.40 + unseenScore * 0.35 + wrongScore * 0.25 + Math.random() * 0.08
+
+    const score = (
+      fsrsDue     * 0.35 +
+      topicScore  * 0.25 +
+      unseenScore * 0.25 +
+      wrongScore  * 0.15 +
+      Math.random() * 0.08
+    )
     return { q, score }
   })
   scored.sort((a, b) => b.score - a.score)

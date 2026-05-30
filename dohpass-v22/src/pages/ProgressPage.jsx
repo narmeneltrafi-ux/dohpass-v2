@@ -180,18 +180,18 @@ export default function ProgressPage() {
           ) : bookmarked.length === 0 ? (
             <div className="an-empty">
               <p>No bookmarks yet on this track.</p>
-              <p style={{ fontSize: '13px', opacity: 0.6 }}>Star questions while practising to save them here.</p>
+              <p className="an-empty__hint">Star questions while practising to save them here.</p>
             </div>
           ) : (
             <div className="an-card">
               <h3 className="an-card-title">Saved Questions ({bookmarked.length})</h3>
               {bookmarked.map((q, i) => (
-                <div key={q.id} className="an-topic-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '16px 0' }}>
-                  <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                    <span className={`an-topic-pct`} style={{ color: 'var(--gold)', flexShrink: 0 }}>Q{i + 1}</span>
-                    <span className="an-topic-name" style={{ flex: 1, fontSize: '13px', opacity: 0.6 }}>{q.topic}</span>
+                <div key={q.id} className="an-bm-row">
+                  <div className="an-bm-row__meta">
+                    <span className="an-bm-row__num">Q{i + 1}</span>
+                    <span className="an-bm-row__topic">{q.topic}</span>
                   </div>
-                  <p className="an-topic-name" style={{ margin: 0, lineHeight: 1.6 }}>{q.q}</p>
+                  <p className="an-bm-row__q">{q.q}</p>
                 </div>
               ))}
             </div>

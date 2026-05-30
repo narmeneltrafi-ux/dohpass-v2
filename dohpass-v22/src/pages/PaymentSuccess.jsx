@@ -12,6 +12,12 @@ const planLabel = {
   free: 'Free',
 }
 
+const IconCheck = ({ size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
 export default function PaymentSuccess() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -51,35 +57,29 @@ export default function PaymentSuccess() {
       <div className="hw-orb hw-orb--2" />
 
       <div className="ps-card">
-        <div className="ps-icon">✓</div>
-        <h1 className="ps-title">Payment Successful!</h1>
+        <div className="ps-icon" aria-hidden="true"><IconCheck /></div>
+        <h1 className="ps-title">Payment confirmed</h1>
 
         {status === 'polling' && (
-          <p className="ps-sub">Processing your subscription...</p>
+          <p className="ps-sub">Checking your account status…</p>
         )}
         {status === 'active' && (
           <p className="ps-sub">
-            Subscription active! Plan: {planLabel[profile?.plan] || profile?.plan}
+            {planLabel[profile?.plan] || profile?.plan} access is live. You're ready to study.
           </p>
         )}
         {status === 'timeout' && (
           <p className="ps-sub">
-            Payment received — if you don't see access in a minute, please refresh or contact support.
+            Payment received. We'll activate your access within 24 hours — check your email or contact support if you have questions.
           </p>
         )}
 
-        <button
-          className="ps-cta"
-          onClick={() => navigate('/dashboard')}
-          disabled={status === 'polling'}
-        >
-          Go to Dashboard
+        <button className="ps-cta" onClick={() => navigate('/dashboard')}>
+          Go to dashboard
         </button>
 
         {sessionId && (
-          <p className="ps-note" style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '1rem' }}>
-            Ref: {sessionId}
-          </p>
+          <p className="ps-note">Ref: {sessionId}</p>
         )}
       </div>
     </div>

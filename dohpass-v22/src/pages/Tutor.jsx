@@ -257,12 +257,15 @@ export default function Tutor() {
         }
       } catch (err) {
         if (err?.name !== 'AbortError') {
+          const content = err?.message === 'HTTP 401'
+            ? 'Session expired — please refresh the page.'
+            : 'Something went wrong — please try again.'
           setMessages(prev =>
             prev.map(m =>
               m.id === assistantId
                 ? {
                     ...m,
-                    content: 'Something went wrong — please try again.',
+                    content,
                     streaming: false,
                   }
                 : m

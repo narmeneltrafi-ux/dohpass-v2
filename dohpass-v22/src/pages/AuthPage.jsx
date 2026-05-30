@@ -7,6 +7,12 @@ import { supabase } from '../lib/supabase'
 // (Authentication → URL Configuration → Redirect URLs) or the link 404s.
 const EMAIL_REDIRECT_URL = 'https://dohpass.com/dashboard'
 
+const IconCheckSmall = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
 const IconCross = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
     <rect x="9" y="2" width="6" height="20" rx="2" />
@@ -183,6 +189,23 @@ export default function AuthPage() {
             ? 'Sign in to access your question bank'
             : 'Create your account to begin practising'}
         </p>
+
+        {mode === 'signup' && (
+          <div className="aw-trust" role="list" aria-label="What you get with DOHPass">
+            <div className="aw-trust__item" role="listitem">
+              <span className="aw-trust__icon"><IconCheckSmall /></span>
+              DOH-specific questions — not USMLE or MRCP adapted
+            </div>
+            <div className="aw-trust__item" role="listitem">
+              <span className="aw-trust__icon"><IconCheckSmall /></span>
+              Free preview questions — no payment to browse
+            </div>
+            <div className="aw-trust__item" role="listitem">
+              <span className="aw-trust__icon"><IconCheckSmall /></span>
+              7-day money-back guarantee on your first payment
+            </div>
+          </div>
+        )}
 
         {/* Divider */}
         <div className="aw-divider" />

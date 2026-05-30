@@ -4490,16 +4490,16 @@ nav {
   text-align: center;
 }
 .lp-pricing__h2 {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   color: var(--text);
   margin-bottom: 0.65rem;
 }
 .lp-pricing__sub {
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-size: 1rem;
   margin-bottom: 3rem;
 }
@@ -4721,9 +4721,10 @@ nav {
   max-width: 100%;
 }
 .lp-faq__h2 {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  letter-spacing: -0.03em;
   text-align: center;
   color: var(--text);
   margin-bottom: 2.5rem;
@@ -4816,7 +4817,7 @@ nav {
 }
 .lp-closer__sub {
   font-size: 1.125rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   margin-bottom: 2rem;
 }
 .lp-closer__small {
@@ -5392,7 +5393,7 @@ nav {
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #71717a;
+  color: var(--text-muted);
   margin-bottom: 0.85rem;
   min-height: 1.1em;
 }
@@ -5412,7 +5413,7 @@ nav {
 }
 .lp-pp-plan__cur {
   font-size: 0.95rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-weight: 600;
   letter-spacing: 0.04em;
 }

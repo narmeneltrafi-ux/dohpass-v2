@@ -54,12 +54,13 @@ function Hero() {
           Simple pricing · No subscription · No auto-renew
         </div>
         <h1 className="lp-hero__h1" id="lp-pricing-h1">
-          One price.
+          One payment.
           <br />
-          <span className="lp-hero__h1-gold">Pass faster.</span>
+          <span className="lp-hero__h1-gold">Full preparation.</span>
         </h1>
         <p className="lp-hero__sub">
-          Full access to thousands of questions, written by UAE physicians, mapped to the current DOH blueprint.
+          Complete access to the DOH-mapped question bank. Written by UAE physicians.
+          7-day refund if it&apos;s not the right fit.
         </p>
       </div>
     </section>
@@ -189,17 +190,26 @@ function PricingGrid({ counts, profile, onSelect }) {
 /* ───────────────────────────────────────────────────────────────
    3. TRUST ROW
    ─────────────────────────────────────────────────────────────── */
+const IconCalendar = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+)
+
 function TrustRow() {
   const items = [
-    '7-day money-back guarantee',
-    'No subscription · No auto-renew · No contracts',
-    'Secure bank transfer · Manual activation · 7-day refund',
+    { icon: <IconShield size={14} />, label: '7-day money-back guarantee — no questions asked' },
+    { icon: <IconCalendar size={14} />, label: 'One payment · 30 days · No subscription · No auto-renew' },
+    { icon: <IconShield size={14} />, label: 'Bank transfer · Manual activation within 24 hours' },
   ]
   return (
     <div className="lp-pp-trust">
-      {items.map((label, i) => (
+      {items.map(({ icon, label }, i) => (
         <div className="lp-pp-trust__cell" key={i}>
-          <span className="lp-pp-trust__icon"><IconShield /></span>
+          <span className="lp-pp-trust__icon">{icon}</span>
           <span className="lp-pp-trust__label">{label}</span>
         </div>
       ))}

@@ -348,6 +348,12 @@ function MockDaily() {
 /* ───────────────────────────────────────────────────────────────
    5. CREDIBILITY BAR
    ─────────────────────────────────────────────────────────────── */
+const IconVerified = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
 function CredibilityBar() {
   return (
     <section className="lp-cred" id="credibility">
@@ -359,12 +365,71 @@ function CredibilityBar() {
           <div className="lp-cred__title">
             Oncology &amp; Palliative Care SHO · Tawam Hospital, Al Ain
           </div>
+          <div className="lp-cred__credentials">
+            <span className="lp-cred__credential"><IconVerified /> Sat the DOH exam</span>
+            <span className="lp-cred__credential"><IconVerified /> UAE physician</span>
+            <span className="lp-cred__credential"><IconVerified /> Content written from scratch</span>
+          </div>
           <p className="lp-cred__quote">
-            &ldquo;Built from the questions I wished I&apos;d had during my own DOH prep.&rdquo;
+            &ldquo;Built from the questions I wished I&apos;d had during my own DOH prep.
+            Every other resource was USMLE or MRCP adapted. This is purpose-built.&rdquo;
           </p>
         </div>
       </div>
     </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   5b. AUTHORITY STRIP
+   ─────────────────────────────────────────────────────────────── */
+const IconMap = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+    <line x1="9" y1="3" x2="9" y2="18" />
+    <line x1="15" y1="6" x2="15" y2="21" />
+  </svg>
+)
+const IconRefresh = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="23 4 23 10 17 10" />
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+  </svg>
+)
+const IconShieldCheck = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
+  </svg>
+)
+
+function AuthorityStrip() {
+  return (
+    <div className="lp-authority" aria-label="Platform credentials">
+      <div className="lp-authority__inner">
+        <div className="lp-authority__item">
+          <span className="lp-authority__icon"><IconMap /></span>
+          <div className="lp-authority__text">
+            <div className="lp-authority__label">Blueprint coverage</div>
+            <div className="lp-authority__value">Mapped to DOH 2026 blueprint — GP &amp; Specialist</div>
+          </div>
+        </div>
+        <div className="lp-authority__item">
+          <span className="lp-authority__icon"><IconRefresh /></span>
+          <div className="lp-authority__text">
+            <div className="lp-authority__label">Content currency</div>
+            <div className="lp-authority__value">New questions weekly · Updated when guidelines change</div>
+          </div>
+        </div>
+        <div className="lp-authority__item">
+          <span className="lp-authority__icon"><IconShieldCheck /></span>
+          <div className="lp-authority__text">
+            <div className="lp-authority__label">Risk-free access</div>
+            <div className="lp-authority__value">7-day full refund · No subscription · No auto-renew</div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -641,6 +706,8 @@ export default function Home() {
       <FeaturesSection />
 
       <CredibilityBar />
+
+      <AuthorityStrip />
 
       <PricingTeaser stats={stats} navigate={navigate} />
 

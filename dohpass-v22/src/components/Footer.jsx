@@ -48,7 +48,7 @@ export default function Footer() {
 
         {/* Right: Copyright */}
         <div className="site-footer__copy">
-          &copy; 2025 DOHPass. All rights reserved.
+          &copy; 2026 DOHPass. All rights reserved.
         </div>
       </div>
     </footer>

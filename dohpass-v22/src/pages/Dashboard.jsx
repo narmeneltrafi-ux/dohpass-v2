@@ -321,15 +321,27 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
-    supabase.auth.getUser().then(({ data }) => {
+
+    // auth.getUser() validates the JWT with the server — share this promise so
+    // we call it once and gate the stats RPC on confirmed auth. Without the
+    // gate, auth.uid() can return NULL inside the function on a fresh page
+    // load (JWT not yet confirmed), making every stat show as zero/dash.
+    const userPromise = supabase.auth.getUser()
+
+    userPromise.then(({ data }) => {
       if (cancelled) return
       setUser(data?.user ?? null)
     })
+
     Promise.all([
       getProfile(),
       fetchQuestionCounts(),
       fetchStreak(),
-      fetchUserDashboardStats(),
+      // Only call the stats RPC after auth is confirmed — prevents auth.uid()
+      // from returning NULL and the function returning NULL silently.
+      userPromise.then(({ data }) =>
+        data?.user ? fetchUserDashboardStats() : null
+      ),
     ]).then(([p, c, s, stats]) => {
       if (cancelled) return
       setProfile(p)

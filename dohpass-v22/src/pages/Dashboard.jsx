@@ -44,6 +44,12 @@ const IconLayers = () => (
     <path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2" />
   </svg>
 )
+/* AI Tutor — chat bubble */
+const IconChat = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
 /* Mock exam — clipboard */
 const IconClipboard = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -534,6 +540,29 @@ export default function Dashboard() {
         </section>
       )}
 
+
+      {hasAccess(profile) && (
+        <section className="lp-dash__section" aria-labelledby="lp-tutor-h">
+          <h2 className="lp-dash__h2" id="lp-tutor-h">AI Tutor</h2>
+          <div
+            className="lp-mockx"
+            onClick={() => navigate('/tutor')}
+            role="button"
+            tabIndex={0}
+            aria-label="Open Dr. Tutor"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/tutor') } }}
+          >
+            <span className="lp-mockx__icon lp-mockx__icon--action"><IconChat /></span>
+            <div className="lp-mockx__body">
+              <h3 className="lp-mockx__title">Dr. Tutor</h3>
+              <p className="lp-mockx__desc">Ask anything about your DOH exam</p>
+            </div>
+            <span className="lp-tutor-open" aria-hidden="true">
+              Open Dr. Tutor <IconArrow size={13} />
+            </span>
+          </div>
+        </section>
+      )}
 
       <section className="lp-dash__section" aria-labelledby="lp-mock-h">
         <h2 className="lp-dash__h2" id="lp-mock-h">Mock exam</h2>

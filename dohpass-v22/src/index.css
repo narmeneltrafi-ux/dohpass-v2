@@ -8237,6 +8237,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 .tutor-bubble p { margin: 0; }
 .tutor-bubble p + p { margin-top: 0.6em; }
 .tutor-bubble strong { color: var(--text); font-weight: 600; }
+.tutor-bubble em { font-style: italic; opacity: 0.9; }
 .tutor-bubble code {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.82em;
@@ -8244,6 +8245,41 @@ a.lp-contact__value:hover { color: var(--gold); }
   border: 1px solid rgba(255,255,255,0.1);
   padding: 1px 5px;
   border-radius: 4px;
+}
+.tutor-h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0.9em 0 0.35em;
+  letter-spacing: 0.01em;
+}
+.tutor-h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.75em 0 0.25em;
+  opacity: 0.9;
+}
+.tutor-bubble h2:first-child,
+.tutor-bubble h3:first-child { margin-top: 0; }
+.tutor-ul, .tutor-ol {
+  margin: 0.4em 0 0.4em 1.1em;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+.tutor-ul li, .tutor-ol li {
+  line-height: 1.55;
+  padding-left: 0.2em;
+}
+.tutor-ul { list-style: disc; }
+.tutor-ol { list-style: decimal; }
+.tutor-hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.75em 0;
+  opacity: 0.5;
 }
 
 .tutor-bubble--user {

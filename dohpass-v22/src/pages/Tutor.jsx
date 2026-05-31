@@ -3,22 +3,98 @@ import { useNavigate } from 'react-router-dom'
 import { supabase, getProfile, fetchWeakTopics, fetchFlashcardDueCount, fetchOverallProgress } from '../lib/supabase'
 import AppNav from '../components/AppNav.jsx'
 
-/* ── Inline message renderer ──────────────────────────────────────
-   Escapes HTML first, then applies **bold**, `code`, and newlines.
-   Safe to use with dangerouslySetInnerHTML since all user-supplied
-   text is HTML-escaped before any substitution runs.
+/* ── Markdown renderer ────────────────────────────────────────────
+   Processes markdown into clean HTML. Order matters:
+   1. Escape raw HTML  2. Block elements  3. Inline elements
+   Safe: all user text is HTML-escaped before substitution runs.
    ─────────────────────────────────────────────────────────────── */
 function renderHtml(text) {
-  return text
+  // 1. Escape raw HTML
+  let t = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+
+  // 2. Split into lines for block-level processing
+  const lines = t.split('\n')
+  const out = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // Headings: ## H2, ### H3
+    if (/^### (.+)/.test(line)) {
+      out.push(`<h3 class="tutor-h3">${line.replace(/^### /, '')}</h3>`)
+      i++; continue
+    }
+    if (/^## (.+)/.test(line)) {
+      out.push(`<h2 class="tutor-h2">${line.replace(/^## /, '')}</h2>`)
+      i++; continue
+    }
+    if (/^# (.+)/.test(line)) {
+      out.push(`<h2 class="tutor-h2">${line.replace(/^# /, '')}</h2>`)
+      i++; continue
+    }
+
+    // Numbered list: collect consecutive items
+    if (/^\d+\.\s/.test(line)) {
+      out.push('<ol class="tutor-ol">')
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        out.push(`<li>${lines[i].replace(/^\d+\.\s/, '')}</li>`)
+        i++
+      }
+      out.push('</ol>')
+      continue
+    }
+
+    // Bullet list: -, *, •
+    if (/^[-*•]\s/.test(line)) {
+      out.push('<ul class="tutor-ul">')
+      while (i < lines.length && /^[-*•]\s/.test(lines[i])) {
+        out.push(`<li>${lines[i].replace(/^[-*•]\s/, '')}</li>`)
+        i++
+      }
+      out.push('</ul>')
+      continue
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      out.push('<hr class="tutor-hr" />')
+      i++; continue
+    }
+
+    // Blank line → paragraph break (skip)
+    if (line.trim() === '') {
+      i++; continue
+    }
+
+    // Regular paragraph — collect consecutive non-special lines
+    const para = []
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^#{1,3} /.test(lines[i]) &&
+      !/^\d+\.\s/.test(lines[i]) &&
+      !/^[-*•]\s/.test(lines[i]) &&
+      !/^---+$/.test(lines[i].trim())
+    ) {
+      para.push(lines[i])
+      i++
+    }
+    if (para.length > 0) {
+      out.push(`<p>${para.join('<br>')}</p>`)
+    }
+  }
+
+  // 3. Inline: bold, italic, code — applied to all collected HTML
+  return out.join('')
+    .replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
     .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-    .split(/\n{2,}/)
-    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-    .join('')
 }
 
 /* ── Icons ────────────────────────────────────────────────────── */

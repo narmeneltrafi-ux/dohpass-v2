@@ -1,13 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
 
 :root {
-  /* Gold */
+  /* Gold — kept for logo, badges, static brand labels */
   --gold:        #c9a84c;
   --gold-light:  #e8c870;
   --gold-bright: #f5d980;
   --gold-dim:    rgba(201, 168, 76, 0.09);
   --gold-glow:   rgba(201, 168, 76, 0.18);
   --gold-border: rgba(201, 168, 76, 0.25);
+
+  /* Action / Interactive — teal-500 for buttons, selections, progress */
+  --action:        #14b8a6;
+  --action-light:  #2dd4bf;
+  --action-dim:    rgba(20, 184, 166, 0.09);
+  --action-glow:   rgba(20, 184, 166, 0.18);
+  --action-border: rgba(20, 184, 166, 0.25);
 
   /* Blue */
   --blue:        #3b82f6;
@@ -178,7 +185,7 @@ body::before {
   align-items: center;
   justify-content: center;
   padding: 0.65rem 2rem;
-  background: var(--gold);
+  background: var(--action);
   color: #0f1117;
   border: none;
   border-radius: var(--radius-sm);
@@ -190,8 +197,8 @@ body::before {
 }
 
 .kicked-btn:hover {
-  background: var(--gold-light);
-  box-shadow: 0 0 24px var(--gold-glow);
+  background: var(--action-light);
+  box-shadow: 0 0 24px var(--action-glow);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -365,7 +372,7 @@ button.hdr-badge--link:focus-visible {
 }
 
 .site-header__signup {
-  background: var(--gold);
+  background: var(--action);
   border: none;
   color: #0f1117;
   font-family: inherit;
@@ -378,7 +385,7 @@ button.hdr-badge--link:focus-visible {
 }
 
 .site-header__signup:hover {
-  background: var(--gold-light);
+  background: var(--action-light);
 }
 
 .site-header__logout {
@@ -1741,15 +1748,15 @@ nav {
 }
 
 .option:hover:not(:disabled) {
-  border-color: var(--gold-border);
-  background: rgba(201, 168, 76, 0.07);
+  border-color: var(--action-border);
+  background: rgba(20, 184, 166, 0.07);
   transform: translateX(3px);
 }
 
 .option.selected {
-  border-color: var(--gold);
-  background: rgba(201, 168, 76, 0.1);
-  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.12), inset 0 1px 0 rgba(201, 168, 76, 0.06);
+  border-color: var(--action);
+  background: rgba(20, 184, 166, 0.10);
+  box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.12), inset 0 1px 0 rgba(20, 184, 166, 0.06);
 }
 
 .option.correct {
@@ -1784,8 +1791,8 @@ nav {
   margin-top: 1px;
 }
 
-.option:hover:not(:disabled) .option-letter  { background: rgba(201, 168, 76, 0.16); border-color: var(--gold-border);          color: var(--gold); }
-.option.selected .option-letter              { background: rgba(201, 168, 76, 0.2);  border-color: var(--gold);                  color: var(--gold); }
+.option:hover:not(:disabled) .option-letter  { background: rgba(20, 184, 166, 0.16); border-color: var(--action-border);         color: var(--action); }
+.option.selected .option-letter              { background: rgba(20, 184, 166, 0.20); border-color: var(--action);                color: var(--action); }
 .option.correct  .option-letter              { background: rgba(34, 197, 94, 0.16);  border-color: rgba(34, 197, 94, 0.4);       color: var(--green); }
 .option.incorrect .option-letter             { background: rgba(239, 68, 68, 0.12);  border-color: rgba(239, 68, 68, 0.3);       color: var(--red); }
 
@@ -5208,9 +5215,9 @@ nav {
   align-items: center;
   font-size: 0.84rem;
   font-weight: 700;
-  color: var(--gold);
-  background: var(--gold-dim);
-  border: 1px solid var(--gold-border);
+  color: var(--action);
+  background: var(--action-dim);
+  border: 1px solid var(--action-border);
   border-radius: 8px;
   padding: 0.6rem 1.15rem;
   cursor: pointer;
@@ -5218,8 +5225,8 @@ nav {
   white-space: nowrap;
 }
 .lp-dash__upgrade__cta:hover {
-  background: rgba(201, 168, 76, 0.14);
-  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(20, 184, 166, 0.14);
+  border-color: rgba(20, 184, 166, 0.35);
 }
 @media (max-width: 580px) {
   .lp-dash__upgrade { flex-direction: column; align-items: flex-start; }
@@ -5343,7 +5350,7 @@ nav {
 .lp-track__fill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  background: linear-gradient(90deg, var(--action), var(--action-light));
   transition: width 0.6s var(--lp-ease);
 }
 
@@ -5369,7 +5376,7 @@ nav {
 }
 .lp-track:hover .lp-track__cta,
 .lp-track:focus-visible .lp-track__cta {
-  background: var(--gold);
+  background: var(--action);
   color: #0b0b14;
   border-color: transparent;
 }
@@ -6448,13 +6455,13 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 
 .qui-cta--gold {
-  background: var(--gold);
+  background: var(--action);
   color: #0b0b14;
 }
 .qui-cta--gold:hover:not(:disabled) {
-  background: #b89841; /* slightly darker gold */
+  background: var(--action-light);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(201, 168, 76, 0.25);
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.25);
 }
 .qui-cta--gold:active:not(:disabled) {
   transform: scale(0.98);
@@ -7677,8 +7684,8 @@ a.lp-contact__value:hover { color: var(--gold); }
   align-items: center;
   gap: 0.35rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #c9a227, #e2b43c);
-  color: #000;
+  background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  color: #0b0b14;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -7901,7 +7908,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 }
 .lp-goal__fill {
   height: 100%;
-  background: var(--gold);
+  background: var(--action);
   border-radius: 3px;
   transition: width 0.6s ease;
 }

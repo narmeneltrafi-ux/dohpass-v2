@@ -84,13 +84,14 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
       <div style={{
         position: "relative", width: "100%", height: "100%",
         transformStyle: "preserve-3d",
+        WebkitTransformStyle: "preserve-3d",
         transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)",
         transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
       }}>
 
         {/* FRONT */}
         <div style={{
-          position: "absolute", inset: 0, backfaceVisibility: "hidden",
+          position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
           background: "linear-gradient(135deg,#0F172A 0%,#1E293B 100%)",
           border: `1px solid ${cfg.color}30`, borderRadius: 16,
           display: "flex", flexDirection: "column", padding: 24,
@@ -119,8 +120,8 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
 
         {/* BACK */}
         <div style={{
-          position: "absolute", inset: 0, backfaceVisibility: "hidden",
-          transform: "rotateY(180deg)",
+          position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+          transform: "rotateY(180deg)", WebkitTransform: "rotateY(180deg)",
           background: "linear-gradient(135deg,#0F172A 0%,#1A2744 100%)",
           border: `1px solid ${cfg.color}40`, borderRadius: 16,
           display: "flex", flexDirection: "column", padding: 20,
@@ -183,12 +184,12 @@ function ProgressBar({ known, total }) {
     <div style={{ marginBottom: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: 12, color: "#64748B", fontFamily: "'IBM Plex Mono',monospace" }}>DECK PROGRESS</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#d4a843", fontFamily: "'IBM Plex Mono',monospace" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#14b8a6", fontFamily: "'IBM Plex Mono',monospace" }}>
           {known}/{total} · {pct}%
         </span>
       </div>
       <div style={{ height: 4, borderRadius: 2, background: "#2d3448", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#d4a843,#f5d980)", borderRadius: 2, transition: "width 0.4s ease" }} />
+        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#14b8a6,#2dd4bf)", borderRadius: 2, transition: "width 0.4s ease" }} />
       </div>
     </div>
   );
@@ -206,9 +207,9 @@ function FilterTabs({ active, onChange }) {
           <button key={t.key} onClick={() => onChange(t.key)} style={{
             padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600,
             cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace",
-            border: `1px solid ${isActive ? (cfg?.color || "#d4a843") : "#1E293B"}`,
-            background: isActive ? (cfg?.bg || "rgba(212,168,67,0.12)") : "transparent",
-            color: isActive ? (cfg?.color || "#d4a843") : "#475569",
+            border: `1px solid ${isActive ? (cfg?.color || "#14b8a6") : "#1E293B"}`,
+            background: isActive ? (cfg?.bg || "rgba(20,184,166,0.12)") : "transparent",
+            color: isActive ? (cfg?.color || "#14b8a6") : "#475569",
             transition: "all 0.2s",
           }}>
             {t.label}
@@ -364,7 +365,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #0F2040", padding: "20px 24px 0", background: "linear-gradient(180deg,#0A1628 0%,#060E1A 100%)" }}>
         <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-          DOHPass / {trackLabel} / <span style={{ color: "#d4a843" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
+          DOHPass / {trackLabel} / <span style={{ color: "#14b8a6" }}>{track === 'gp' ? 'GP Flashcards' : displaySystem}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
@@ -377,8 +378,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               {!userId && <span style={{ color: "#334155" }}> · guest mode</span>}
             </div>
           </div>
-          <div style={{ background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.2)", borderRadius: 10, padding: "8px 16px", textAlign: "center", minWidth: 70 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#d4a843", fontFamily: "'IBM Plex Mono',monospace" }}>{pct}%</div>
+          <div style={{ background: "rgba(20,184,166,0.08)", border: "1px solid rgba(20,184,166,0.2)", borderRadius: 10, padding: "8px 16px", textAlign: "center", minWidth: 70 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#14b8a6", fontFamily: "'IBM Plex Mono',monospace" }}>{pct}%</div>
             <div style={{ fontSize: 10, color: "#475569", fontFamily: "'IBM Plex Mono',monospace" }}>KNOWN</div>
           </div>
         </div>
@@ -386,8 +387,8 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
           {["questions", "flashcards"].map(tab => (
             <button key={tab} onClick={() => handleTabSwitch(tab)} style={{
               padding: "10px 24px", background: "transparent", border: "none",
-              borderBottom: activeTab === tab ? "2px solid #d4a843" : "2px solid transparent",
-              color: activeTab === tab ? "#d4a843" : "#475569",
+              borderBottom: activeTab === tab ? "2px solid #14b8a6" : "2px solid transparent",
+              color: activeTab === tab ? "#14b8a6" : "#475569",
               fontSize: 13, fontWeight: 600, cursor: "pointer",
               fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase",
               letterSpacing: "0.08em", transition: "all 0.2s",
@@ -472,7 +473,7 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 {[
                   { label: "← Prev", disabled: safeIdx === 0, onClick: () => setCurrentIdx(i => Math.max(0, i - 1)), activeColor: "#94A3B8", activeBg: "rgba(30,41,59,1)" },
-                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#d4a843", activeBg: "rgba(212,168,67,0.1)" },
+                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#14b8a6", activeBg: "rgba(20,184,166,0.1)" },
                 ].map(btn => (
                   <button key={btn.label} onClick={btn.onClick} disabled={btn.disabled} style={{
                     flex: 1, padding: "12px 0", borderRadius: 10,

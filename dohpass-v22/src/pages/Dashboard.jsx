@@ -12,7 +12,6 @@ import {
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
-import StudyCoach from '../components/StudyCoach.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS (monochrome line, gold-tinted via currentColor)
@@ -538,10 +537,6 @@ export default function Dashboard() {
       {hasAccess(profile) && (
         <section className="lp-dash__section" aria-labelledby="lp-tutor-h">
           <h2 className="lp-dash__h2" id="lp-tutor-h">AI Tutor</h2>
-          <StudyCoach
-            profile={profile}
-            track={profile?.diagnostic_track === 'gp' ? 'gp' : 'specialist'}
-          />
           <div
             className="lp-tutor-cta"
             onClick={() => navigate('/tutor')}

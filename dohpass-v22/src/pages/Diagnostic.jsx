@@ -134,6 +134,33 @@ function SetupPhase({ onStart, onSkip }) {
 /* ── Results phase ───────────────────────────────────────────── */
 function ResultsPhase({ questions, answers, track, profile }) {
   const navigate = useNavigate()
+
+  if (!answers || answers.length === 0) {
+    return (
+      <div className="diag-page">
+        <div className="hw-orb hw-orb--1 lp-orb-dim" />
+        <div className="hw-orb hw-orb--2 lp-orb-dim" />
+        <div className="diag-results-card">
+          <div className="diag-brand">
+            <div className="diag-brand-icon"><IconCross /></div>
+            <span className="diag-brand-name">DOH<span>Pass</span></span>
+          </div>
+          <div className="diag-results-header">
+            <h1 className="diag-results-title">No results to show</h1>
+          </div>
+          <p className="diag-readiness-stmt">
+            The diagnostic ended without any recorded answers. Head back to the dashboard and try again.
+          </p>
+          <div className="diag-cta-block">
+            <button type="button" className="diag-cta-btn btn-primary gold" onClick={() => navigate('/dashboard')}>
+              Go to dashboard <IconArrow size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const correct = answers.filter(a => a.isCorrect).length
   const total = answers.length
   const pct = Math.round((correct / total) * 100)
@@ -322,7 +349,17 @@ export default function Diagnostic() {
   }, [phase])
 
   async function handleStart(selectedTrack) {
-    const qs = await fetchDiagnosticQuestions(selectedTrack)
+    let qs
+    try {
+      qs = await fetchDiagnosticQuestions(selectedTrack)
+    } catch (e) {
+      alert('Could not load the diagnostic. Please try again.')
+      return
+    }
+    if (!qs?.length) {
+      alert('No diagnostic questions available for this track yet.')
+      return
+    }
     setTrack(selectedTrack)
     setQuestions(qs)
     setCurrentIndex(0)

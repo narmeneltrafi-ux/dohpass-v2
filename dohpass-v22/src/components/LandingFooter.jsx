@@ -50,8 +50,6 @@ export default function LandingFooter() {
         </div>
       </div>
 
-      <div className="lp-foot__stroke" aria-hidden="true">DOHPASS</div>
-
       <div className="lp-foot__bottom">
         <span>&copy; {new Date().getFullYear()} DOHPass. All rights reserved.</span>
         <span className="lp-foot__status">

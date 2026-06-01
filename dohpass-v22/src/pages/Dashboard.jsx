@@ -349,8 +349,8 @@ export default function Dashboard() {
       setStreak(s)
       if (stats) {
         setOverall({
-          answered: stats.specialist.answered + stats.gp.answered,
-          correct:  stats.specialist.correct  + stats.gp.correct,
+          answered: stats.total_answered,
+          correct:  stats.specialist.correct + stats.gp.correct,
         })
         setWeekly(stats.weekly_answered)
         setProgSpecialist(stats.specialist)

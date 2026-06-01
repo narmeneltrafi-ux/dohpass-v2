@@ -545,9 +545,10 @@ export async function fetchUserDashboardStats() {
   return {
     specialist:      { answered: data.specialist_answered ?? 0, correct: data.specialist_correct ?? 0 },
     gp:              { answered: data.gp_answered ?? 0,         correct: data.gp_correct ?? 0 },
-    today_answered:  data.today_answered ?? 0,
+    total_answered:  data.total_answered  ?? 0,
+    today_answered:  data.today_answered  ?? 0,
     weekly_answered: data.weekly_answered ?? 0,
-    flashcard_due:   data.flashcard_due ?? 0,
+    flashcard_due:   data.flashcard_due   ?? 0,
   }
 }
 

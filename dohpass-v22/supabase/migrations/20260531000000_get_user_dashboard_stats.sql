@@ -2,8 +2,7 @@
 -- DOHPass — get_user_dashboard_stats RPC
 -- Single-RPC replacement for 5 separate dashboard queries.
 -- Uses question_attempts (append-only source of truth) for
--- all counts — never user_progress (cache) — so deduplication
--- and accuracy are always correct regardless of cache staleness.
+-- all counts — never user_progress (cache).
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.get_user_dashboard_stats()
@@ -17,13 +16,13 @@ BEGIN
   IF v_user_id IS NULL THEN RETURN NULL; END IF;
 
   RETURN jsonb_build_object(
-    -- Distinct questions attempted per track (question_attempts = source of truth)
+    -- Per-track distinct questions (latest attempt determines correct/wrong)
     'specialist_answered', (
       SELECT COUNT(DISTINCT question_id)
       FROM question_attempts
       WHERE user_id = v_user_id AND track = 'specialist'
     ),
-    'specialist_correct',  (
+    'specialist_correct', (
       SELECT COUNT(DISTINCT question_id)
       FROM (
         SELECT DISTINCT ON (question_id) question_id, is_correct
@@ -33,12 +32,12 @@ BEGIN
       ) sub
       WHERE is_correct
     ),
-    'gp_answered',         (
+    'gp_answered', (
       SELECT COUNT(DISTINCT question_id)
       FROM question_attempts
       WHERE user_id = v_user_id AND track = 'gp'
     ),
-    'gp_correct',          (
+    'gp_correct', (
       SELECT COUNT(DISTINCT question_id)
       FROM (
         SELECT DISTINCT ON (question_id) question_id, is_correct
@@ -48,9 +47,14 @@ BEGIN
       ) sub
       WHERE is_correct
     ),
-    -- Activity counts: every attempt (not deduped — matches user expectation)
-    -- today: truncated to UAE midnight (UTC+4) so the count resets at the
-    -- correct local day boundary, not UTC midnight (which would be 8 PM local)
+    -- Cross-track total: distinct questions answered across all tracks
+    'total_answered', (
+      SELECT COUNT(DISTINCT question_id)
+      FROM question_attempts
+      WHERE user_id = v_user_id
+    ),
+    -- Activity counts (not deduped — raw attempt volume)
+    -- today: UAE midnight boundary (UTC+4) so the counter resets at local midnight
     'today_answered', (
       SELECT COUNT(*)
       FROM question_attempts
@@ -58,12 +62,13 @@ BEGIN
         AND created_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Dubai')
                           AT TIME ZONE 'Asia/Dubai'
     ),
-    -- weekly: rolling 7-day window — no calendar boundary, no timezone issue
+    -- weekly: Monday anchor, UAE timezone
     'weekly_answered', (
       SELECT COUNT(*)
       FROM question_attempts
       WHERE user_id = v_user_id
-        AND created_at >= now() - interval '7 days'
+        AND created_at >= date_trunc('week', now() AT TIME ZONE 'Asia/Dubai')
+                          AT TIME ZONE 'Asia/Dubai'
     ),
     'flashcard_due', (
       SELECT COUNT(*)
@@ -74,5 +79,4 @@ BEGIN
 END;
 $$;
 
--- Grant execute to all Supabase roles that need it
 GRANT EXECUTE ON FUNCTION public.get_user_dashboard_stats() TO anon, authenticated, service_role;

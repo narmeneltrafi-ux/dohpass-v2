@@ -8683,7 +8683,7 @@ a.lp-contact__value:hover { color: var(--gold); }
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 900;
+    z-index: 90;
     align-items: stretch;
   }
   .bottom-nav__tab {

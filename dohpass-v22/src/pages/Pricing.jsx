@@ -62,11 +62,9 @@ function Hero() {
           Complete access to the DOH-mapped question bank. Written by UAE physicians.
           7-day refund if it&apos;s not the right fit.
         </p>
-        <div className="lp-pp-founder">
-          <span className="lp-pp-founder__avatar" aria-hidden="true">DI</span>
-          <span className="lp-pp-founder__text">
-            Built by Dr. Ibrahim · Oncology SHO · Tawam Hospital · MRCP(UK)
-          </span>
+        <div className="founder-strip">
+          <span className="founder-avatar">DI</span>
+          <span>Built by Dr. Ibrahim · Oncology SHO · Tawam Hospital · MRCP(UK)</span>
         </div>
       </div>
     </section>
@@ -187,7 +185,7 @@ function PricingGrid({ counts, profile, onSelect }) {
       <div className="lp-pp-plans__grid">
         {plans.map((p) => <PlanCard key={p.id} plan={p} currentPlan={currentPlan} onSelect={onSelect} />)}
       </div>
-      <p className="lp-pp-plans__trust-line">
+      <p className="pricing-trust-line">
         Secure bank transfer · Activated within 24 hours · 7-day money-back guarantee
       </p>
     </section>

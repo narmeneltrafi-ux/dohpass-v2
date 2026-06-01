@@ -539,6 +539,7 @@ export default function Dashboard() {
             <span className="lp-drill__icon"><IconTarget /></span>
             <div className="lp-drill__body">
               <h3 className="lp-drill__title">Drill your weak spots</h3>
+              <p className="lp-drill__subtitle">Targeted practice on your lowest-scoring topics</p>
               <p className="lp-drill__topics">
                 {drillData.topics.map(t => (
                   <span key={t.topic} className="lp-drill__chip">

@@ -7822,8 +7822,9 @@ a.lp-contact__value:hover { color: var(--gold); }
   align-items: center;
   gap: 1.25rem;
   padding: 1.25rem 1.5rem;
-  background: rgba(239,68,68,0.04);
-  border: 1px solid rgba(239,68,68,0.18);
+  background: rgba(20, 184, 166, 0.04);
+  border: 1px solid rgba(20, 184, 166, 0.18);
+  border-left: 3px solid var(--action);
   border-radius: 18px;
   cursor: pointer;
   transition: transform 0.3s var(--lp-ease), border-color 0.3s var(--lp-ease), background 0.3s var(--lp-ease), box-shadow 0.3s var(--lp-ease);
@@ -7831,9 +7832,10 @@ a.lp-contact__value:hover { color: var(--gold); }
 .lp-drill:hover,
 .lp-drill:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(239,68,68,0.45);
-  background: rgba(239,68,68,0.08);
-  box-shadow: 0 16px 40px -20px rgba(239,68,68,0.25);
+  border-color: rgba(20, 184, 166, 0.45);
+  border-left-color: var(--action);
+  background: rgba(20, 184, 166, 0.08);
+  box-shadow: 0 16px 40px -20px rgba(20, 184, 166, 0.25);
   outline: none;
 }
 .lp-drill__icon {
@@ -7842,9 +7844,9 @@ a.lp-contact__value:hover { color: var(--gold); }
   justify-content: center;
   width: 44px; height: 44px;
   border-radius: 11px;
-  color: #ef4444;
-  background: rgba(239,68,68,0.10);
-  border: 1px solid rgba(239,68,68,0.25);
+  color: var(--action);
+  background: rgba(20, 184, 166, 0.10);
+  border: 1px solid rgba(20, 184, 166, 0.25);
   flex-shrink: 0;
 }
 .lp-drill__body { flex: 1; min-width: 0; }
@@ -7853,7 +7855,12 @@ a.lp-contact__value:hover { color: var(--gold); }
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--text);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.2rem;
+}
+.lp-drill__subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
 }
 .lp-drill__topics {
   display: flex;
@@ -7869,22 +7876,22 @@ a.lp-contact__value:hover { color: var(--gold); }
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 600;
-  background: rgba(239,68,68,0.10);
-  border: 1px solid rgba(239,68,68,0.25);
-  color: #fca5a5;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #fbbf24;
 }
 .lp-drill__chip-pct {
   opacity: 0.75;
   font-weight: 400;
 }
 .lp-drill__arrow {
-  color: var(--text-muted);
+  color: var(--action);
   flex-shrink: 0;
   transition: color 0.3s var(--lp-ease), transform 0.3s var(--lp-ease);
 }
 .lp-drill:hover .lp-drill__arrow,
 .lp-drill:focus-visible .lp-drill__arrow {
-  color: #ef4444;
+  color: var(--action-light);
   transform: translateX(4px);
 }
 

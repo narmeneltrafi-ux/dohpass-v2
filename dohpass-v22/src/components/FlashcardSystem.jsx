@@ -220,6 +220,59 @@ function FilterTabs({ active, onChange }) {
   );
 }
 
+// ─── DECK GRID ────────────────────────────────────────────────────────────────
+const GRID_COLLAPSED_ROWS = 1;
+const GRID_COLS = 11;
+
+function DeckGrid({ filtered, safeIdx, fsrsMap, onSelect }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleCount = expanded ? filtered.length : GRID_COLS * GRID_COLLAPSED_ROWS;
+  const visible = filtered.slice(0, visibleCount);
+  const remaining = filtered.length - GRID_COLS * GRID_COLLAPSED_ROWS;
+
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
+        Deck Overview
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {visible.map((c, i) => {
+          const cfg = TYPE_CONFIG[c.card_type] || TYPE_CONFIG.concept;
+          const isActive = i === safeIdx;
+          const isKnown  = fsrsMap.get(c.id)?.is_known ?? false;
+          return (
+            <button key={c.id} onClick={() => onSelect(i)} style={{
+              width: 28, height: 28, borderRadius: 6,
+              background: isKnown ? "rgba(52,211,153,0.2)" : isActive ? cfg.bg : "rgba(15,23,42,1)",
+              border: `1px solid ${isActive ? cfg.color : isKnown ? "#34D39940" : "#1E293B"}`,
+              cursor: "pointer", fontSize: 9, fontWeight: 700,
+              color: isActive ? cfg.color : isKnown ? "#34D399" : "#334155",
+              fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s",
+            }}>
+              {i + 1}
+            </button>
+          );
+        })}
+      </div>
+      {filtered.length > GRID_COLS && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          style={{
+            marginTop: 10, padding: "4px 12px", borderRadius: 6,
+            background: "#0d0d0d", border: "1px solid #1E293B",
+            color: "#14b8a6", fontSize: 11, cursor: "pointer",
+            fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.05em",
+          }}
+        >
+          {expanded
+            ? "Collapse ↑"
+            : `Show all ${filtered.length} cards ↓`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function FlashcardSystem({ userId = null, onSwitchTab }) {
   const { track, system: systemParam } = useParams();
@@ -524,30 +577,12 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
                 </div>
               )}
 
-              <div style={{ marginTop: 28 }}>
-                <div style={{ fontSize: 11, color: "#334155", fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
-                  Deck Overview
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {filtered.map((c, i) => {
-                    const cfg = TYPE_CONFIG[c.card_type] || TYPE_CONFIG.concept;
-                    const isActive = i === safeIdx;
-                    const isKnown  = fsrsMap.get(c.id)?.is_known ?? false;
-                    return (
-                      <button key={c.id} onClick={() => setCurrentIdx(i)} style={{
-                        width: 28, height: 28, borderRadius: 6,
-                        background: isKnown ? "rgba(52,211,153,0.2)" : isActive ? cfg.bg : "rgba(15,23,42,1)",
-                        border: `1px solid ${isActive ? cfg.color : isKnown ? "#34D39940" : "#1E293B"}`,
-                        cursor: "pointer", fontSize: 9, fontWeight: 700,
-                        color: isActive ? cfg.color : isKnown ? "#34D399" : "#334155",
-                        fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s",
-                      }}>
-                        {i + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <DeckGrid
+                filtered={filtered}
+                safeIdx={safeIdx}
+                fsrsMap={fsrsMap}
+                onSelect={setCurrentIdx}
+              />
             </>
           )}
         </div>

@@ -413,6 +413,9 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
         ::-webkit-scrollbar-track{background:#0F172A}
         ::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .fc-prev-btn{border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);background:transparent}
+        .fc-prev-btn:hover:not(:disabled){border-color:rgba(255,255,255,0.4)}
+        .fc-prev-btn:disabled{border-color:#1E2940;color:#1E2940;cursor:default}
       `}</style>
 
       {/* HEADER */}
@@ -524,21 +527,34 @@ export default function FlashcardSystem({ userId = null, onSwitchTab }) {
               />
 
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-                {[
-                  { label: "← Prev", disabled: safeIdx === 0, onClick: () => setCurrentIdx(i => Math.max(0, i - 1)), activeColor: "#94A3B8", activeBg: "rgba(30,41,59,1)" },
-                  { label: "Next →", disabled: safeIdx === filtered.length - 1, onClick: () => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1)), activeColor: "#14b8a6", activeBg: "rgba(20,184,166,0.1)" },
-                ].map(btn => (
-                  <button key={btn.label} onClick={btn.onClick} disabled={btn.disabled} style={{
+                <button
+                  onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+                  disabled={safeIdx === 0}
+                  className="fc-prev-btn"
+                  style={{
                     flex: 1, padding: "12px 0", borderRadius: 10,
-                    background: btn.disabled ? "rgba(30,41,59,0.3)" : btn.activeBg,
-                    border: `1px solid ${btn.disabled ? "#1E2940" : btn.activeColor + "30"}`,
-                    color: btn.disabled ? "#1E2940" : btn.activeColor,
-                    fontSize: 13, fontWeight: 600, cursor: btn.disabled ? "default" : "pointer",
+                    fontSize: 13, fontWeight: 600,
                     fontFamily: "'IBM Plex Mono',monospace",
-                  }}>
-                    {btn.label}
-                  </button>
-                ))}
+                    cursor: safeIdx === 0 ? "default" : "pointer",
+                  }}
+                >
+                  ← Prev
+                </button>
+                <button
+                  onClick={() => setCurrentIdx(i => Math.min(filtered.length - 1, i + 1))}
+                  disabled={safeIdx === filtered.length - 1}
+                  style={{
+                    flex: 1, padding: "12px 0", borderRadius: 10,
+                    background: safeIdx === filtered.length - 1 ? "rgba(30,41,59,0.3)" : "rgba(20,184,166,0.1)",
+                    border: `1px solid ${safeIdx === filtered.length - 1 ? "#1E2940" : "#14b8a630"}`,
+                    color: safeIdx === filtered.length - 1 ? "#1E2940" : "#14b8a6",
+                    fontSize: 13, fontWeight: 600,
+                    cursor: safeIdx === filtered.length - 1 ? "default" : "pointer",
+                    fontFamily: "'IBM Plex Mono',monospace",
+                  }}
+                >
+                  Next →
+                </button>
               </div>
 
               {isPaid === false && safeIdx === filtered.length - 1 && filtered.length > 0 && (

@@ -70,7 +70,7 @@ export default function QuestionCard({
   const dataIssue = submitted && correctIdx === -1
   const accentClass = track === 'blue' ? 'qui-blue' : 'qui-gold'
   const modeLabel = mode === 'timed' ? 'TIMED' : 'TUTOR MODE'
-  const pct = total > 0 ? ((index + (submitted ? 1 : 0)) / total) * 100 : 0
+  const pct = total > 0 ? ((index + 1) / total) * 100 : 0
 
   /* haptic + delayed select so taps feel weighty */
   const handleSelectInternal = useCallback((i) => {
@@ -176,16 +176,6 @@ export default function QuestionCard({
   return (
     <div className={`qui-page ${accentClass}`}>
       <div className="qui-stickyhead">
-        <div
-          className="qui-progress"
-          role="progressbar"
-          aria-valuenow={Math.round(pct)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Session progress"
-        >
-          <div className="qui-progress__fill" style={{ width: `${pct}%` }} />
-        </div>
         <div className="qui-topbar">
           <button
             className="qui-back"
@@ -200,6 +190,16 @@ export default function QuestionCard({
             Question {index + 1} of {total}
           </div>
           <div className="qui-modepill">{modeLabel}</div>
+        </div>
+        <div
+          className="qui-progress"
+          role="progressbar"
+          aria-valuenow={Math.round(pct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Session progress"
+        >
+          <div className="qui-progress__fill" style={{ width: `${pct}%` }} />
         </div>
       </div>
 

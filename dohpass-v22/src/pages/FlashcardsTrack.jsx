@@ -198,7 +198,13 @@ export default function FlashcardsTrack() {
                     ? `${reviewed} / ${system.total} reviewed`
                     : `0 / ${system.total} — Not started`}
                 </p>
-                <p className="track-desc" style={{ color: '#a0aec0' }}>Tap to start reviewing</p>
+                <p className="track-desc" style={{ color: '#a0aec0' }}>
+                  {reviewed === 0
+                    ? 'Start reviewing →'
+                    : reviewed >= system.total
+                      ? 'Review again →'
+                      : 'Continue reviewing →'}
+                </p>
                 <span
                   className="track-badge"
                   style={{

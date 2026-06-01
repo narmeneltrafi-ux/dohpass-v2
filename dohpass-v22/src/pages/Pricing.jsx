@@ -169,8 +169,6 @@ function PlanCard({ plan, currentPlan, onSelect }) {
           {plan.ctaLabel}
         </button>
       )}
-
-      <div className="lp-pp-plan__soon">Pay by bank transfer</div>
     </article>
   )
 }
@@ -183,6 +181,9 @@ function PricingGrid({ counts, profile, onSelect }) {
       <div className="lp-pp-plans__grid">
         {plans.map((p) => <PlanCard key={p.id} plan={p} currentPlan={currentPlan} onSelect={onSelect} />)}
       </div>
+      <p className="lp-pp-plans__trust-line">
+        Secure bank transfer · Activated within 24 hours · 7-day money-back guarantee
+      </p>
     </section>
   )
 }
@@ -394,7 +395,6 @@ function FinalCTA({ onSelect }) {
       >
         Start Specialist
       </button>
-      <p className="lp-pp-plan__soon lp-pp-finale__soon">Pay by bank transfer</p>
     </section>
   )
 }
@@ -447,7 +447,6 @@ export default function Pricing() {
       <AppNav />
       <Hero />
       <PricingGrid counts={counts} profile={profile} onSelect={goToCheckout} />
-      <TrustRow />
       <ComparisonTable counts={counts} />
       <FAQ />
       <FinalCTA onSelect={goToCheckout} />

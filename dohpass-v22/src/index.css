@@ -5496,6 +5496,13 @@ nav {
 @media (max-width: 960px) {
   .lp-pp-plans__grid { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; }
 }
+.lp-pp-plans__trust-line {
+  margin: 1.25rem auto 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
 
 /* Pricing-page plan card — bigger, more breathing room than the teaser */
 .lp-pp-plan {

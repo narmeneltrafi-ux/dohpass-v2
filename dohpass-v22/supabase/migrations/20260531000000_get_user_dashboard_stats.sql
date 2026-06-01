@@ -49,9 +49,27 @@ BEGIN
       WHERE is_correct
     ),
     -- Activity counts: every attempt (not deduped — matches user expectation)
-    'today_answered',      (SELECT COUNT(*) FROM question_attempts WHERE user_id = v_user_id AND created_at >= date_trunc('day', now())),
-    'weekly_answered',     (SELECT COUNT(*) FROM question_attempts WHERE user_id = v_user_id AND created_at >= now() - interval '7 days'),
-    'flashcard_due',       (SELECT COUNT(*) FROM flashcard_progress WHERE user_id = v_user_id AND due_date <= now())
+    -- today: truncated to UAE midnight (UTC+4) so the count resets at the
+    -- correct local day boundary, not UTC midnight (which would be 8 PM local)
+    'today_answered', (
+      SELECT COUNT(*)
+      FROM question_attempts
+      WHERE user_id = v_user_id
+        AND created_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Dubai')
+                          AT TIME ZONE 'Asia/Dubai'
+    ),
+    -- weekly: rolling 7-day window — no calendar boundary, no timezone issue
+    'weekly_answered', (
+      SELECT COUNT(*)
+      FROM question_attempts
+      WHERE user_id = v_user_id
+        AND created_at >= now() - interval '7 days'
+    ),
+    'flashcard_due', (
+      SELECT COUNT(*)
+      FROM flashcard_progress
+      WHERE user_id = v_user_id AND due_date <= now()
+    )
   );
 END;
 $$;

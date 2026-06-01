@@ -85,7 +85,13 @@ export default function About() {
               <span className="lp-about__eyebrow">{s.eyebrow}</span>
               {isFounder ? (
                 <div className="lp-about__founder">
-                  <div className="lp-about__avatar" aria-label="Founder portrait placeholder">DI</div>
+                  <div className="lp-about__avatar" aria-label="Founder portrait placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5" width="14" height="14" aria-hidden="true">
+                      <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
+                      <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/>
+                      <circle cx="20" cy="10" r="2"/>
+                    </svg>
+                  </div>
                   <div className="lp-about__founderText">
                     <h2 className="lp-about__h2">{s.title}</h2>
                     <div className="lp-about__founderTitle">

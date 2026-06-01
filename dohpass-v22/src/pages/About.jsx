@@ -56,16 +56,10 @@ const STORY = [
     ),
   },
   {
-    eyebrow: 'What\u2019s coming next',
-    title: 'More specialties, mock exams, and a mobile app.',
+    eyebrow: 'What we\u2019re building next',
+    title: 'Cardiology &amp; Respiratory specialty banks.',
     body: (
-      <>
-        <p>The roadmap, in order: more specialty banks (cardiology and respiratory are next),
-          full-length timed mock exams that mirror the real DOH paper, and a native iOS/Android
-          app for practising between cases.</p>
-        <p>If there&rsquo;s a specialty or feature you want next, the contact form is the
-          fastest way to get it in front of us.</p>
-      </>
+      <p>Cardiology &amp; Respiratory specialty banks &mdash; adding this month.</p>
     ),
   },
 ]

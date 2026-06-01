@@ -8674,6 +8674,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   .bottom-nav {
     display: flex;
     position: fixed;
+    top: auto;
     bottom: 0;
     left: 0;
     right: 0;

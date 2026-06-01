@@ -80,7 +80,7 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
   }
 
   return (
-    <div onClick={() => setFlipped(f => !f)} style={{ cursor: "pointer", perspective: 1000, width: "100%", height: 340, userSelect: "none" }}>
+    <div onClick={() => setFlipped(f => !f)} style={{ cursor: "pointer", perspective: "1000px", WebkitPerspective: "1000px", width: "100%", height: 340, userSelect: "none" }}>
       <div style={{
         position: "relative", width: "100%", height: "100%",
         transformStyle: "preserve-3d",
@@ -135,7 +135,7 @@ function FlipCard({ card, fsrsData, onRate, saving }) {
           }}>
             {card.front}
           </div>
-          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+          <div style={{ flex: 1, position: "relative", overflow: "clip" }}>
             <div ref={scrollRef} onScroll={onScroll} style={{ position: "absolute", inset: 0, overflowY: "auto", paddingBottom: 4 }}>
               {renderBack(card.back)}
             </div>

@@ -94,11 +94,12 @@ function ConditionalHeader() {
   return <Header />
 }
 
-/* Footer is hidden on /login, /signup, /auth, and any self-chromed route */
+/* Footer is hidden on /login, /signup, /auth, self-chromed routes, and flashcard study screens */
 function ConditionalFooter() {
   const location = useLocation()
   if (['/login', '/signup', '/auth'].includes(location.pathname)) return null
   if (SELF_CHROMED_PATHS.has(location.pathname)) return null
+  if (location.pathname.startsWith('/flashcards')) return null
   return <Footer />
 }
 

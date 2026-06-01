@@ -6168,6 +6168,7 @@ a.lp-contact__value:hover { color: var(--gold); }
 
   position: relative;
   min-height: 100vh;
+  background: var(--bg);
   color: var(--text);
 }
 .qui-page.qui-blue {

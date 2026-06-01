@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { supabase, getProfile } from '../lib/supabase'
+import { supabase, getProfile, hasAccess } from '../lib/supabase'
 
 /* Unified auth-aware glass-capsule nav (DORMANT — not yet wired into any page).
    Reuses the existing .lp-nav / .lp-nav--auth visual language verbatim so it
@@ -93,7 +93,7 @@ export default function AppNav() {
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   const isAuthed = !!user
-  const badge = planBadge(profile)
+  const badge = hasAccess(profile) ? planBadge(profile) : null
   const initials = deriveInitials(profile, user)
   const isPaid = PAID_BADGES.has(badge)
   // Paid users get a Tutor entry appended to the nav

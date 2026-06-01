@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { supabase, getProfile } from '../lib/supabase'
+import { supabase, getProfile, hasAccess } from '../lib/supabase'
 
 /* ── Inline SVG icons ───────────────────────────────────────────── */
 const IconCross = () => (
@@ -87,7 +87,7 @@ export default function Header() {
     navigate('/login')
   }
 
-  const badge = planInfo(profile)
+  const badge = hasAccess(profile) ? planInfo(profile) : null
   const isLoggedIn = !!user
 
   return (

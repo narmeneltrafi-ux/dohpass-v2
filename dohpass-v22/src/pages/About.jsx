@@ -55,13 +55,6 @@ const STORY = [
       </>
     ),
   },
-  {
-    eyebrow: 'What we\u2019re building next',
-    title: 'Cardiology &amp; Respiratory specialty banks.',
-    body: (
-      <p>Cardiology &amp; Respiratory specialty banks &mdash; adding this month.</p>
-    ),
-  },
 ]
 
 export default function About() {

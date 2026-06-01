@@ -62,6 +62,12 @@ function Hero() {
           Complete access to the DOH-mapped question bank. Written by UAE physicians.
           7-day refund if it&apos;s not the right fit.
         </p>
+        <div className="lp-pp-founder">
+          <span className="lp-pp-founder__avatar" aria-hidden="true">DI</span>
+          <span className="lp-pp-founder__text">
+            Built by Dr. Ibrahim · Oncology SHO · Tawam Hospital · MRCP(UK)
+          </span>
+        </div>
       </div>
     </section>
   )

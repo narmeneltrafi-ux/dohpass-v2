@@ -4,6 +4,7 @@ import { supabase, ensureProfile, getProfile, hasAccess } from './lib/supabase'
 import { registerDeviceSession, startSessionPolling, stopSessionPolling } from './lib/deviceSession'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
+import BottomNav from './components/BottomNav.jsx'
 import ScreenGuard from './components/ScreenGuard.jsx'
 import SessionKicked from './components/SessionKicked.jsx'
 import Home from './pages/Home.jsx'
@@ -101,6 +102,11 @@ function ConditionalFooter() {
   return <Footer />
 }
 
+function ConditionalBottomNav({ user }) {
+  if (!user) return null
+  return <BottomNav />
+}
+
 /* Public landing for / — logged-in users get redirected to /dashboard */
 function HomeRoot({ user }) {
   if (user === undefined) return <Home />
@@ -149,6 +155,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
         </Routes>
       </GuardedContent>
       <ConditionalFooter />
+      <ConditionalBottomNav user={user} />
     </>
   )
 }

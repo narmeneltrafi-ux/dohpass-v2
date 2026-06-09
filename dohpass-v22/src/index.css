@@ -7756,6 +7756,24 @@ a.lp-contact__value:hover { color: var(--gold); }
 /* Exam date banner variant — slightly wider to fit the inputs */
 .diag-dash-banner--exam { align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; }
 
+/* Hero variant — shown to new users (0 attempts) to make diagnostic the primary action */
+.diag-dash-banner--hero {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-color: rgba(20, 184, 166, 0.35);
+  background: rgba(20, 184, 166, 0.06);
+}
+.diag-dash-banner--hero .diag-dash-banner__title { font-size: 1.05rem; }
+.diag-dash-banner--hero .diag-dash-banner__sub { font-size: 0.86rem; margin-top: 0.25rem; }
+.diag-dash-banner--hero .diag-dash-banner__cta {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
 .exam-date-inputs {
   display: flex;
   gap: 0.5rem;
@@ -7985,10 +8003,32 @@ a.lp-contact__value:hover { color: var(--gold); }
   text-align: right;
 }
 
+.lp-goal__start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--action);
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.28);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.lp-goal__start:hover {
+  background: rgba(20, 184, 166, 0.18);
+  border-color: rgba(20, 184, 166, 0.45);
+}
+
 @media (max-width: 540px) {
   .lp-goal { flex-wrap: wrap; gap: 0.5rem; }
   .lp-goal__track { order: 3; flex-basis: 100%; }
   .lp-goal__msg { text-align: left; }
+  .lp-goal__start { align-self: flex-start; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

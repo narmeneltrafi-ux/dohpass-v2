@@ -31,6 +31,8 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
 
   const scoreClass = `score-pct ${track === 'gold' ? 'gold' : 'blue'}`
   const btnClass = `btn-primary ${track === 'gold' ? 'gold' : 'blue'} results-restart`
+  const trackPath = track === 'gold' ? 'specialist' : 'gp'
+  const drillFirst = pct < 65
 
   return (
     <div className="results-wrap">
@@ -60,11 +62,22 @@ export default function ResultsScreen({ correct, wrong, track, onRestart }) {
           </div>
         </div>
 
-        <button className={btnClass} onClick={onRestart}>
-          Practice again
-        </button>
+        {drillFirst ? (
+          <>
+            <button className={btnClass} onClick={() => navigate(`/${trackPath}?drill=1`)}>
+              Drill weak topics
+            </button>
+            <button className="results-nav-btn" onClick={onRestart}>
+              Practice again
+            </button>
+          </>
+        ) : (
+          <button className={btnClass} onClick={onRestart}>
+            Practice again
+          </button>
+        )}
         <button className="results-nav-btn" onClick={() => navigate('/progress')}>
-          Review weak topics
+          View progress
         </button>
         <button className="results-nav-btn results-nav-btn--ghost" onClick={() => navigate('/dashboard')}>
           Back to dashboard

@@ -62,8 +62,13 @@ export default function QuestionCard({
   const explRef = useRef(null)
   const stemRef = useRef(null)
   const [submitting, setSubmitting] = useState(false)
-  const [aiExpl, setAiExpl] = useState(null)          // null | 'loading' | string
-  useEffect(() => { setAiExpl(null) }, [index])       // reset on every new question
+  const [aiExpl, setAiExpl] = useState(null)          // null | 'loading' | 'error' | string
+  const aiAutoFiredRef = useRef(false)
+
+  useEffect(() => {
+    setAiExpl(null)
+    aiAutoFiredRef.current = false
+  }, [index])
 
   const options = question?.options || []
   const correctIdx = question ? resolveCorrectIndex(options, question.answer) : -1
@@ -125,8 +130,8 @@ export default function QuestionCard({
     return () => document.removeEventListener('keydown', handleKey)
   }, [submitted, selectedOption, options.length, onNext, navigate, handleSelectInternal, handleSubmitInternal])
 
-  const handleAIExplain = useCallback(async () => {
-    if (!question || aiExpl) return
+  const fetchAIExpl = useCallback(async () => {
+    if (!question) return
     setAiExpl('loading')
     const { data, error } = await supabase.functions.invoke('enhance-explanation', {
       body: {
@@ -137,12 +142,17 @@ export default function QuestionCard({
         existingExplanation: question.explanation ?? '',
       },
     })
-    if (error || !data?.explanation) {
-      setAiExpl('Sorry, could not load the AI explanation. Try again.')
-    } else {
-      setAiExpl(data.explanation)
+    setAiExpl(error || !data?.explanation ? 'error' : data.explanation)
+  }, [question, selectedOption])
+
+  // Auto-fire AI explanation the moment a wrong answer is submitted — removes
+  // the extra tap at the highest-learning-intent moment in the session.
+  useEffect(() => {
+    if (submitted && feedback !== null && !feedback.correct && isPaid && !aiAutoFiredRef.current) {
+      aiAutoFiredRef.current = true
+      fetchAIExpl()
     }
-  }, [question, selectedOption, aiExpl])
+  }, [submitted, feedback, isPaid, fetchAIExpl])
 
   /* fade explanation panel into view */
   useEffect(() => {
@@ -319,21 +329,22 @@ export default function QuestionCard({
               )
             )}
 
-            {/* AI deeper explanation — paid users only, wrong answers only */}
+            {/* AI deeper explanation — paid users only, wrong answers only.
+                Auto-fires on submission; only manual action needed is retry on error. */}
             {isPaid && !feedback?.correct && !dataIssue && (
               <div className="qui-ai-expl">
-                {aiExpl === null && (
-                  <button type="button" className="qui-ai-expl__btn" onClick={handleAIExplain}>
-                    <IconSparkle size={11} />
-                    Deeper explanation
-                  </button>
-                )}
                 {aiExpl === 'loading' && (
                   <div className="qui-ai-expl__loading">
                     <span className="qui-ai-expl__spinner" /> Generating explanation…
                   </div>
                 )}
-                {aiExpl && aiExpl !== 'loading' && (
+                {aiExpl === 'error' && (
+                  <button type="button" className="qui-ai-expl__btn" onClick={fetchAIExpl}>
+                    <IconSparkle size={11} />
+                    Try again
+                  </button>
+                )}
+                {aiExpl !== null && aiExpl !== 'loading' && aiExpl !== 'error' && (
                   <div className="qui-ai-expl__text">{aiExpl}</div>
                 )}
               </div>

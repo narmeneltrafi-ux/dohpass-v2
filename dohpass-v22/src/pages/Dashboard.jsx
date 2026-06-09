@@ -379,6 +379,8 @@ export default function Dashboard() {
     ? Math.round((overall.correct / overall.answered) * 100)
     : null
   const totalAnswered = overall?.answered ?? null
+  const primaryTrack = profile?.diagnostic_track === 'gp' ? '/gp' : '/specialist'
+  const isNewUser = !profile?.diagnostic_completed_at && (totalAnswered === null || totalAnswered === 0)
 
   let subhead
   if (weekly == null) {
@@ -423,11 +425,15 @@ export default function Dashboard() {
       )}
 
       {profile && !profile.diagnostic_completed_at && (
-        <div className="diag-dash-banner" role="banner" aria-label="Readiness check prompt">
+        <div className={`diag-dash-banner${isNewUser ? ' diag-dash-banner--hero' : ''}`} role="banner" aria-label="Readiness check prompt">
           <div className="diag-dash-banner__body">
-            <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
+            <strong className="diag-dash-banner__title">
+              {isNewUser ? 'Start here — discover your exam gaps' : 'Discover your exam gaps'}
+            </strong>
             <span className="diag-dash-banner__sub">
-              20 questions · 10 topics · ~10 min — see exactly where to focus.
+              {isNewUser
+                ? 'A free 20-question check that maps exactly where you stand. Takes ~10 min and unlocks your personalised study plan.'
+                : '20 questions · 10 topics · ~10 min — see exactly where to focus.'}
             </span>
           </div>
           <button
@@ -435,7 +441,7 @@ export default function Dashboard() {
             className="diag-dash-banner__cta"
             onClick={() => navigate('/diagnostic')}
           >
-            Start <IconArrow size={13} />
+            {isNewUser ? 'Take free diagnostic' : 'Start'} <IconArrow size={13} />
           </button>
         </div>
       )}
@@ -471,13 +477,22 @@ export default function Dashboard() {
               style={{ width: `${Math.min(100, Math.round((todayCount / DAILY_GOAL) * 100))}%` }}
             />
           </div>
-          <span className="lp-goal__msg">
-            {todayCount === 0
-              ? 'Start answering to hit your goal'
-              : todayCount >= DAILY_GOAL
+          {todayCount === 0 ? (
+            <button
+              type="button"
+              className="lp-goal__start"
+              onClick={() => navigate(primaryTrack)}
+              aria-label="Start studying now"
+            >
+              Study now <IconArrow size={12} />
+            </button>
+          ) : (
+            <span className="lp-goal__msg">
+              {todayCount >= DAILY_GOAL
                 ? 'Goal met today!'
                 : `${DAILY_GOAL - todayCount} to go`}
-          </span>
+            </span>
+          )}
         </div>
       )}
 

@@ -50,9 +50,33 @@ Same schema as `specialist_questions`, plus:
 - 3–5 distractors
 - No negative stems
 
+## Revenue Model
+
+**Manual only. No payment processor. Permanently.**
+Access is granted via SQL after bank transfer / Wise / cash confirmation:
+```sql
+UPDATE profiles
+SET is_paid = true, plan = 'specialist', access_expires_at = now() + interval '30 days'
+WHERE email = 'user@example.com';
+```
+
+Do NOT suggest Stripe, Paddle, Lemon Squeezy, or any payment processor.
+
+### `profiles` access columns
+
+| Column | Purpose |
+|---|---|
+| `is_paid` | boolean — set true on manual grant |
+| `plan` | `'free'` \| `'gp'` \| `'specialist'` \| `'all_access'` |
+| `access_expires_at` | **Manual bank transfer expiry** — this is the authoritative field for manual grants |
+| `current_period_end` | Stripe artifact — legacy only, do not use for manual grants |
+| `grace_period_end` | Stripe grace period fallback — do not use for manual grants |
+
+`hasAccess(profile)` checks in order: `access_expires_at` → `is_paid` → `grace_period_end`.
+For manual grants, only `access_expires_at` matters.
+
 ## Pending Work
 
-- [ ] Paywall with Stripe
 - [x] Progress tracking — ProgressPage rewritten with design system + answered_at bug fixed
 - [ ] Bare domain fix: `dohpass.com` A record → `216.198.79.1`
 

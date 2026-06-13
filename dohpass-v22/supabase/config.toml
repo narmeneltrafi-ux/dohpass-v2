@@ -44,3 +44,9 @@ verify_jwt = false
 # create-checkout — gateway rejects HS256 tokens on this project).
 [functions.ai-tutor]
 verify_jwt = false
+
+# blueprint-analysis verifies the caller in-function via GoTrue (same gateway
+# HS256-rejection workaround as ai-tutor / create-checkout). It additionally
+# gates on profiles.is_admin. Gateway JWT verification must stay off.
+[functions.blueprint-analysis]
+verify_jwt = false

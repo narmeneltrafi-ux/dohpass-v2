@@ -280,7 +280,7 @@ export async function getProfile() {
     if (!user) return null
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan, is_paid, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end, access_expires_at, exam_date, exam_name')
+      .select('plan, is_paid, is_admin, email, full_name, stripe_customer_id, current_period_end, cancel_at_period_end, grace_period_end, access_expires_at, exam_date, exam_name')
       .eq('id', user.id)
       .single()
     if (error || !data) return null

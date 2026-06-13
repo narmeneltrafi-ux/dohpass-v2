@@ -30,6 +30,7 @@ import OncologyPage from './pages/OncologyPage.jsx'
 import ProgressPage from './pages/ProgressPage'
 import Diagnostic from './pages/Diagnostic.jsx'
 import Tutor from './pages/Tutor.jsx'
+import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
 
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
@@ -58,6 +59,21 @@ function PaidRoute({ user, allowedPlans, children }) {
     if (!allowed) return <Navigate to='/pricing' replace />
   }
 
+  return children
+}
+
+function AdminRoute({ user, children }) {
+  const [profile, setProfile] = useState(undefined)
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    getProfile().then(p => { if (!cancelled) setProfile(p ?? null) })
+    return () => { cancelled = true }
+  }, [user?.id])
+  if (user === null) return <Navigate to='/login' replace />
+  if (user === undefined) return null
+  if (profile === undefined) return null
+  if (!profile?.is_admin) return <Navigate to='/dashboard' replace />
   return children
 }
 
@@ -153,6 +169,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
           <Route path='/mock-exam' element={<PaidRoute user={user} allowedPlans={[]}><MockExam /></PaidRoute>} />
           <Route path='/tutor' element={<PaidRoute user={user}><Tutor /></PaidRoute>} />
+          <Route path='/god-mode/blueprint' element={<AdminRoute user={user}><BlueprintGapAgent /></AdminRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

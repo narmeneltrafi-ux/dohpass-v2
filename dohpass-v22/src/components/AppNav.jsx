@@ -102,7 +102,7 @@ export default function AppNav() {
     ? [
         ...AUTH_LINKS,
         ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : []),
-        ...(profile?.is_admin ? [{ label: 'God Mode', path: '/god-mode' }] : []),
+        ...(profile?.is_admin ? [{ label: 'Mission Control', path: '/god-mode' }] : []),
       ]
     : PUBLIC_LINKS
 

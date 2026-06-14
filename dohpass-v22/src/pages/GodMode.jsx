@@ -13,7 +13,7 @@ export default function GodMode() {
 
       <header className='gm-header'>
         <button className='gm-back' onClick={() => navigate('/dashboard')}>← Dashboard</button>
-        <h1 className='gm-title'>God Mode</h1>
+        <h1 className='gm-title'>Mission Control</h1>
         <p className='gm-muted'>Admin tools. Visible only to accounts with <code>is_admin</code>.</p>
       </header>
 

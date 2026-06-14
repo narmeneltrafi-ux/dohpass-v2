@@ -62,17 +62,17 @@ export default function QuestionWriterAgent() {
     setInserted({})
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not signed in')
+
       const res = await fetch(FN_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${ANON}`,
+          Authorization: `Bearer ${session.access_token}`,
           apikey: ANON,
         },
         body: JSON.stringify({
-          userId: user.id,
           track,
           topic,
           subtopic: subtopic.trim() || undefined,

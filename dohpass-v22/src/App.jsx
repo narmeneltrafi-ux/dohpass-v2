@@ -31,6 +31,7 @@ import ProgressPage from './pages/ProgressPage'
 import Diagnostic from './pages/Diagnostic.jsx'
 import Tutor from './pages/Tutor.jsx'
 import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
+import QuestionWriterAgent from './pages/QuestionWriterAgent.jsx'
 import GodMode from './pages/GodMode.jsx'
 
 function ProtectedRoute({ user, children }) {

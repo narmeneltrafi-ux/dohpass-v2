@@ -30,6 +30,8 @@ import OncologyPage from './pages/OncologyPage.jsx'
 import ProgressPage from './pages/ProgressPage'
 import Diagnostic from './pages/Diagnostic.jsx'
 import Tutor from './pages/Tutor.jsx'
+import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
+import GodMode from './pages/GodMode.jsx'
 
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
@@ -61,6 +63,21 @@ function PaidRoute({ user, allowedPlans, children }) {
   return children
 }
 
+function AdminRoute({ user, children }) {
+  const [profile, setProfile] = useState(undefined)
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    getProfile().then(p => { if (!cancelled) setProfile(p ?? null) })
+    return () => { cancelled = true }
+  }, [user?.id])
+  if (user === null) return <Navigate to='/login' replace />
+  if (user === undefined) return null
+  if (profile === undefined) return null
+  if (!profile?.is_admin) return <Navigate to='/dashboard' replace />
+  return children
+}
+
 /* ── ScreenGuard wrapper — only for content pages ─────────────── */
 const GUARDED_PATHS = ['/specialist', '/gp', '/gems', '/flashcards', '/mock-exam']
 
@@ -88,9 +105,15 @@ const SELF_CHROMED_PATHS = new Set([
   '/specialist', '/gp', '/checkout', '/tutor',
 ])
 
+/* God Mode tools ship a full-screen dark chrome of their own — suppress the
+   global Header/Footer/BottomNav across the whole /god-mode/* subtree. */
+function isSelfChromed(pathname) {
+  return SELF_CHROMED_PATHS.has(pathname) || pathname.startsWith('/god-mode')
+}
+
 function ConditionalHeader() {
   const location = useLocation()
-  if (SELF_CHROMED_PATHS.has(location.pathname)) return null
+  if (isSelfChromed(location.pathname)) return null
   return <Header />
 }
 
@@ -98,7 +121,7 @@ function ConditionalHeader() {
 function ConditionalFooter() {
   const location = useLocation()
   if (['/login', '/signup', '/auth'].includes(location.pathname)) return null
-  if (SELF_CHROMED_PATHS.has(location.pathname)) return null
+  if (isSelfChromed(location.pathname)) return null
   if (location.pathname.startsWith('/flashcards')) return null
   return <Footer />
 }
@@ -153,6 +176,8 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/analytics' element={<PaidRoute user={user}><Analytics /></PaidRoute>} />
           <Route path='/mock-exam' element={<PaidRoute user={user} allowedPlans={[]}><MockExam /></PaidRoute>} />
           <Route path='/tutor' element={<PaidRoute user={user}><Tutor /></PaidRoute>} />
+          <Route path='/god-mode' element={<AdminRoute user={user}><GodMode /></AdminRoute>} />
+          <Route path='/god-mode/blueprint' element={<AdminRoute user={user}><BlueprintGapAgent /></AdminRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

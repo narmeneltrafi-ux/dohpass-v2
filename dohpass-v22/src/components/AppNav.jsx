@@ -96,9 +96,14 @@ export default function AppNav() {
   const badge = hasAccess(profile) ? planBadge(profile) : null
   const initials = deriveInitials(profile, user)
   const isPaid = PAID_BADGES.has(badge)
-  // Paid users get a Tutor entry appended to the nav
+  // Paid users get a Tutor entry; admins additionally get a God Mode entry
+  // (gated on profiles.is_admin, so it stays invisible to everyone else).
   const links = isAuthed
-    ? [...AUTH_LINKS, ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : [])]
+    ? [
+        ...AUTH_LINKS,
+        ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : []),
+        ...(profile?.is_admin ? [{ label: 'God Mode', path: '/god-mode' }] : []),
+      ]
     : PUBLIC_LINKS
 
   return (

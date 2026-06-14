@@ -44,6 +44,7 @@ const HIDDEN_PATHS = new Set([
 export default function BottomNav() {
   const { pathname } = useLocation()
   if (HIDDEN_PATHS.has(pathname)) return null
+  if (pathname.startsWith('/god-mode')) return null
 
   return (
     <nav className="bottom-nav" aria-label="Main navigation">

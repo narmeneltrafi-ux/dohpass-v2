@@ -197,6 +197,7 @@ export default function BlueprintGapAgent() {
 
       <header className='bga-header'>
         <div>
+          <button className='bga-back' onClick={() => navigate('/god-mode')}>← God Mode</button>
           <h1 className='bga-title'>Blueprint Gap Agent</h1>
           <p className='bga-muted'>Question-bank coverage vs. blueprint targets. Targets are estimates — DOH publishes no official weights.</p>
         </div>
@@ -338,6 +339,8 @@ function Style() {
       .bga-denied h2 { margin: 0 0 8px; }
 
       .bga-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+      .bga-back { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 0 0 10px; }
+      .bga-back:hover { color: #e2e8f0; }
       .bga-title { margin: 0 0 6px; font-size: 26px; font-weight: 700; }
 
       .bga-track-toggle { display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 4px; }

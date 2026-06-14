@@ -31,6 +31,7 @@ import ProgressPage from './pages/ProgressPage'
 import Diagnostic from './pages/Diagnostic.jsx'
 import Tutor from './pages/Tutor.jsx'
 import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
+import QuestionWriterAgent from './pages/QuestionWriterAgent.jsx'
 import GodMode from './pages/GodMode.jsx'
 
 function ProtectedRoute({ user, children }) {
@@ -178,6 +179,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/tutor' element={<PaidRoute user={user}><Tutor /></PaidRoute>} />
           <Route path='/god-mode' element={<AdminRoute user={user}><GodMode /></AdminRoute>} />
           <Route path='/god-mode/blueprint' element={<AdminRoute user={user}><BlueprintGapAgent /></AdminRoute>} />
+          <Route path='/god-mode/question-writer' element={<AdminRoute user={user}><QuestionWriterAgent /></AdminRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

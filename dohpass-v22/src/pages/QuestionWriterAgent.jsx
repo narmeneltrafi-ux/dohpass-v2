@@ -5,8 +5,9 @@
 // examiner review server-side, then lets the admin stage PASS/EDIT items as DRAFTS
 // (is_active=false) and approve them to live in a separate queue.
 //
-// No payments, no RLS changes. Writes go through the authenticated supabase client;
-// the edge function re-checks is_admin server-side.
+// No payments, no RLS changes. Writes (insert/approve/discard) route through the
+// edge function, which re-checks is_admin server-side via the service role — direct
+// client writes to the question tables are blocked by RLS.
 
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
@@ -14,6 +15,23 @@ import { supabase } from '../lib/supabase'
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-questions-agent`
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+async function callAgent(payload) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not signed in')
+  const res = await fetch(FN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: ANON,
+    },
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+  return data
+}
 
 const SPECIALIST_SYSTEMS = [
   'Cardiology', 'Respiratory', 'Gastroenterology', 'Endocrinology', 'Nephrology',
@@ -32,8 +50,6 @@ const VERDICT_STYLE = {
   EDIT:   { bg: '#2e2305', border: '#d97706', label: 'EDIT',   color: '#fbbf24' },
   REJECT: { bg: '#2e0808', border: '#dc2626', label: 'REJECT', color: '#f87171' },
 }
-
-const DIFF_MAP = { Easy: 'easy', Moderate: 'medium', Hard: 'hard' }
 
 export default function QuestionWriterAgent() {
   const [track, setTrack] = useState('specialist')
@@ -62,26 +78,14 @@ export default function QuestionWriterAgent() {
     setInserted({})
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not signed in')
-
-      const res = await fetch(FN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: ANON,
-        },
-        body: JSON.stringify({
-          track,
-          topic,
-          subtopic: subtopic.trim() || undefined,
-          difficulty: difficulty || undefined,
-          count,
-        }),
+      const data = await callAgent({
+        action: 'generate',
+        track,
+        topic,
+        subtopic: subtopic.trim() || undefined,
+        difficulty: difficulty || undefined,
+        count,
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
       setResult(data)
     } catch (e) {
       setError(String(e.message || e))
@@ -94,43 +98,14 @@ export default function QuestionWriterAgent() {
   async function insertDraft(idx) {
     if (!result) return
     const row = result.items[idx]
-    const c = row.candidate
     setInserting((s) => ({ ...s, [idx]: true }))
     try {
-      const table = track === 'specialist' ? 'specialist_questions' : 'gp_questions'
-      const payload = {
-        topic: c.topic,
-        subtopic: c.subtopic || null,
-        q: c.vignette + '\n\n' + c.lead_in,
-        options: c.options,
-        answer: c.answer,
-        explanation: c.explanation,
-        difficulty: DIFF_MAP[c.difficulty] || 'medium',
-        source: 'agent',
-        is_active: false,
-        needs_review: true,
-        review_metadata: {
-          verdict: row.verdict,
-          flaws: row.flaws,
-          clinical_note: row.clinical_note,
-          citation: c.citation || null,
-          model: result.model,
-          generated_at: result.generated_at,
-          blueprint_topic: result.topic,
-          blueprint_subtopic: result.subtopic,
-          was_edited: row.verdict === 'EDIT',
-        },
-      }
-      if (track === 'gp') {
-        payload.broad_topic = c.topic
-        payload.category = c.subtopic || null
-      }
-      const { data, error: insErr } = await supabase
-        .from(table)
-        .insert(payload)
-        .select('id')
-        .single()
-      if (insErr) throw insErr
+      const data = await callAgent({
+        action: 'insert',
+        track,
+        item: row.candidate,
+        review: { verdict: row.verdict, flaws: row.flaws, clinical_note: row.clinical_note },
+      })
       setInserted((s) => ({ ...s, [idx]: data.id }))
     } catch (e) {
       setError(`Insert failed: ${e.message || e}`)
@@ -310,11 +285,7 @@ function PendingQueue({ track, setTrack }) {
   async function approve(id) {
     setBusy((s) => ({ ...s, [id]: 'approve' }))
     try {
-      const { error } = await supabase
-        .from(table)
-        .update({ is_active: true, needs_review: false })
-        .eq('id', id)
-      if (error) throw error
+      await callAgent({ action: 'approve', track, id })
       setRows((r) => r.filter((x) => x.id !== id))
     } catch (e) { setErr(String(e.message || e)) }
     finally { setBusy((s) => ({ ...s, [id]: null })) }
@@ -324,8 +295,7 @@ function PendingQueue({ track, setTrack }) {
     if (!confirm('Delete this draft permanently?')) return
     setBusy((s) => ({ ...s, [id]: 'discard' }))
     try {
-      const { error } = await supabase.from(table).delete().eq('id', id)
-      if (error) throw error
+      await callAgent({ action: 'discard', track, id })
       setRows((r) => r.filter((x) => x.id !== id))
     } catch (e) { setErr(String(e.message || e)) }
     finally { setBusy((s) => ({ ...s, [id]: null })) }

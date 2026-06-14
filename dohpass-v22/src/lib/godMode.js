@@ -18,6 +18,15 @@ export const GOD_MODE_TOOLS = [
     accent: '#3b82f6',
     status: 'live', // 'live' | 'beta' | 'soon'
   },
+  {
+    key:    'question-writer',
+    path:   '/god-mode/question-writer',
+    title:  'Question Writer Agent',
+    desc:   'Generates DOH-style one-best-answer items to NBME standard, runs an adversarial examiner review, and stages passing items as drafts for approval.',
+    tag:    'Content',
+    accent: '#8b5cf6',
+    status: 'live',
+  },
 ]
 
 // Monogram for a tool card icon — initials of the first two words of the title.

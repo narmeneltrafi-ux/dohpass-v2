@@ -179,6 +179,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/tutor' element={<PaidRoute user={user}><Tutor /></PaidRoute>} />
           <Route path='/god-mode' element={<AdminRoute user={user}><GodMode /></AdminRoute>} />
           <Route path='/god-mode/blueprint' element={<AdminRoute user={user}><BlueprintGapAgent /></AdminRoute>} />
+          <Route path='/god-mode/question-writer' element={<AdminRoute user={user}><QuestionWriterAgent /></AdminRoute>} />
         </Routes>
       </GuardedContent>
       <ConditionalFooter />

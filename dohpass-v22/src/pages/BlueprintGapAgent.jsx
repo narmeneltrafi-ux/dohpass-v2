@@ -197,7 +197,7 @@ export default function BlueprintGapAgent() {
 
       <header className='bga-header'>
         <div>
-          <button className='bga-back' onClick={() => navigate('/god-mode')}>← God Mode</button>
+          <button className='bga-back' onClick={() => navigate('/god-mode')}>← Mission Control</button>
           <h1 className='bga-title'>Blueprint Gap Agent</h1>
           <p className='bga-muted'>Question-bank coverage vs. blueprint targets. Targets are estimates — DOH publishes no official weights.</p>
         </div>

@@ -50,3 +50,8 @@ verify_jwt = false
 # gates on profiles.is_admin. Gateway JWT verification must stay off.
 [functions.blueprint-analysis]
 verify_jwt = false
+
+# generate-questions-agent uses in-function is_admin gating via service role.
+# Same gateway HS256-rejection workaround applies.
+[functions.generate-questions-agent]
+verify_jwt = false

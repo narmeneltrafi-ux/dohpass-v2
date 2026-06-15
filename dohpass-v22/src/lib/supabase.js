@@ -342,8 +342,10 @@ export async function saveProgress(
     stability:  existing.stability,
     difficulty: existing.difficulty,
     due_date:   existing.due_date,
-    reps:       0,   // reps/lapses not stored on user_progress — FSRS still
-    lapses:     0,   // computes correct stability from stability+difficulty+r
+    // reps/lapses are NOT stored on user_progress and are intentionally omitted:
+    // scheduleCard now keys isNew off stability (the canonical FSRS signal), not
+    // reps. A hardcoded reps:0 here previously forced every answer down the
+    // new-card path, capping intervals at 1-3 days.
     last_review: existing.last_attempt_at,
     fsrs_state: existing.fsrs_state,
   } : null

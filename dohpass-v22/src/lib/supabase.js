@@ -725,3 +725,68 @@ export async function fetchTrialStatus() {
   if (error || !data) return { used: 0, limit: 10, remaining: 10 }
   return data
 }
+
+// ── RETENTION CARDS ───────────────────────────────────────────────────────────
+
+// Count of user_progress rows where due_date <= now (FSRS cards due for review).
+// Returns 0 on error — safe to display as "all caught up".
+export async function fetchDueCount() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+  const { count, error } = await supabase
+    .from('user_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .lte('due_date', new Date().toISOString())
+  if (error) return 0
+  return count ?? 0
+}
+
+// Per-topic blueprint coverage for a given track.
+// Returns array of { topic, attempted, total, pct } sorted lowest pct first.
+// Questions without a matching topic in the active set are ignored.
+export async function fetchBlueprintCoverage(track) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const table = track === 'specialist' ? 'specialist_questions' : 'gp_questions'
+
+  const [questionsRes, attemptsRes] = await Promise.all([
+    supabase.from(table).select('id, topic').eq('is_active', true),
+    supabase
+      .from('question_attempts')
+      .select('question_id, topic')
+      .eq('user_id', user.id)
+      .eq('track', track),
+  ])
+
+  if (questionsRes.error || !questionsRes.data) return []
+
+  // Total active questions per topic
+  const totalByTopic = {}
+  for (const row of questionsRes.data) {
+    const t = primaryTopic(row.topic)
+    if (!t) continue
+    totalByTopic[t] = (totalByTopic[t] || 0) + 1
+  }
+
+  // Distinct questions attempted per topic (count each question_id once)
+  const attemptedByTopic = {}
+  if (!attemptsRes.error && attemptsRes.data) {
+    const seen = new Map() // question_id → topic
+    for (const row of attemptsRes.data) {
+      if (seen.has(row.question_id)) continue
+      seen.set(row.question_id, true)
+      const t = primaryTopic(row.topic)
+      if (!t || totalByTopic[t] == null) continue
+      attemptedByTopic[t] = (attemptedByTopic[t] || 0) + 1
+    }
+  }
+
+  return Object.entries(totalByTopic)
+    .map(([topic, total]) => {
+      const attempted = attemptedByTopic[topic] || 0
+      return { topic, attempted, total, pct: total > 0 ? Math.round((attempted / total) * 100) : 0 }
+    })
+    .sort((a, b) => a.pct - b.pct)
+}

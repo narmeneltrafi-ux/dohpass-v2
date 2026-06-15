@@ -8716,3 +8716,193 @@ a.lp-contact__value:hover { color: var(--gold); }
     line-height: 1;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   RETENTION CARDS (.ret-cards, .ret-card, .ret-bp)
+   Three read-only insight cards mounted in Dashboard below goal strip.
+   ═══════════════════════════════════════════════════════════════ */
+
+.ret-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  max-width: 1080px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .ret-cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 540px) {
+  .ret-cards { grid-template-columns: 1fr; }
+}
+
+.ret-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 130px;
+}
+
+.ret-card--due {
+  border-color: var(--action-border);
+  background: var(--action-dim);
+}
+
+.ret-card--exam {
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+}
+
+.ret-card--blueprint {
+  grid-column: span 1;
+}
+
+.ret-card__eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.ret-card__big {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 3rem;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--action-light);
+}
+
+.ret-card__big--gold { color: var(--gold); }
+.ret-card__big--muted { color: var(--text-muted); }
+
+.ret-card__caught-up {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--action-light);
+  margin: 0.5rem 0 0;
+  line-height: 1.3;
+}
+
+.ret-card__label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* date picker inside Card B */
+.ret-card__date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.ret-card__date-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.ret-card__date-input:focus {
+  outline: none;
+  border-color: var(--gold-border);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.ret-card__date-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  color: var(--gold-light);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ret-card__date-btn:hover:not(:disabled) {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--gold);
+}
+
+.ret-card__date-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ret-card__error {
+  font-size: 0.78rem;
+  color: #f87171;
+}
+
+/* blueprint topic list inside Card C */
+.ret-bp__list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.ret-bp__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 4px;
+  gap: 0 0.5rem;
+  align-items: center;
+}
+
+.ret-bp__topic {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ret-bp__pct {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.ret-bp__rail {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ret-bp__fill {
+  height: 100%;
+  background: var(--action);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}

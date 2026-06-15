@@ -12,6 +12,7 @@ import {
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
+import RetentionCards from '../components/RetentionCards.jsx'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS (monochrome line, gold-tinted via currentColor)
@@ -479,6 +480,13 @@ export default function Dashboard() {
                 : `${DAILY_GOAL - todayCount} to go`}
           </span>
         </div>
+      )}
+
+      {hasAccess(profile) && profile && (
+        <RetentionCards
+          profile={profile}
+          onExamDateSaved={date => setProfile(p => ({ ...p, exam_date: date }))}
+        />
       )}
 
       {!hasAccess(profile) && profile !== null && (

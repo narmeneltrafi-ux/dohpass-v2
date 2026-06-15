@@ -54,7 +54,7 @@ function nextStabilityForgot(d, s, r) {
 // Returns the fields to upsert into flashcard_progress.
 export function scheduleCard(card, rating) {
   const now    = new Date()
-  const isNew  = !card || !card.reps || card.reps === 0
+  const isNew  = !card || card.stability == null
   let stability, difficulty
 
   if (isNew) {

@@ -34,6 +34,11 @@ import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
 import QuestionWriterAgent from './pages/QuestionWriterAgent.jsx'
 import GodMode from './pages/GodMode.jsx'
 
+// Captured at module-load time, before Supabase's PKCE handler calls
+// history.replaceState to strip ?code= from the URL. True only on the
+// one page-load where the user arrives via the email-confirmation link.
+const _hadConfirmationCode = new URLSearchParams(window.location.search).has('code')
+
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
   if (user === undefined) return null
@@ -202,7 +207,33 @@ export default function App() {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (event === 'SIGNED_IN' && u) ensureProfile(u)
+      if (event === 'SIGNED_IN' && u) {
+        ensureProfile(u)
+        // Three independent guards — all must be true to fire the conversion:
+        //
+        // 1. _hadConfirmationCode — the page loaded with ?code= (PKCE email
+        //    redirect). False on normal logins, false on any refresh (Supabase
+        //    already called history.replaceState to strip ?code= on first load).
+        //
+        // 2. event === 'SIGNED_IN' (outer condition) — password reset fires
+        //    PASSWORD_RECOVERY, not SIGNED_IN. Belt-and-braces in case a future
+        //    Supabase release changes that sequencing.
+        //
+        // 3. isRecentConfirmation — email_confirmed_at was set within the last
+        //    5 minutes. For a brand-new user clicking the confirmation link, this
+        //    timestamp is effectively "right now". For any returning user (password
+        //    reset, session restore, re-login), email_confirmed_at is from their
+        //    original signup and will be hours/days/months old — so this guard
+        //    blocks the conversion even if guards 1 and 2 somehow both pass.
+        if (_hadConfirmationCode && typeof window.gtag === 'function') {
+          const confirmedAt = u.email_confirmed_at ?? u.confirmed_at
+          const isRecentConfirmation = !!confirmedAt &&
+            Date.now() - new Date(confirmedAt).getTime() < 5 * 60 * 1000
+          if (isRecentConfirmation) {
+            window.gtag('event', 'conversion', { send_to: 'AW-18224272403/nVAbCJ37trscEJOogfJD' })
+          }
+        }
+      }
     })
     return () => listener.subscription.unsubscribe()
   }, [])

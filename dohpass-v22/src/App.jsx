@@ -209,13 +209,29 @@ export default function App() {
       setUser(u)
       if (event === 'SIGNED_IN' && u) {
         ensureProfile(u)
-        // Fire Google Ads signup-conversion exactly once: only when this page
-        // load carried the PKCE ?code= param (email-confirmation redirect).
-        // _hadConfirmationCode is false on normal logins (no redirect), password
-        // resets (those fire PASSWORD_RECOVERY, not SIGNED_IN), and refreshes
-        // (Supabase already cleared ?code= via history.replaceState on first load).
+        // Three independent guards — all must be true to fire the conversion:
+        //
+        // 1. _hadConfirmationCode — the page loaded with ?code= (PKCE email
+        //    redirect). False on normal logins, false on any refresh (Supabase
+        //    already called history.replaceState to strip ?code= on first load).
+        //
+        // 2. event === 'SIGNED_IN' (outer condition) — password reset fires
+        //    PASSWORD_RECOVERY, not SIGNED_IN. Belt-and-braces in case a future
+        //    Supabase release changes that sequencing.
+        //
+        // 3. isRecentConfirmation — email_confirmed_at was set within the last
+        //    5 minutes. For a brand-new user clicking the confirmation link, this
+        //    timestamp is effectively "right now". For any returning user (password
+        //    reset, session restore, re-login), email_confirmed_at is from their
+        //    original signup and will be hours/days/months old — so this guard
+        //    blocks the conversion even if guards 1 and 2 somehow both pass.
         if (_hadConfirmationCode && typeof window.gtag === 'function') {
-          window.gtag('event', 'conversion', { send_to: 'AW-18224272403/nVAbCJ37trscEJOogfJD' })
+          const confirmedAt = u.email_confirmed_at ?? u.confirmed_at
+          const isRecentConfirmation = !!confirmedAt &&
+            Date.now() - new Date(confirmedAt).getTime() < 5 * 60 * 1000
+          if (isRecentConfirmation) {
+            window.gtag('event', 'conversion', { send_to: 'AW-18224272403/nVAbCJ37trscEJOogfJD' })
+          }
         }
       }
     })

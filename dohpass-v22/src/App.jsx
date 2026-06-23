@@ -34,6 +34,11 @@ import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
 import QuestionWriterAgent from './pages/QuestionWriterAgent.jsx'
 import GodMode from './pages/GodMode.jsx'
 
+// Captured at module-load time, before Supabase's PKCE handler calls
+// history.replaceState to strip ?code= from the URL. True only on the
+// one page-load where the user arrives via the email-confirmation link.
+const _hadConfirmationCode = new URLSearchParams(window.location.search).has('code')
+
 function ProtectedRoute({ user, children }) {
   if (user === null) return <Navigate to='/login' replace />
   if (user === undefined) return null
@@ -202,7 +207,17 @@ export default function App() {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (event === 'SIGNED_IN' && u) ensureProfile(u)
+      if (event === 'SIGNED_IN' && u) {
+        ensureProfile(u)
+        // Fire Google Ads signup-conversion exactly once: only when this page
+        // load carried the PKCE ?code= param (email-confirmation redirect).
+        // _hadConfirmationCode is false on normal logins (no redirect), password
+        // resets (those fire PASSWORD_RECOVERY, not SIGNED_IN), and refreshes
+        // (Supabase already cleared ?code= via history.replaceState on first load).
+        if (_hadConfirmationCode && typeof window.gtag === 'function') {
+          window.gtag('event', 'conversion', { send_to: 'AW-18224272403/nVAbCJ37trscEJOogfJD' })
+        }
+      }
     })
     return () => listener.subscription.unsubscribe()
   }, [])

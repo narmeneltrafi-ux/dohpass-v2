@@ -5257,6 +5257,51 @@ nav {
   .lp-dash__upgrade__cta { width: 100%; justify-content: center; }
 }
 
+/* ── First-run activation hero ──────────────────────────────── */
+.lp-fr__hero {
+  padding-top: 2.5rem;
+}
+.lp-fr__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid var(--gold-border);
+  padding: 0.32rem 0.85rem;
+  border-radius: 100px;
+  margin-bottom: 0.9rem;
+}
+.lp-fr__eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+.lp-fr__tracks {
+  margin-top: 2.25rem;
+}
+.lp-fr__diag-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 2rem auto 0;
+  width: 100%;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.lp-fr__diag-link:hover { color: var(--gold); }
+
 .lp-dash__statswrap {
   margin-top: 2.5rem;
   margin-bottom: 4rem;

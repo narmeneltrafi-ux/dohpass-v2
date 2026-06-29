@@ -300,6 +300,81 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
 }
 
 /* ───────────────────────────────────────────────────────────────
+   FIRST-RUN HERO — shown to any user with zero answered questions.
+   Activation surface: one decision (pick a track), big Start CTAs,
+   no empty stats / streaks / paywall (those demoralize before value).
+   The 10-min diagnostic is demoted to an optional link, not a wall.
+   ─────────────────────────────────────────────────────────────── */
+function FirstRunHero({ firstName, navigate, counts, isPaid }) {
+  return (
+    <>
+      <header className="lp-dash__hero lp-fr__hero">
+        <div className="lp-fr__eyebrow">
+          <span className="lp-fr__eyebrow-dot" aria-hidden="true" />
+          Welcome to DOHPass
+        </div>
+        <h1 className="lp-dash__h1">
+          Answer your first question, <span className="lp-dash__h1-name">{firstName}</span>
+        </h1>
+        <p className="lp-dash__sub">
+          {isPaid
+            ? 'Your full bank is unlocked. Pick a track and jump straight in.'
+            : 'Pick a track to begin — your first questions are free, no payment to start.'}
+        </p>
+      </header>
+
+      <section className="lp-dash__section lp-fr__tracks" aria-label="Choose a track to start">
+        <div className="lp-track-grid">
+          <TrackCard
+            Icon={IconStethoscope}
+            eyebrow="Specialist"
+            title="Internal Medicine Specialist"
+            desc="Cardiology, Respiratory, Nephrology and the rest of the specialist blueprint."
+            count={counts?.specialist}
+            route="/specialist"
+            navigate={navigate}
+            progress={null}
+            total={counts?.specialist}
+          />
+          <TrackCard
+            Icon={IconHeartPulse}
+            eyebrow="GP"
+            title="General Practice"
+            desc="Broad primary-care coverage mapped to the DOH GP blueprint."
+            count={counts?.gp}
+            route="/gp"
+            navigate={navigate}
+            progress={null}
+            total={counts?.gp}
+          />
+          <TrackCard
+            Icon={IconLayers}
+            eyebrow="Flashcards"
+            title="Concept &amp; Drug Cards"
+            desc="High-yield concept, drug and anatomy cards across both tracks."
+            count={counts?.flashcards}
+            route="/gems"
+            navigate={navigate}
+            progress={null}
+            total={null}
+            due={0}
+          />
+        </div>
+
+        <button
+          type="button"
+          className="lp-fr__diag-link"
+          onClick={() => navigate('/diagnostic')}
+        >
+          Not sure where to start? Take the 10-minute readiness check
+          <IconArrow size={14} />
+        </button>
+      </section>
+    </>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
    PAGE
    ─────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
@@ -380,6 +455,9 @@ export default function Dashboard() {
     : null
   const totalAnswered = overall?.answered ?? null
 
+  const statsLoaded = overall !== null
+  const firstVisit = profile !== null && statsLoaded && (overall?.answered ?? 0) === 0
+
   let subhead
   if (weekly == null) {
     subhead = null
@@ -400,6 +478,15 @@ export default function Dashboard() {
 
       <AppNav />
 
+      {firstVisit ? (
+        <FirstRunHero
+          firstName={firstName}
+          navigate={navigate}
+          counts={counts}
+          isPaid={hasAccess(profile)}
+        />
+      ) : (
+        <>
       {hasAccess(profile) && profile && !profile.exam_date && !examDateDismissed && (
         <ExamDateBanner
           onSave={({ exam_date, exam_name }) => {
@@ -602,6 +689,8 @@ export default function Dashboard() {
           <span className="lp-mockx__arrow"><IconArrow size={18} /></span>
         </div>
       </section>
+        </>
+      )}
     </div>
   )
 }

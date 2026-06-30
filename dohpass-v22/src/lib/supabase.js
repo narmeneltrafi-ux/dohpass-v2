@@ -300,11 +300,14 @@ export async function getProfile() {
 // Use this anywhere a paid plan unlocks content — never for UI labels.
 export function hasAccess(profile) {
   if (!profile) return false
-  if (profile.access_expires_at && new Date(profile.access_expires_at) > new Date()) return true
-  if (profile.is_paid) return true
-  return Boolean(
-    profile.grace_period_end && new Date(profile.grace_period_end) > new Date()
-  )
+  // Grace period (failed-renewal cushion) always honored.
+  if (profile.grace_period_end && new Date(profile.grace_period_end) > new Date()) return true
+  // If an expiry is set it is AUTHORITATIVE — a passed date revokes access even
+  // when is_paid is still true. This is what makes time-boxed grants expire.
+  // Mirrors the specialist_questions / gp_questions RLS policies exactly.
+  if (profile.access_expires_at) return new Date(profile.access_expires_at) > new Date()
+  // No expiry set → legacy lifetime access via is_paid.
+  return Boolean(profile.is_paid)
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────

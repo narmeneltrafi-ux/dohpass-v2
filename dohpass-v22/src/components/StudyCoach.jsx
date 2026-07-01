@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase, hasAccess } from "../lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-function hasAccess(profile) {
-  if (!profile?.access_expires_at) return false;
-  return new Date(profile.access_expires_at) > new Date();
-}
 
 export default function StudyCoach({ profile, track = "specialist" }) {
   const [plan, setPlan] = useState(null);

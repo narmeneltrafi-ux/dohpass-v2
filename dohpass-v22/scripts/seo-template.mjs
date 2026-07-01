@@ -3,6 +3,8 @@
 // No external requests, no JS required to read content (progressive enhancement only).
 // Every DB string is HTML-escaped. Output is fully crawlable static HTML.
 
+import { resolveCorrectIndex } from '../src/lib/resolveCorrectIndex.js';
+
 const esc = (s = '') =>
   String(s)
     .replaceAll('&', '&amp;')
@@ -29,16 +31,9 @@ function normaliseOption(opt, idx) {
   return { letter, text };
 }
 
-// answer is a letter (A-E). Resolve to a 0-based index, bounds-guarded.
-function correctIndex(answer, optionCount) {
-  const ch = String(answer ?? '').trim().toUpperCase().charCodeAt(0);
-  const idx = ch - 65;
-  return idx >= 0 && idx < optionCount ? idx : -1;
-}
-
 function renderQuestion(qObj, n) {
   const options = Array.isArray(qObj.options) ? qObj.options : [];
-  const ci = correctIndex(qObj.answer, options.length);
+  const ci = resolveCorrectIndex(options, qObj.answer);
 
   const optsHtml = options
     .map((opt, i) => {

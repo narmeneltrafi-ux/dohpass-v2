@@ -55,3 +55,11 @@ verify_jwt = false
 # Same gateway HS256-rejection workaround applies.
 [functions.generate-questions-agent]
 verify_jwt = false
+
+# notify-manual-order is invoked by pg_cron via net.http_post from the
+# notify_manual_order() trigger on manual_orders INSERT. Cron calls carry no
+# user JWT, so gateway verification must stay off or every alert will 401.
+# Auth is the shared CRON_SECRET (x-cron-secret header), same as the other
+# cron-invoked functions.
+[functions.notify-manual-order]
+verify_jwt = false

@@ -8761,3 +8761,139 @@ a.lp-contact__value:hover { color: var(--gold); }
     line-height: 1;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────
+   PAYMENT CONFIRM (/confirm-payment) — public manual-payment form
+   ─────────────────────────────────────────────────────────────── */
+.pc-page {
+  max-width: 28rem;
+  margin: 0 auto;
+  /* 62px clears the fixed .site-header */
+  padding: calc(62px + 2.5rem) 1.5rem 4rem;
+}
+
+.pc-page--center {
+  padding-top: calc(62px + 3.5rem);
+  text-align: center;
+}
+
+.pc-success-icon {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+.pc-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.pc-sub {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+
+.pc-page--center .pc-sub { margin-bottom: 0; }
+
+.pc-strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pc-finehint {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.pc-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.pc-field { display: block; }
+
+.pc-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.pc-req { color: var(--red); }
+
+.pc-input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-med);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  outline: none;
+}
+
+.pc-input:focus {
+  border-color: var(--action);
+  background: rgba(20, 184, 166, 0.04);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.14);
+}
+
+.pc-input::placeholder { color: var(--text-muted); opacity: 0.45; }
+
+select.pc-input option {
+  background: var(--surface-hard);
+  color: var(--text);
+}
+
+.pc-input--noresize { resize: none; }
+
+.pc-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.pc-invalid {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--red);
+}
+
+.pc-submit {
+  width: 100%;
+  padding: 0.95rem 1.2rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: #03201c;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+}
+
+.pc-submit:hover:not(:disabled) { background: var(--action-light); }
+
+.pc-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pc-confirm-link {
+  color: var(--action-light);
+  text-decoration: none;
+}
+
+.pc-confirm-link:hover { text-decoration: underline; }

@@ -23,6 +23,7 @@ import About from './pages/About.jsx'
 import Features from './pages/Features.jsx'
 import PaymentSuccess from './pages/PaymentSuccess.jsx'
 import Checkout from './pages/Checkout.jsx'
+import PaymentConfirm from './pages/PaymentConfirm.jsx'
 import Account from './pages/Account.jsx'
 import Analytics from './pages/Analytics.jsx'
 import MockExam from './pages/MockExam.jsx'
@@ -170,6 +171,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/oncology' element={<OncologyPage />} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/checkout' element={<Checkout />} />
+          <Route path='/confirm-payment' element={<PaymentConfirm />} />
           <Route path='/terms'    element={<Terms />} />
           <Route path='/privacy'  element={<Privacy />} />
           <Route path='/contact'  element={<Contact />} />

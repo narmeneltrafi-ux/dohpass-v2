@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import {
   supabase,
   getProfile,
@@ -193,6 +193,9 @@ function PricingGrid({ counts, profile, onSelect }) {
       </div>
       <p className="pricing-trust-line">
         Secure bank transfer · Activated within 24 hours · 7-day money-back guarantee
+      </p>
+      <p className="pricing-trust-line">
+        <Link className="pc-confirm-link" to="/confirm-payment">Already paid? Confirm here →</Link>
       </p>
     </section>
   )

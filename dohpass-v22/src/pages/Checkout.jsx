@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase, createManualOrder, generatePaymentReference } from '../lib/supabase'
 import { getPlan, BANK_DETAILS, SUPPORT_EMAIL, ACTIVATION_WINDOW } from '../lib/paymentConfig'
 import AppNav from '../components/AppNav.jsx'
@@ -284,6 +284,9 @@ export default function Checkout() {
           <p className="bt-finehint">
             Tap this once you've sent the transfer. You can also email proof to{' '}
             <a className="bt-link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> anytime.
+          </p>
+          <p className="bt-finehint">
+            <Link className="bt-link" to="/confirm-payment">Already paid? Confirm here →</Link>
           </p>
         </div>
       </div>

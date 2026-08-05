@@ -178,6 +178,7 @@ export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl
       padding:7px 14px;font-size:13.5px;color:var(--text)}
     .badge b{color:var(--gold)}
     .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 0}
+    .endcta .cta-row{justify-content:center}
     .btn{display:inline-block;padding:14px 24px;border-radius:999px;font-weight:600;font-size:16px}
     .btn--gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1306}
     .btn--gold:hover{text-decoration:none;filter:brightness(1.05)}

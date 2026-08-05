@@ -178,6 +178,7 @@ export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl
       padding:7px 14px;font-size:13.5px;color:var(--text)}
     .badge b{color:var(--gold)}
     .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 0}
+    .endcta .cta-row{justify-content:center}
     .btn{display:inline-block;padding:14px 24px;border-radius:999px;font-weight:600;font-size:16px}
     .btn--gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1306}
     .btn--gold:hover{text-decoration:none;filter:brightness(1.05)}
@@ -264,7 +265,7 @@ export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl
         </div>
         <div class="cta-row">
           <a class="btn btn--gold" href="${esc(baseUrl)}/pricing">Get the full question bank</a>
-          <a class="btn btn--ghost" href="${esc(baseUrl)}/">Free 50-question mock</a>
+          <a class="btn btn--ghost" href="https://beacons.ai/dohpass?utm_source=seo&utm_medium=hero&utm_campaign=mock50" target="_blank" rel="noopener">Free 50-question mock</a>
         </div>
       </section>
     </div>
@@ -310,7 +311,10 @@ export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl
       <section class="endcta">
         <h2>Ready to practise properly?</h2>
         <p>Start with the free 50-question mock, then unlock the full bank.</p>
-        <a class="btn btn--gold" href="${esc(baseUrl)}/pricing">See plans &amp; pricing</a>
+        <div class="cta-row">
+          <a class="btn btn--gold" href="https://beacons.ai/dohpass?utm_source=seo&utm_medium=endcta&utm_campaign=mock50" target="_blank" rel="noopener">Get the free 50-question mock</a>
+          <a class="btn btn--ghost" href="${esc(baseUrl)}/pricing">See plans &amp; pricing</a>
+        </div>
       </section>
     </div>
   </main>
@@ -319,6 +323,7 @@ export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl
     <div class="wrap">
       <div class="links">
         <a href="${esc(baseUrl)}/pricing">Pricing</a>
+        <a href="https://t.me/doh_dha_gp_internal_medicine" target="_blank" rel="noopener">Telegram</a>
         <a href="${esc(baseUrl)}/specialist">Specialist</a>
         <a href="${esc(baseUrl)}/gp">GP</a>
         <a href="${esc(baseUrl)}/about">About</a>

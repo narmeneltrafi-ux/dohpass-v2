@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .bp-row { display: grid; grid-template-columns: 1fr 132px 44px 54px; gap: 14px; align-items: center;
+      padding: 6px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: #0c0c16; }
+    .bp-name { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .bp-sub { font-size: 10.5px; color: #8a8ab0; line-height: 1.4; margin-top: 2px; }
+    .bp-track { height: 8px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .bp-pct { font-size: 15px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+    .bp-q { font-size: 10.5px; color: #8a8ab0; text-align: right; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 32px 44px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Internal Medicine · Specialist track</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 1 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 36px; line-height: 1.02; letter-spacing: -0.02em">Where the marks are</div>
+    <div style="font-size: 13px; color: #b4b4cc; line-height: 1.5; max-width: 620px">Ten systems carry the DOH IM specialist paper. Study them in this order, not in textbook order — the top four are 52% of your score, and the bottom three together are worth less than Cardiology alone.</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+    <div style="background: #0c0c16; border: 1px solid rgba(201,168,76,0.25); border-radius: 12px; padding: 10px 14px">
+      <div style="font-size: 22px; font-weight: 800; color: #c9a84c; line-height: 1">60%</div>
+      <div style="font-size: 10.5px; color: #8a8ab0; margin-top: 3px">Pass mark you are aiming past</div>
+    </div>
+    <div style="background: #0c0c16; border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 10px 14px">
+      <div style="font-size: 22px; font-weight: 800; color: #14b8a6; line-height: 1">52%</div>
+      <div style="font-size: 10.5px; color: #8a8ab0; margin-top: 3px">Sits in the top four systems</div>
+    </div>
+    <div style="background: #0c0c16; border: 1px solid rgba(59,130,246,0.25); border-radius: 12px; padding: 10px 14px">
+      <div style="font-size: 22px; font-weight: 800; color: #3b82f6; line-height: 1">90 Q</div>
+      <div style="font-size: 10.5px; color: #8a8ab0; margin-top: 3px">Roughly what 60% of 150 looks like</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+
+    <div class="bp-row">
+      <div><div class="bp-name">Cardiology</div><div class="bp-sub">ACS pathway &amp; reperfusion windows · AF rate vs rhythm + CHA₂DS₂-VASc · HFrEF four pillars · murmurs · ECG blocks and axis</div></div>
+      <div class="bp-track"><div style="width: 100%; height: 100%; background: #c9a84c"></div></div>
+      <div class="bp-pct" style="color: #c9a84c">18%</div>
+      <div class="bp-q">≈27 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Endocrinology</div><div class="bp-sub">T2DM agent choice by comorbidity · DKA vs HHS · thyroid function patterns · adrenal insufficiency · osteoporosis · Cushing / phaeo screening</div></div>
+      <div class="bp-track"><div style="width: 66.7%; height: 100%; background: #c9a84c"></div></div>
+      <div class="bp-pct" style="color: #c9a84c">12%</div>
+      <div class="bp-q">≈18 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Respiratory Medicine</div><div class="bp-sub">Asthma vs COPD escalation ladders · CURB-65 and CAP antibiotics · PE probability scoring · pleural effusion (Light's) · O₂ targets</div></div>
+      <div class="bp-track"><div style="width: 66.7%; height: 100%; background: #c9a84c"></div></div>
+      <div class="bp-pct" style="color: #c9a84c">12%</div>
+      <div class="bp-q">≈18 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Nephrology</div><div class="bp-sub">AKI staging and pre-renal vs ATN · CKD staging and referral · hyperkalaemia sequence · acid–base with anion gap · nephrotic vs nephritic</div></div>
+      <div class="bp-track"><div style="width: 55.6%; height: 100%; background: #14b8a6"></div></div>
+      <div class="bp-pct" style="color: #14b8a6">10%</div>
+      <div class="bp-q">≈15 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Gastroenterology</div><div class="bp-sub">Upper GI bleed and variceal care · decompensated cirrhosis (SBP, HE, ascites) · IBD flares · coeliac serology · LFT patterns · pancreatitis</div></div>
+      <div class="bp-track"><div style="width: 55.6%; height: 100%; background: #14b8a6"></div></div>
+      <div class="bp-pct" style="color: #14b8a6">10%</div>
+      <div class="bp-q">≈15 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Rheumatology</div><div class="bp-sub">Acute gout vs septic arthritis · SLE and antibody patterns · giant cell arteritis · vasculitis (ANCA) · seronegative spondyloarthropathy</div></div>
+      <div class="bp-track"><div style="width: 44.4%; height: 100%; background: #3b82f6"></div></div>
+      <div class="bp-pct" style="color: #3b82f6">8%</div>
+      <div class="bp-q">≈12 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Neurology</div><div class="bp-sub">Stroke thrombolysis window vs thrombectomy · SAH work-up · seizure and status ladder · MS and GBS · headache red flags · neuropathy</div></div>
+      <div class="bp-track"><div style="width: 44.4%; height: 100%; background: #3b82f6"></div></div>
+      <div class="bp-pct" style="color: #3b82f6">8%</div>
+      <div class="bp-q">≈12 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Haematology</div><div class="bp-sub">Anaemia by MCV and iron studies · transfusion thresholds · VTE and anticoagulation choice · myeloma triad · leukaemia and lymphoma basics</div></div>
+      <div class="bp-track"><div style="width: 44.4%; height: 100%; background: #3b82f6"></div></div>
+      <div class="bp-pct" style="color: #3b82f6">8%</div>
+      <div class="bp-q">≈12 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Infectious Disease</div><div class="bp-sub">Sepsis bundle timing · TB diagnosis and regimen · HIV screening and prophylaxis · endocarditis (Duke) · meningitis · travel fever</div></div>
+      <div class="bp-track"><div style="width: 44.4%; height: 100%; background: #3b82f6"></div></div>
+      <div class="bp-pct" style="color: #3b82f6">8%</div>
+      <div class="bp-q">≈12 Q</div>
+    </div>
+
+    <div class="bp-row">
+      <div><div class="bp-name">Dermatology</div><div class="bp-sub">Drug eruptions and SJS/TEN · cellulitis vs necrotising fasciitis · psoriasis · skin signs of internal disease · pigmented lesion red flags</div></div>
+      <div class="bp-track"><div style="width: 33.3%; height: 100%; background: #8a8ab0"></div></div>
+      <div class="bp-pct" style="color: #8a8ab0">6%</div>
+      <div class="bp-q">≈9 Q</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+    <div style="height: 1px; background: rgba(255,255,255,0.08)"></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+      <div><div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9a84c; font-weight: 700; margin-bottom: 4px">Read it this way</div><div style="font-size: 10.5px; color: #b4b4cc; line-height: 1.45">A system's weight is your hour budget. Two hours on Dermatology is two hours not spent on Cardiology.</div></div>
+      <div><div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9a84c; font-weight: 700; margin-bottom: 4px">The honest caveat</div><div style="font-size: 10.5px; color: #b4b4cc; line-height: 1.45">DOH publishes no official weighting. These are DOHPass estimates from content specs and item-frequency analysis — a priority order, not gospel.</div></div>
+      <div><div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9a84c; font-weight: 700; margin-bottom: 4px">Check your paper</div><div style="font-size: 10.5px; color: #b4b4cc; line-height: 1.45">Question counts assume a 150-item paper. Confirm the count on your booking confirmation and rescale.</div></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

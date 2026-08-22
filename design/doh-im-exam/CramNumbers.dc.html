@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .sec { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 13px 8px; }
+    .sh { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+    .r { display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+      font-size: 10.5px; line-height: 1.35; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .r:last-child { border-bottom: none; }
+    .k { color: #b4b4cc; }
+    .v { color: #ededf8; font-weight: 700; text-align: right; max-width: 56%; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 32px 44px; display: flex; flex-direction: column; gap: 11px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Cram sheet 1 — numbers</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 3 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 36px; line-height: 1.02; letter-spacing: -0.02em">Cutoffs and thresholds</div>
+    <div style="font-size: 12px; color: #b4b4cc; line-height: 1.45; max-width: 660px">The values a stem hangs its answer on. If you can't produce the number, you can't rule out the distractor built around it.</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start">
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+
+      <div class="sec">
+        <div class="sh" style="color: #c9a84c">Cardiology</div>
+        <div class="r"><span class="k">Hypertension, clinic / ABPM daytime</span><span class="v">≥140/90 · ≥135/85</span></div>
+        <div class="r"><span class="k">LDL target, established ASCVD</span><span class="v">&lt;1.4 mmol/L + ≥50% drop</span></div>
+        <div class="r"><span class="k">LDL target, high risk</span><span class="v">&lt;1.8 mmol/L</span></div>
+        <div class="r"><span class="k">STEMI — primary PCI from first contact</span><span class="v">≤90 min</span></div>
+        <div class="r"><span class="k">Lyse instead if PCI unavailable within</span><span class="v">120 min · door-to-needle ≤30</span></div>
+        <div class="r"><span class="k">Reperfusion window from symptom onset</span><span class="v">≤12 h</span></div>
+        <div class="r"><span class="k">HFrEF / HFmrEF / HFpEF by LVEF</span><span class="v">≤40 · 41–49 · ≥50%</span></div>
+        <div class="r"><span class="k">Anticoagulate AF — CHA₂DS₂-VASc</span><span class="v">≥2 men · ≥3 women</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #c9a84c">Endocrine</div>
+        <div class="r"><span class="k">Diabetes — HbA1c / FPG / 2-h OGTT</span><span class="v">≥6.5% · ≥7.0 · ≥11.1</span></div>
+        <div class="r"><span class="k">Prediabetes — HbA1c / fasting</span><span class="v">5.7–6.4% · 5.6–6.9</span></div>
+        <div class="r"><span class="k">DKA triad</span><span class="v">Glucose &gt;13.9 · pH &lt;7.3 · HCO₃ &lt;18 · ketones ≥3.0</span></div>
+        <div class="r"><span class="k">HHS</span><span class="v">Glucose &gt;33.3 · osm &gt;320 · pH &gt;7.3 · ketones low</span></div>
+        <div class="r"><span class="k">Hypoglycaemia — alert / significant</span><span class="v">&lt;3.9 · &lt;3.0 mmol/L</span></div>
+        <div class="r"><span class="k">Treat subclinical hypothyroid when TSH</span><span class="v">&gt;10 mIU/L</span></div>
+        <div class="r"><span class="k">Adrenal insufficiency — 9 am cortisol</span><span class="v">&lt;100 likely · &gt;400 nmol/L excludes</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #14b8a6">Respiratory</div>
+        <div class="r"><span class="k">SpO₂ target — usual / CO₂ retention risk</span><span class="v">94–98% · 88–92%</span></div>
+        <div class="r"><span class="k">CURB-65 — home / admit / ICU review</span><span class="v">0–1 · 2 · ≥3</span></div>
+        <div class="r"><span class="k">Acute severe vs life-threatening asthma</span><span class="v">PEF 33–50% · &lt;33% or SpO₂ &lt;92%</span></div>
+        <div class="r"><span class="k">Type 2 respiratory failure — PaCO₂</span><span class="v">&gt;6.0 kPa (45 mmHg)</span></div>
+        <div class="r"><span class="k">NIV in COPD when pH</span><span class="v">&lt;7.35 with PaCO₂ &gt;6.0</span></div>
+        <div class="r"><span class="k">Light's — exudate if any one</span><span class="v">Pr ratio &gt;0.5 · LDH ratio &gt;0.6 · LDH &gt;⅔ ULN</span></div>
+        <div class="r"><span class="k">Wells — PE likely</span><span class="v">&gt;4 points</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #14b8a6">Neurology</div>
+        <div class="r"><span class="k">IV thrombolysis window</span><span class="v">≤4.5 h from onset</span></div>
+        <div class="r"><span class="k">Thrombectomy, anterior LVO</span><span class="v">≤6 h · to 24 h if imaging-selected</span></div>
+        <div class="r"><span class="k">BP ceiling before thrombolysis</span><span class="v">&lt;185/110 mmHg</span></div>
+        <div class="r"><span class="k">Status epilepticus starts at</span><span class="v">5 min of seizure</span></div>
+        <div class="r"><span class="k">LP for xanthochromia — earliest</span><span class="v">12 h after headache onset</span></div>
+      </div>
+
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+
+      <div class="sec">
+        <div class="sh" style="color: #3b82f6">Renal &amp; electrolytes</div>
+        <div class="r"><span class="k">AKI stage 1 — creatinine</span><span class="v">×1.5–1.9 in 7 d or ↑≥26.5 µmol/L in 48 h</span></div>
+        <div class="r"><span class="k">AKI stage 1 — urine output</span><span class="v">&lt;0.5 mL/kg/h for 6–12 h</span></div>
+        <div class="r"><span class="k">AKI stage 2 / stage 3</span><span class="v">×2.0–2.9 · ×3.0 or ≥353.6 or RRT</span></div>
+        <div class="r"><span class="k">Pre-renal vs ATN — FeNa</span><span class="v">&lt;1% · &gt;2%</span></div>
+        <div class="r"><span class="k">CKD G3a / G3b / G4 / G5 — eGFR</span><span class="v">45–59 · 30–44 · 15–29 · &lt;15</span></div>
+        <div class="r"><span class="k">Hyperkalaemia — emergency at</span><span class="v">≥6.5 or any ECG change</span></div>
+        <div class="r"><span class="k">Max Na correction in 24 h</span><span class="v">≤8–10 mmol/L</span></div>
+        <div class="r"><span class="k">Corrected Ca (mmol/L)</span><span class="v">measured + 0.02 × (40 − albumin)</span></div>
+        <div class="r"><span class="k">Normal anion gap</span><span class="v">8–12 mmol/L</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #3b82f6">Haematology &amp; VTE</div>
+        <div class="r"><span class="k">Transfuse — stable / ACS</span><span class="v">Hb &lt;70 · &lt;80 g/L</span></div>
+        <div class="r"><span class="k">Platelets — prophylactic / procedure</span><span class="v">&lt;10 · &lt;50 ×10⁹/L</span></div>
+        <div class="r"><span class="k">MCV — micro / normo / macro</span><span class="v">&lt;80 · 80–100 · &gt;100 fL</span></div>
+        <div class="r"><span class="k">Iron deficiency — ferritin</span><span class="v">&lt;30 µg/L (&lt;100 if inflamed)</span></div>
+        <div class="r"><span class="k">Anticoagulation — provoked VTE</span><span class="v">3 months</span></div>
+        <div class="r"><span class="k">INR target — usual / mechanical mitral</span><span class="v">2.5 · 3.0</span></div>
+        <div class="r"><span class="k">Myeloma CRAB</span><span class="v">Ca &gt;2.75 · Cr &gt;177 · Hb &lt;100 · lytic bone</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #ef4444">Sepsis &amp; infection</div>
+        <div class="r"><span class="k">qSOFA ≥2 of</span><span class="v">RR ≥22 · altered mentation · SBP ≤100</span></div>
+        <div class="r"><span class="k">Antibiotics from recognition</span><span class="v">within 1 h</span></div>
+        <div class="r"><span class="k">Fluid if hypotensive or lactate ≥4</span><span class="v">30 mL/kg crystalloid</span></div>
+        <div class="r"><span class="k">Septic shock</span><span class="v">Pressors for MAP ≥65 + lactate &gt;2</span></div>
+        <div class="r"><span class="k">Neutropenia / severe — ANC</span><span class="v">&lt;1.0 · &lt;0.5 ×10⁹/L</span></div>
+        <div class="r"><span class="k">Neutropenic fever</span><span class="v">≥38.3 °C once or ≥38.0 for 1 h</span></div>
+        <div class="r"><span class="k">SBP — ascitic neutrophils</span><span class="v">≥250 /mm³</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sh" style="color: #ef4444">Liver &amp; GI</div>
+        <div class="r"><span class="k">Glasgow-Blatchford — consider discharge</span><span class="v">0–1</span></div>
+        <div class="r"><span class="k">Endoscopy in upper GI bleed</span><span class="v">≤24 h · ≤12 h if variceal/unstable</span></div>
+        <div class="r"><span class="k">SAAG — portal hypertension</span><span class="v">≥11 g/L</span></div>
+        <div class="r"><span class="k">AST:ALT suggesting alcohol</span><span class="v">&gt;2:1</span></div>
+        <div class="r"><span class="k">Severe alcoholic hepatitis — Maddrey</span><span class="v">≥32</span></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px">
+    <div style="height: 1px; background: rgba(255,255,255,0.08)"></div>
+    <div style="font-size: 10px; color: #8a8ab0; line-height: 1.5">Units are SI (mmol/L, µmol/L, g/L, kPa) unless stated. Values are consensus guideline figures for revision — where your local Abu Dhabi or hospital protocol differs, the local protocol wins on the ward and the guideline figure wins on the paper. Re-check anything you plan to rely on against the current guideline edition.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

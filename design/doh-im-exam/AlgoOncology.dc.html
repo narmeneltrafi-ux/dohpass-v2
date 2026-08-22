@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .blk { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      padding: 12px 15px 11px; display: flex; flex-direction: column; gap: 7px; }
+    .bt { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .btitle { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .bclue { font-size: 9.5px; color: #8a8ab0; line-height: 1.35; text-align: right; max-width: 56%; }
+    .chain { display: flex; flex-direction: column; }
+    .step { display: grid; grid-template-columns: 19px 1fr; gap: 10px; align-items: start;
+      padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .num { font-size: 9.5px; font-weight: 800; width: 19px; height: 19px; border-radius: 99px;
+      display: flex; align-items: center; justify-content: center; }
+    .stitle { font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+    .sdet { font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 2px; }
+    .trap { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 6px 10px; }
+    .trap b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Algorithm card 4</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 9 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 33px; line-height: 1.02; letter-spacing: -0.02em">Oncological emergencies</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Each clue line below is the phrase the stem will use. These five carry more marks than their share of the blueprint suggests, because every one of them is a timed decision.</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+
+    <div class="blk">
+      <div class="btitle" style="color: #ef4444">Neutropenic sepsis</div>
+      <div class="bclue" style="text-align: left; max-width: 100%">Fever ≥38.3 °C once, or ≥38.0 for an hour, within six weeks of chemotherapy.</div>
+      <div class="chain">
+        <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">1</div><div><div class="stitle">Antibiotics within one hour</div><div class="sdet">Piperacillin-tazobactam as the usual first line. Do not wait for the neutrophil count.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">2</div><div><div class="stitle">Culture peripherally and from every line lumen</div><div class="sdet">Full septic screen, then the rest of the sepsis bundle as normal.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">3</div><div><div class="stitle">Escalate or step down deliberately</div><div class="sdet">Vancomycin for line infection or MRSA risk. Score with MASCC — low-risk patients can move to oral therapy.</div></div></div>
+      </div>
+      <div class="trap"><b>Trap</b> &nbsp;A normal white cell count on arrival excludes nothing. The first dose goes in before the FBC comes back.</div>
+    </div>
+
+    <div class="blk">
+      <div class="btitle" style="color: #f5d980">Tumour lysis syndrome</div>
+      <div class="bclue" style="text-align: left; max-width: 100%">Bulky chemo-sensitive tumour, days into treatment: high potassium and phosphate, high urate, low calcium, rising creatinine.</div>
+      <div class="chain">
+        <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">1</div><div><div class="stitle">Stratify risk before cycle one</div><div class="sdet">High-grade lymphoma, ALL, high white count, bulky disease, existing renal impairment.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">2</div><div><div class="stitle">Fluids for everyone at risk, then urate control</div><div class="sdet">Rasburicase for high risk, allopurinol for lower risk.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">3</div><div><div class="stitle">Treat the potassium first</div><div class="sdet">It kills before the urate does. Cardiac monitoring, and renal input early for refractory disturbance.</div></div></div>
+      </div>
+      <div class="trap"><b>Trap</b> &nbsp;Rasburicase is contraindicated in G6PD deficiency, and calcium for asymptomatic hypocalcaemia risks precipitation with phosphate.</div>
+    </div>
+
+    <div class="blk">
+      <div class="btitle" style="color: #2dd4bf">Hypercalcaemia of malignancy</div>
+      <div class="bclue" style="text-align: left; max-width: 100%">Known cancer with confusion, constipation, polyuria and thirst, or a corrected calcium above 3.0 mmol/L.</div>
+      <div class="chain">
+        <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">1</div><div><div class="stitle">Correct for albumin before you react</div><div class="sdet">Measured calcium + 0.02 × (40 − albumin in g/L).</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">2</div><div><div class="stitle">IV 0.9% saline is the treatment, not the preparation</div><div class="sdet">Rehydration alone brings the calcium down substantially.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">3</div><div><div class="stitle">Then a renally-adjusted IV bisphosphonate</div><div class="sdet">Zoledronic acid; the nadir takes 2–4 days. Denosumab if refractory or in renal failure.</div></div></div>
+      </div>
+      <div class="trap"><b>Trap</b> &nbsp;Loop diuretics are not routine — only once fluid-replete and overloaded. Stop thiazides, calcium and vitamin D.</div>
+    </div>
+
+    <div class="blk">
+      <div class="btitle" style="color: #60a5fa">Metastatic cord compression</div>
+      <div class="bclue" style="text-align: left; max-width: 100%">New or progressive back pain with leg weakness, a sensory level, or bladder and bowel change in a patient with cancer.</div>
+      <div class="chain">
+        <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">1</div><div><div class="stitle">Dexamethasone immediately</div><div class="sdet">Typically 16 mg daily with gastric protection — before the imaging is even booked.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">2</div><div><div class="stitle">Whole-spine MRI within 24 hours</div><div class="sdet">Sooner if the neurology is progressing. Whole spine, because multiple levels are common.</div></div></div>
+        <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">3</div><div><div class="stitle">Same-day radiotherapy or surgical decision</div><div class="sdet">Nurse flat until the spine is declared stable.</div></div></div>
+      </div>
+      <div class="trap"><b>Trap</b> &nbsp;Function at the moment of treatment predicts function afterwards. Once they cannot walk, they usually will not walk again.</div>
+    </div>
+
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #e8c870">Superior vena cava obstruction</div>
+      <div class="bclue">Facial and arm swelling with distended neck and chest-wall veins, breathlessness worse on stooping — usually with a known or suspected intrathoracic primary.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #e8c870">1</div><div><div class="stitle">Assess the airway first — stridor is what makes this a true emergency</div><div class="sdet">Sit the patient up, give oxygen, and start dexamethasone.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #e8c870">2</div><div><div class="stitle">CT chest with contrast to define the level, the cause and any thrombus</div><div class="sdet">Get a tissue diagnosis where the patient can wait for it — the histology dictates the definitive treatment.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #e8c870">3</div><div><div class="stitle">Endovascular stenting for rapid relief, then treat the tumour</div><div class="sdet">Radiotherapy or chemotherapy as the histology directs.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;In a chemo-sensitive tumour — small-cell, lymphoma, germ cell — systemic treatment relieves it quickly, so an undiagnosed patient needs a biopsy, not just a steroid.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

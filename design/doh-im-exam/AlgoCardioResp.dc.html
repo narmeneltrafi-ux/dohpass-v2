@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .blk { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      padding: 12px 15px 11px; display: flex; flex-direction: column; gap: 7px; }
+    .bt { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .btitle { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .bclue { font-size: 9.5px; color: #8a8ab0; line-height: 1.35; text-align: right; max-width: 56%; }
+    .chain { display: flex; flex-direction: column; }
+    .step { display: grid; grid-template-columns: 19px 1fr; gap: 10px; align-items: start;
+      padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .num { font-size: 9.5px; font-weight: 800; width: 19px; height: 19px; border-radius: 99px;
+      display: flex; align-items: center; justify-content: center; }
+    .stitle { font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+    .sdet { font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 2px; }
+    .trap { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 6px 10px; }
+    .trap b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 11px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Algorithm card 1</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 6 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 33px; line-height: 1.02; letter-spacing: -0.02em">Chest pain, fast heart, breathless</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Management-order questions live here. The mark is for the step that comes <i>next</i> — not the step that is most thorough.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #f5d980">Acute coronary syndrome</div>
+      <div class="bclue">Ischaemic pain with diaphoresis, nausea or radiation. The ECG and the troponin timing decide everything else.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">1</div><div><div class="stitle">ECG within 10 minutes of arrival</div><div class="sdet">Repeat if pain continues and the first is non-diagnostic. ST depression in V1–V3 → posterior leads before calling it NSTEMI.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">2</div><div><div class="stitle">Aspirin 300 mg, a P2Y12 inhibitor and an anticoagulant</div><div class="sdet">Nitrate and morphine relieve symptoms only. Oxygen just for hypoxia.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">3</div><div><div class="stitle">STEMI → primary PCI within 90 minutes of first medical contact</div><div class="sdet">Not achievable inside 120 minutes → fibrinolyse with a door-to-needle time of 30 minutes or less, then transfer.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">4</div><div><div class="stitle">NSTEMI or unstable angina → risk-stratify, then time the angiogram</div><div class="sdet">High GRACE risk or ongoing ischaemia → angiography within 24 hours. Everyone leaves on a high-intensity statin, DAPT, ACE inhibitor, beta-blocker and an echo.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;A single normal troponin never excludes ACS. When every option is a sensible test, the answer is usually the repeat troponin at the right interval.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #2dd4bf">Atrial fibrillation with a fast ventricular rate</div>
+      <div class="bclue">Irregularly irregular pulse above 110. The first question is haemodynamic, never pharmacological.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">1</div><div><div class="stitle">Unstable? Synchronised DC cardioversion now</div><div class="sdet">Shock, syncope, myocardial ischaemia or acute heart failure — do not rate-control your way through it.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">2</div><div><div class="stitle">Stable → rate control with a beta-blocker or diltiazem</div><div class="sdet">Digoxin suits the sedentary patient or heart failure; amiodarone if rhythm control is intended.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">3</div><div><div class="stitle">Time the onset before considering cardioversion</div><div class="sdet">Clearly under 48 hours → cardioversion is on the table. 48 hours or unknown → three weeks of anticoagulation, or a TOE first.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">4</div><div><div class="stitle">Score the stroke risk separately, then find the driver</div><div class="sdet">CHA₂DS₂-VASc ≥2 men or ≥3 women → DOAC; mechanical valve or moderate–severe mitral stenosis → warfarin. Look for sepsis, thyrotoxicosis, PE or alcohol.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;Never pair verapamil or diltiazem with a beta-blocker, and avoid both in decompensated heart failure with reduced ejection fraction.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #60a5fa">Suspected pulmonary embolism</div>
+      <div class="bclue">Pleuritic pain, breathlessness, tachycardia — usually with immobility, surgery, malignancy or pregnancy in the stem.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">1</div><div><div class="stitle">Score the probability first</div><div class="sdet">Wells: PE unlikely → D-dimer. PE likely → straight to CTPA, no D-dimer.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">2</div><div><div class="stitle">Unstable → bedside echo for right ventricular strain</div><div class="sdet">Peri-arrest or persistent hypotension with a convincing story → thrombolyse without waiting for the CTPA.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">3</div><div><div class="stitle">Anticoagulate while you wait when probability is high</div><div class="sdet">Unless active bleeding or a clear contraindication makes the risk unacceptable.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">4</div><div><div class="stitle">Confirmed → DOAC, then set the duration before discharge</div><div class="sdet">Severe renal impairment or antiphospholipid syndrome → LMWH into warfarin. Provoked 3 months; unprovoked or active cancer at least 3, extended therapy considered.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;A negative D-dimer only helps a low-probability patient. In pregnancy the pathway is different — chest X-ray and leg dopplers come first.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

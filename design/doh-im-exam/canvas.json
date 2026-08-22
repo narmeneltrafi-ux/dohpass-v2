@@ -1,0 +1,23 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Blueprint & plan" },
+    { "id": "page-2", "name": "Cram sheets" },
+    { "id": "page-3", "name": "Algorithm cards" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",           "page": "page-1", "x": 0,    "y": 0, "w": 794, "h": 1123 },
+    { "file": "Countdown.dc.html",      "page": "page-1", "x": 874,  "y": 0, "w": 794, "h": 1123 },
+    { "file": "CramNumbers.dc.html",    "page": "page-2", "x": 0,    "y": 0, "w": 794, "h": 1123 },
+    { "file": "CramDrugs.dc.html",      "page": "page-2", "x": 874,  "y": 0, "w": 794, "h": 1123 },
+    { "file": "CramTriggers.dc.html",   "page": "page-2", "x": 1748, "y": 0, "w": 794, "h": 1123 },
+    { "file": "AlgoCardioResp.dc.html", "page": "page-3", "x": 0,    "y": 0, "w": 794, "h": 1123 },
+    { "file": "AlgoMetabolic.dc.html",  "page": "page-3", "x": 874,  "y": 0, "w": 794, "h": 1123 },
+    { "file": "AlgoSepsisGI.dc.html",   "page": "page-3", "x": 1748, "y": 0, "w": 794, "h": 1123 },
+    { "file": "AlgoOncology.dc.html",   "page": "page-3", "x": 2622, "y": 0, "w": 794, "h": 1123 }
+  ],
+  "annotations": [
+    { "id": "weights-caveat", "page": "page-1", "x": 0, "y": -150, "w": 560, "text": "The weights are DOHPass estimates from content specs and item-frequency analysis — DOH publishes no official weighting. Trust the order, not the decimal places." },
+    { "id": "traps-note", "page": "page-3", "x": 0, "y": -150, "w": 560, "text": "Every red trap box is a distractor candidates actually pick. Read only those boxes on the night before — nothing else on these cards is new by then." }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

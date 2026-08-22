@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .wk { display: grid; grid-template-columns: 76px 1fr 1fr; gap: 16px; align-items: start;
+      padding: 13px 16px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: #0c0c16; }
+    .wk-badge { font-size: 20px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+    .wk-weight { font-size: 9.5px; color: #8a8ab0; margin-top: 5px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .wk-focus { font-size: 14px; font-weight: 700; line-height: 1.25; }
+    .wk-detail { font-size: 10.5px; color: #8a8ab0; line-height: 1.45; margin-top: 4px; }
+    .wk-do { font-size: 11px; color: #b4b4cc; line-height: 1.5; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 40px 44px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Internal Medicine · Specialist track</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 2 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em">Six weeks out</div>
+    <div style="font-size: 13px; color: #b4b4cc; line-height: 1.5; max-width: 640px">Heaviest systems first, while your attention is cheapest. The last week buys nothing new — it only converts what you already half-know into marks.</div>
+  </div>
+
+  <div style="background: #0c0c16; border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #14b8a6; font-weight: 700">The daily rhythm — same every day, all six weeks</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+      <div><div style="font-size: 13px; font-weight: 700">40 questions</div><div style="font-size: 10.5px; color: #8a8ab0; line-height: 1.4; margin-top: 2px">Timed block in the week's system. Timed from day one.</div></div>
+      <div><div style="font-size: 13px; font-weight: 700">Full review</div><div style="font-size: 10.5px; color: #8a8ab0; line-height: 1.4; margin-top: 2px">Every item — including the ones you guessed right.</div></div>
+      <div><div style="font-size: 13px; font-weight: 700">Leak list</div><div style="font-size: 10.5px; color: #8a8ab0; line-height: 1.4; margin-top: 2px">One line per miss: stem clue, your pick, the actual rule.</div></div>
+      <div><div style="font-size: 13px; font-weight: 700">15 min recall</div><div style="font-size: 10.5px; color: #8a8ab0; line-height: 1.4; margin-top: 2px">Flashcards on last week's system, not this week's.</div></div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+
+    <div class="wk">
+      <div><div class="wk-badge" style="color: #c9a84c">W−6</div><div class="wk-weight">18% of paper</div></div>
+      <div><div class="wk-focus">Baseline &amp; Cardiology</div><div class="wk-detail">Sit a full diagnostic on day one — before you revise anything. You need a real weakness map, not a felt one.</div></div>
+      <div class="wk-do">ACS pathway and reperfusion windows · AF rate vs rhythm, CHA₂DS₂-VASc, DOAC vs warfarin · HFrEF four pillars · murmur-to-lesion mapping · ECG blocks.</div>
+    </div>
+
+    <div class="wk">
+      <div><div class="wk-badge" style="color: #c9a84c">W−5</div><div class="wk-weight">24% of paper</div></div>
+      <div><div class="wk-focus">Endocrine &amp; Respiratory</div><div class="wk-detail">The two biggest blocks after Cardiology. Both are algorithm-heavy, which means they are learnable fast.</div></div>
+      <div class="wk-do">T2DM agent choice by comorbidity · DKA vs HHS criteria and fluid order · thyroid patterns · adrenal insufficiency · asthma and COPD ladders · CURB-65 · PE probability.</div>
+    </div>
+
+    <div class="wk">
+      <div><div class="wk-badge" style="color: #14b8a6">W−4</div><div class="wk-weight">20% of paper</div></div>
+      <div><div class="wk-focus">Nephrology &amp; Gastroenterology</div><div class="wk-detail">Where most candidates leak marks on numbers rather than concepts. Learn the cutoffs cold.</div></div>
+      <div class="wk-do">AKI staging, pre-renal vs ATN urinary indices · hyperkalaemia sequence · anion-gap acid–base · decompensated cirrhosis (SBP, HE, ascites) · upper GI bleed · IBD flare.</div>
+    </div>
+
+    <div class="wk">
+      <div><div class="wk-badge" style="color: #14b8a6">W−3</div><div class="wk-weight">16% of paper</div></div>
+      <div><div class="wk-focus">Rheumatology &amp; Neurology</div><div class="wk-detail">Pattern-recognition systems. Drill stems, not textbooks — the marks are in the clue-to-diagnosis jump.</div></div>
+      <div class="wk-do">Gout vs septic arthritis · SLE and antibody patterns · giant cell arteritis (treat before biopsy) · ANCA vasculitis · stroke windows · status epilepticus ladder · headache red flags.</div>
+    </div>
+
+    <div class="wk">
+      <div><div class="wk-badge" style="color: #3b82f6">W−2</div><div class="wk-weight">22% of paper</div></div>
+      <div><div class="wk-focus">Haematology, ID &amp; Dermatology</div><div class="wk-detail">Three lighter systems together. Derm is only 6% — cap it at two days and move on.</div></div>
+      <div class="wk-do">Anaemia by MCV and iron studies · transfusion thresholds · VTE choice and duration · sepsis bundle timing · TB and HIV basics · endocarditis · drug eruptions and SJS/TEN.</div>
+    </div>
+
+    <div class="wk" style="border-color: rgba(201,168,76,0.35)">
+      <div><div class="wk-badge" style="color: #f5d980">W−1</div><div class="wk-weight">No new topics</div></div>
+      <div><div class="wk-focus">Mocks and leaks only</div><div class="wk-detail">Two full timed mocks, spaced. Everything between them is rebuilt from your own wrong answers.</div></div>
+      <div class="wk-do">Days 7 and 4: full mock, full review. Days 6, 5, 3: leak list plus the cram sheets in this pack. Day 2: algorithm sheets out loud. Day before: one light 20-Q block, then stop.</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+    <div style="height: 1px; background: rgba(255,255,255,0.08)"></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+      <div><div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9a84c; font-weight: 700; margin-bottom: 4px">Right answer, wrong reason</div><div style="font-size: 10.5px; color: #b4b4cc; line-height: 1.45">A guess you got right is a miss that hasn't happened yet. Mark it in the leak list the same as a wrong answer.</div></div>
+      <div><div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9a84c; font-weight: 700; margin-bottom: 4px">Never finish on a miss</div><div style="font-size: 10.5px; color: #b4b4cc; line-height: 1.45">Got one wrong at the end of a block? Do five more of that subtopic before you close the laptop. Fewer weeks means shorter blocks, same order.</div></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

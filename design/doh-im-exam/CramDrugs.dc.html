@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .sec { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 7px 13px 5px; }
+    .sh { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+    .hd { display: grid; grid-template-columns: 1fr 1.05fr 1.25fr; gap: 12px; font-size: 8.5px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a; font-weight: 700; padding-bottom: 3px; }
+    .r { display: grid; grid-template-columns: 1fr 1.05fr 1.25fr; gap: 12px; align-items: baseline;
+      font-size: 9.5px; line-height: 1.28; padding: 2px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .c1 { color: #ededf8; font-weight: 600; }
+    .c2 { color: #ededf8; font-weight: 700; }
+    .c3 { color: #8a8ab0; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 30px 44px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Cram sheet 2 — first line</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 4 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 30px; line-height: 1.02; letter-spacing: -0.02em">Drug of choice, and what changes it</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Most management stems are decided by the third column — the comorbidity, allergy or contraindication that moves the answer off the default.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">Cardiovascular</div>
+    <div class="hd"><div>Situation</div><div>First line</div><div>What moves the answer</div></div>
+    <div class="r"><div class="c1">Hypertension, under 55, not Black African/Caribbean</div><div class="c2">ACE inhibitor or ARB</div><div class="c3">Age ≥55 or Black African/Caribbean → CCB first</div></div>
+    <div class="r"><div class="c1">Hypertension with diabetes or proteinuria</div><div class="c2">ACE inhibitor or ARB, any age</div><div class="c3">Pregnancy → stop; labetalol, nifedipine or methyldopa</div></div>
+    <div class="r"><div class="c1">Heart failure, reduced EF</div><div class="c2">ARNI (or ACEi) + beta-blocker + MRA + SGLT2i</div><div class="c3">Loop diuretic treats congestion, not mortality</div></div>
+    <div class="r"><div class="c1">Acute coronary syndrome</div><div class="c2">Aspirin 300 mg + P2Y12 + anticoagulant + high-intensity statin</div><div class="c3">Nitrate and morphine are symptomatic only</div></div>
+    <div class="r"><div class="c1">AF — stroke prevention</div><div class="c2">DOAC</div><div class="c3">Mechanical valve or moderate–severe mitral stenosis → warfarin</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">Endocrine</div>
+    <div class="hd"><div>Situation</div><div>First line</div><div>What moves the answer</div></div>
+    <div class="r"><div class="c1">Type 2 diabetes, no complications</div><div class="c2">Metformin + lifestyle</div><div class="c3">Stop below eGFR 30; hold in acute illness or contrast</div></div>
+    <div class="r"><div class="c1">Type 2 diabetes with ASCVD, HF or CKD</div><div class="c2">SGLT2 inhibitor, regardless of HbA1c</div><div class="c3">Euglycaemic DKA — glucose can be near normal</div></div>
+    <div class="r"><div class="c1">Type 2 diabetes with obesity</div><div class="c2">GLP-1 receptor agonist</div><div class="c3">Avoid with medullary thyroid cancer or MEN2</div></div>
+    <div class="r"><div class="c1">Diabetic ketoacidosis</div><div class="c2">IV fluids first, then fixed-rate insulin 0.1 u/kg/h</div><div class="c3">K⁺ below 3.5 → replace before starting insulin</div></div>
+    <div class="r"><div class="c1">Thyroid storm</div><div class="c2">Propylthiouracil or carbimazole + beta-blocker + steroid</div><div class="c3">Iodine only ≥1 h after the thionamide</div></div>
+    <div class="r"><div class="c1">Adrenal crisis</div><div class="c2">IV hydrocortisone 100 mg + fluids</div><div class="c3">Treat first — never wait for the synacthen result</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #14b8a6">Respiratory &amp; infection</div>
+    <div class="hd"><div>Situation</div><div>First line</div><div>What moves the answer</div></div>
+    <div class="r"><div class="c1">Asthma maintenance</div><div class="c2">ICS-formoterol as MART</div><div class="c3">SABA alone is never the correct maintenance answer</div></div>
+    <div class="r"><div class="c1">COPD maintenance</div><div class="c2">LABA + LAMA</div><div class="c3">Add ICS if eosinophils high or exacerbations recur</div></div>
+    <div class="r"><div class="c1">Community-acquired pneumonia</div><div class="c2">Amoxicillin if low severity; co-amoxiclav + macrolide if moderate–severe</div><div class="c3">Penicillin allergy or atypical picture → macrolide</div></div>
+    <div class="r"><div class="c1">Clostridioides difficile</div><div class="c2">Oral vancomycin or fidaxomicin</div><div class="c3">Stop the culprit antibiotic; loperamide is wrong</div></div>
+    <div class="r"><div class="c1">Tuberculosis, new case</div><div class="c2">RIPE 2 months, then rifampicin + isoniazid 4 months</div><div class="c3">Ethambutol → baseline visual acuity; isoniazid → pyridoxine</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #3b82f6">Neurology &amp; rheumatology</div>
+    <div class="hd"><div>Situation</div><div>First line</div><div>What moves the answer</div></div>
+    <div class="r"><div class="c1">Status epilepticus</div><div class="c2">IV lorazepam, repeat once</div><div class="c3">Then levetiracetam, valproate or phenytoin; then anaesthesia</div></div>
+    <div class="r"><div class="c1">Acute gout</div><div class="c2">NSAID, colchicine or steroid</div><div class="c3">Continue allopurinol if already on it; never start it mid-flare</div></div>
+    <div class="r"><div class="c1">Giant cell arteritis</div><div class="c2">High-dose prednisolone immediately</div><div class="c3">Visual loss → IV methylprednisolone; biopsy after starting</div></div>
+    <div class="r"><div class="c1">SLE</div><div class="c2">Hydroxychloroquine for everyone</div><div class="c3">Organ involvement → steroid plus immunosuppressant</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #ef4444">Emergencies &amp; antidotes</div>
+    <div class="hd"><div>Situation</div><div>First line</div><div>What moves the answer</div></div>
+    <div class="r"><div class="c1">Anaphylaxis</div><div class="c2">IM adrenaline 0.5 mg of 1:1000, anterolateral thigh</div><div class="c3">Repeat at 5 min; steroid and antihistamine are adjuncts</div></div>
+    <div class="r"><div class="c1">Hyperkalaemia with ECG changes</div><div class="c2">IV calcium gluconate</div><div class="c3">Calcium protects the myocardium — it does not lower K⁺</div></div>
+    <div class="r"><div class="c1">Paracetamol overdose</div><div class="c2">N-acetylcysteine</div><div class="c3">Staggered or unknown timing → treat without the nomogram</div></div>
+    <div class="r"><div class="c1">Warfarin with major bleeding</div><div class="c2">IV vitamin K + prothrombin complex concentrate</div><div class="c3">FFP only when PCC is unavailable</div></div>
+    <div class="r"><div class="c1">Beta-blocker or calcium-channel blocker overdose</div><div class="c2">Glucagon, or high-dose insulin euglycaemic therapy</div><div class="c3">Add IV calcium for the calcium-channel blocker</div></div>
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 5px">
+    <div style="height: 1px; background: rgba(255,255,255,0.08)"></div>
+    <div style="font-size: 9.5px; color: #8a8ab0; line-height: 1.45">Antibiotic choices vary by local resistance and formulary — for the exam answer the guideline default, on the ward answer your hospital protocol. Doses shown are adult unless stated.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

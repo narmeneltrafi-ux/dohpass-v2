@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .blk { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      padding: 12px 15px 11px; display: flex; flex-direction: column; gap: 7px; }
+    .bt { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .btitle { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .bclue { font-size: 9.5px; color: #8a8ab0; line-height: 1.35; text-align: right; max-width: 56%; }
+    .chain { display: flex; flex-direction: column; }
+    .step { display: grid; grid-template-columns: 19px 1fr; gap: 10px; align-items: start;
+      padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .num { font-size: 9.5px; font-weight: 800; width: 19px; height: 19px; border-radius: 99px;
+      display: flex; align-items: center; justify-content: center; }
+    .stitle { font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+    .sdet { font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 2px; }
+    .trap { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 6px 10px; }
+    .trap b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 11px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Algorithm card 2</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 7 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 33px; line-height: 1.02; letter-spacing: -0.02em">Sugar, potassium, sodium</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Three emergencies where the sequence itself is the examined content, and where correcting too fast is its own wrong answer.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #f5d980">Diabetic ketoacidosis</div>
+      <div class="bclue">Glucose &gt;13.9 (or near-normal on an SGLT2 inhibitor), pH &lt;7.3, bicarbonate &lt;18, ketones ≥3.0. HHS is the mirror image — glucose &gt;33.3, osmolality &gt;320, few ketones, fluids first and slower.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">1</div><div><div class="stitle">Fluid before insulin — 0.9% sodium chloride</div><div class="sdet">The deficit is often 5–7 litres. Restore the circulation first; the insulin can wait the few minutes it takes.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">2</div><div><div class="stitle">Fixed-rate insulin at 0.1 units/kg/h</div><div class="sdet">Keep the patient's usual long-acting basal insulin running alongside it. Do not stop it.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">3</div><div><div class="stitle">Potassium sets the pace</div><div class="sdet">Below 3.5 → hold the insulin and replace first. Between 3.5 and 5.5 → 40 mmol/L in the bag. Above 5.5 → none, and recheck.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">4</div><div><div class="stitle">Add 10% glucose below 14, and treat to ketone clearance</div><div class="sdet">Resolution is ketones &lt;0.6, pH &gt;7.3, bicarbonate &gt;15. Convert to subcutaneous only when eating, with an overlap.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;The endpoint is ketone clearance, not the glucose. Bicarbonate is almost never the right option, and over-fast correction risks cerebral oedema.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #2dd4bf">Hyperkalaemia</div>
+      <div class="bclue">Potassium above 6.0, or any level with ECG change — peaked T waves, flat or absent P waves, a widening QRS.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">1</div><div><div class="stitle">ECG first, immediately</div><div class="sdet">Repeat the sample only if it costs no time. A haemolysed specimen is a real answer — but never when the ECG is abnormal.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">2</div><div><div class="stitle">ECG change or K ≥6.5 → IV calcium gluconate now</div><div class="sdet">10 mL of 10%, repeated if changes persist. It stabilises the myocardium; it does not lower the potassium at all.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">3</div><div><div class="stitle">Shift it inside the cells</div><div class="sdet">10 units of soluble insulin in 25 g of glucose, plus nebulised salbutamol. Then watch the glucose for several hours.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(20,184,166,0.18); color: #2dd4bf">4</div><div><div class="stitle">Remove it, and stop what caused it</div><div class="sdet">ACE inhibitor, ARB, spironolactone, NSAID, trimethoprim. Potassium binder for the sub-acute problem; dialysis if refractory or in established renal failure.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;Calcium buys minutes, insulin-dextrose buys hours, only removal is definitive. A question that stops at insulin-dextrose has not finished treating the patient.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #60a5fa">Hyponatraemia</div>
+      <div class="bclue">Sodium below 135. Volume status and paired osmolalities decide the answer — the number alone decides nothing.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">1</div><div><div class="stitle">Severe symptoms → hypertonic 3% saline, whatever the cause</div><div class="sdet">Seizure, marked drowsiness or a falling GCS. Give it as boluses and stop chasing the aetiology until the brain is safe.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">2</div><div><div class="stitle">Otherwise assess volume status and send the right tests</div><div class="sdet">Paired serum and urine osmolality with a urine sodium, plus thyroid and cortisol if the picture fits.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">3</div><div><div class="stitle">Treat by compartment</div><div class="sdet">Hypovolaemic with urine Na &lt;20 → 0.9% saline. Euvolaemic, urine osm &gt;100 and urine Na &gt;30 → SIADH: restrict fluid, find the drug, lung, CNS or malignant cause. Hypervolaemic → treat the failing organ.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">4</div><div><div class="stitle">Cap the correction at 8–10 mmol/L in 24 hours</div><div class="sdet">Lower still if malnourished, alcohol-dependent, hypokalaemic, or the sodium has been low for a long time.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;Over-rapid correction causes osmotic demyelination. Exclude pseudohyponatraemia — high glucose, paraprotein or lipids — before treating anything.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .blk { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      padding: 12px 15px 11px; display: flex; flex-direction: column; gap: 7px; }
+    .bt { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .btitle { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .bclue { font-size: 9.5px; color: #8a8ab0; line-height: 1.35; text-align: right; max-width: 56%; }
+    .chain { display: flex; flex-direction: column; }
+    .step { display: grid; grid-template-columns: 19px 1fr; gap: 10px; align-items: start;
+      padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .num { font-size: 9.5px; font-weight: 800; width: 19px; height: 19px; border-radius: 99px;
+      display: flex; align-items: center; justify-content: center; }
+    .stitle { font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+    .sdet { font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 2px; }
+    .trap { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 6px 10px; }
+    .trap b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 11px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Algorithm card 3</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 8 of 9</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 33px; line-height: 1.02; letter-spacing: -0.02em">Sepsis, bleeding, failing kidneys</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">The three acute-take pathways where a timing figure — one hour, twenty-four hours, forty-eight — is usually the marked point.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #ef4444">Sepsis</div>
+      <div class="bclue">Infection plus organ dysfunction. qSOFA ≥2 — respiratory rate ≥22, altered mentation, systolic ≤100 — is a prompt to act, not a diagnosis.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">1</div><div><div class="stitle">Recognise it and start the clock</div><div class="sdet">Senior review early. Do not wait for a lactate result before beginning treatment.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">2</div><div><div class="stitle">Cultures, lactate, urine output — then oxygen, antibiotics, fluids</div><div class="sdet">Blood cultures before the first dose, but only if that costs no delay. Broad-spectrum IV antibiotics within one hour.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">3</div><div><div class="stitle">30 mL/kg crystalloid if hypotensive or lactate ≥4, then reassess</div><div class="sdet">Reassess perfusion after each bolus rather than running fluid blindly.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(239,68,68,0.18); color: #ef4444">4</div><div><div class="stitle">MAP still under 65 → noradrenaline and critical care, and get source control</div><div class="sdet">Drain the collection, remove the line, take them to theatre. Source control is what actually ends the sepsis.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;Antibiotics within the hour beat a perfect microbiological work-up. Never delay the first dose for imaging or a second set of cultures.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #f5d980">Upper gastrointestinal bleed</div>
+      <div class="bclue">Haematemesis, coffee-ground vomit or melaena. Chronic liver disease anywhere in the stem changes the whole answer.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">1</div><div><div class="stitle">Resuscitate and score</div><div class="sdet">Two large-bore cannulae, crossmatch, Glasgow-Blatchford. A score of 0–1 in a well patient can be managed without admission.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">2</div><div><div class="stitle">Transfuse restrictively — target Hb 70 g/L, or 80 with cardiac disease</div><div class="sdet">Over-transfusion raises portal pressure and makes variceal bleeding worse.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">3</div><div><div class="stitle">Suspected varices → terlipressin plus prophylactic antibiotics before endoscopy</div><div class="sdet">For non-variceal bleeding, a PPI before endoscopy adds nothing — it belongs after the endoscopic diagnosis.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(201,168,76,0.18); color: #f5d980">4</div><div><div class="stitle">Endoscopy within 24 hours, within 12 if unstable or variceal</div><div class="sdet">Correct coagulopathy, stop the anticoagulant, and reverse it when the bleeding is life-threatening.</div></div></div>
+    </div>
+    <div class="trap"><b>Trap</b> &nbsp;Antibiotics in variceal bleeding are a mortality intervention, not a courtesy. A urea rise out of proportion to the creatinine is the classic upper GI clue.</div>
+  </div>
+
+  <div class="blk">
+    <div class="bt">
+      <div class="btitle" style="color: #60a5fa">Acute kidney injury</div>
+      <div class="bclue">Creatinine ×1.5 within 7 days, a rise of ≥26.5 µmol/L within 48 hours, or urine output under 0.5 mL/kg/h for 6 hours.</div>
+    </div>
+    <div class="chain">
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">1</div><div><div class="stitle">Exclude obstruction before anything clever</div><div class="sdet">Catheter and bladder scan; ultrasound within 24 hours when no cause is obvious.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">2</div><div><div class="stitle">Assess volume and perfusion honestly</div><div class="sdet">Hypovolaemic → fluid challenge and reassess. Already overloaded → the answer is not more fluid.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">3</div><div><div class="stitle">Stop the nephrotoxins and re-dose everything else</div><div class="sdet">NSAIDs, ACE inhibitors and ARBs, aminoglycosides, contrast. Review every drug for renal adjustment.</div></div></div>
+      <div class="step"><div class="num" style="background: rgba(59,130,246,0.18); color: #60a5fa">4</div><div><div class="stitle">Dip the urine — it is the cheapest test on the sheet</div><div class="sdet">Blood and protein without an obvious explanation → glomerulonephritis or vasculitis. Refer the same day.</div></div></div>
+    </div>
+    <div class="trap"><b>Dialyse for</b> &nbsp;refractory hyperkalaemia, refractory acidosis, refractory fluid overload, uraemic pericarditis or encephalopathy, or a dialysable poison.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

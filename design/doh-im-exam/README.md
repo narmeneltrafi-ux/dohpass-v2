@@ -49,6 +49,26 @@ node "<design skill base dir>/seed-canvas.mjs" \
 
 Then republish the same file path to keep the existing URL.
 
+## Offline PDF
+
+`build-pdf.py` renders the nine artboards into one 9-page A4 PDF with embedded
+fonts and selectable text — for reading on a phone or tablet, where the canvas
+itself is too heavy to open (the published page carries a ~2.3 MB editor).
+
+```
+python3 build-pdf.py            # -> DOH-IM-Revision-Pack.pdf
+```
+
+It needs Chromium and, on first run, network access to fetch the fonts (cached
+in `.fontcache/` afterwards). Two details that are easy to get wrong:
+
+- It requests **static** font weights from the v1 Google Fonts API. The `css2`
+  API serves variable-font woff2, which Chromium's print path refuses to embed —
+  it silently falls back to Arial and the PDF stops matching the design.
+- Each sheet's CSS is scoped to its own `#sN` before the sheets are concatenated.
+  They reuse class names (`.r`, `.sec`) with different definitions per sheet, so
+  unscoped concatenation would cross-contaminate the layouts.
+
 ## Layout constraint
 
 Each artboard is a fixed 794 × 1123 frame with `overflow: hidden`, so content that

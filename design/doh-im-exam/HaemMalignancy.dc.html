@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .sec { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 7px 13px 5px; }
+    .sh { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+    .r { display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+      font-size: 10px; line-height: 1.3; padding: 2px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .k { color: #b4b4cc; }
+    .v { color: #ededf8; font-weight: 700; text-align: right; max-width: 58%; }
+    .g3 { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; align-items: baseline;
+      font-size: 10px; line-height: 1.28; padding: 2.5px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .g3h { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; font-size: 8.5px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a; font-weight: 700; padding-bottom: 3px; }
+    .a { color: #b4b4cc; } .b { font-weight: 700; } .c { color: #ededf8; }
+    .mx, .mxh { display: grid; gap: 8px; align-items: baseline; }
+    .mxh { font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a;
+      font-weight: 700; padding-bottom: 3px; }
+    .mx { font-size: 10px; line-height: 1.28; padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .mx .nm { color: #ededf8; font-weight: 600; }
+    .mx .cell { font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+    .mx .note { color: #8a8ab0; }
+    .gem { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(201,168,76,0.09);
+      border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .gem b { color: #f5d980; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .warn { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .warn b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .up { color: #ef4444; font-weight: 800; } .dn { color: #60a5fa; font-weight: 800; }
+    .eq { color: #8a8ab0; font-weight: 700; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Haematology gems 3 — malignancy</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 12 of 12</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 32px; line-height: 1.02; letter-spacing: -0.02em">Leukaemia, lymphoma, myeloma</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Each of these carries one signature the examiner can put in a single clause. Learn the clause and the complication it drags behind it.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">The four leukaemias</div>
+    <div class="g3h"><div>Disease</div><div>Signature</div><div>What it drags with it</div></div>
+    <div class="g3"><div class="a">Acute myeloid (AML)</div><div class="b" style="color: #f5d980">Auer rods, blasts ≥20%</div><div class="c">The promyelocytic subtype, t(15;17), arrives in DIC — give ATRA immediately, before the workup is finished.</div></div>
+    <div class="g3"><div class="a">Acute lymphoblastic (ALL)</div><div class="b" style="color: #f5d980">Children, lymphoblasts</div><div class="c">CNS and testis are sanctuary sites, so prophylaxis is part of the regimen. Philadelphia-positive is the poor-prognosis adult form.</div></div>
+    <div class="g3"><div class="a">Chronic myeloid (CML)</div><div class="b" style="color: #f5d980">Philadelphia t(9;22), BCR-ABL</div><div class="c">Massive splenomegaly, the whole myeloid series on the film, low leucocyte alkaline phosphatase. Imatinib; watch for blast crisis.</div></div>
+    <div class="g3"><div class="a">Chronic lymphocytic (CLL)</div><div class="b" style="color: #f5d980">Smudge cells, incidental lymphocytosis</div><div class="c">Warm AIHA and ITP, hypogammaglobulinaemia with recurrent infection, and Richter's transformation to high-grade lymphoma.</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #14b8a6">Hodgkin against non-Hodgkin</div>
+    <div class="mxh" style="grid-template-columns: 0.72fr 1.4fr 1.4fr"><div></div><div>Hodgkin lymphoma</div><div>Non-Hodgkin lymphoma</div></div>
+    <div class="mx" style="grid-template-columns: 0.72fr 1.4fr 1.4fr"><div class="nm">Cell</div><div class="note">Reed-Sternberg cells</div><div class="note">Diffuse large B-cell is the commonest of many</div></div>
+    <div class="mx" style="grid-template-columns: 0.72fr 1.4fr 1.4fr"><div class="nm">Spread</div><div class="note">Contiguous, node to adjacent node</div><div class="note">Non-contiguous, frequently extranodal</div></div>
+    <div class="mx" style="grid-template-columns: 0.72fr 1.4fr 1.4fr"><div class="nm">Age</div><div class="note">Bimodal — young adults and the elderly</div><div class="note">Rises steadily with age</div></div>
+    <div class="mx" style="grid-template-columns: 0.72fr 1.4fr 1.4fr"><div class="nm">Treatment</div><div class="note">ABVD — bleomycin means lung toxicity</div><div class="note">R-CHOP — doxorubicin means cardiotoxicity</div></div>
+    <div class="gem"><b>Gems</b> &nbsp;Nodal pain brought on by alcohol is Hodgkin, and appears in stems precisely because it is unmistakable. B symptoms have an exact definition: fever above 38 °C, drenching night sweats, over 10% weight loss in six months. A bulky lymphoma starting chemotherapy is the classic tumour lysis setup — sheet 9.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #3b82f6">Myeloma and the paraproteins</div>
+    <div class="r"><span class="k">The diagnostic quartet — CRAB</span><span class="v">Calcium &gt;2.75 · Creatinine &gt;177 · Hb &lt;100 · lytic bone lesions</span></div>
+    <div class="r"><span class="k">On the film and in the blood</span><span class="v">Rouleaux · very high ESR · paraprotein on electrophoresis</span></div>
+    <div class="r"><span class="k">In the urine</span><span class="v">Bence-Jones protein — free light chains</span></div>
+    <div class="r"><span class="k">Why the kidney fails</span><span class="v">Light-chain cast nephropathy — hydrate, stop nephrotoxics</span></div>
+    <div class="r"><span class="k">MGUS, and what it becomes</span><span class="v">Paraprotein &lt;30 g/L, marrow plasma cells &lt;10%, no CRAB · 1% per year</span></div>
+    <div class="warn"><b>Two traps</b> &nbsp;The isotope bone scan is <b>negative</b> in myeloma — the lesions are purely lytic and provoke no osteoblastic reaction, so imaging is a skeletal survey, whole-body low-dose CT or MRI. And a normal ESR does not exclude it: light-chain-only disease produces no measurable paraprotein band, so send serum free light chains.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #ef4444">Myeloproliferative neoplasms</div>
+    <div class="g3h"><div>Disease</div><div>Marker</div><div>The clinical clue</div></div>
+    <div class="g3"><div class="a">Polycythaemia vera</div><div class="b" style="color: #ef4444">JAK2 V617F</div><div class="c">Itch after a hot bath, plethora, thrombosis. Venesection plus aspirin, hydroxycarbamide if high risk.</div></div>
+    <div class="g3"><div class="a">Essential thrombocythaemia</div><div class="b" style="color: #ef4444">JAK2 or CALR</div><div class="c">Thrombosis — but bleeding at extreme counts, from an acquired von Willebrand defect.</div></div>
+    <div class="g3"><div class="a">Myelofibrosis</div><div class="b" style="color: #ef4444">JAK2, dry tap</div><div class="c">Tear-drop cells and a leucoerythroblastic film with massive splenomegaly.</div></div>
+    <div class="gem"><b>Gem</b> &nbsp;Erythropoietin separates the polycythaemias: <b>low</b> EPO means polycythaemia vera, while a high or normal level points to a secondary cause — hypoxia, smoking, renal or hepatic tumour. And of this group only CML is BCR-ABL positive; the other three are defined by JAK2 and its company.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #8a8ab0">Anticoagulation gems that sit outside the drug sheet</div>
+    <div class="r"><span class="k">Monitoring</span><span class="v">UFH by APTT · LMWH by anti-Xa only in renal impairment, pregnancy or extreme weight</span></div>
+    <div class="r"><span class="k">Reversing heparin</span><span class="v">Protamine reverses UFH fully, LMWH only partially</span></div>
+    <div class="r"><span class="k">Reversing a DOAC</span><span class="v">Idarucizumab for dabigatran · andexanet alfa for the anti-Xa agents</span></div>
+    <div class="r"><span class="k">Massive haemorrhage</span><span class="v">Red cells, plasma and platelets 1:1:1 · tranexamic acid early in trauma</span></div>
+    <div class="r"><span class="k">Why warfarin starts procoagulant</span><span class="v">Protein C falls first — hence bridging, and skin necrosis</span></div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

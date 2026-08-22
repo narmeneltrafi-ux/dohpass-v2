@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .sec { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 7px 13px 5px; }
+    .sh { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+    .r { display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+      font-size: 10px; line-height: 1.3; padding: 2px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .k { color: #b4b4cc; }
+    .v { color: #ededf8; font-weight: 700; text-align: right; max-width: 58%; }
+    .g3 { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; align-items: baseline;
+      font-size: 10px; line-height: 1.28; padding: 2.5px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .g3h { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; font-size: 8.5px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a; font-weight: 700; padding-bottom: 3px; }
+    .a { color: #b4b4cc; } .b { font-weight: 700; } .c { color: #ededf8; }
+    .mx, .mxh { display: grid; gap: 8px; align-items: baseline; }
+    .mxh { font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a;
+      font-weight: 700; padding-bottom: 3px; }
+    .mx { font-size: 10px; line-height: 1.28; padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .mx .nm { color: #ededf8; font-weight: 600; }
+    .mx .cell { font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+    .mx .note { color: #8a8ab0; }
+    .gem { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(201,168,76,0.09);
+      border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .gem b { color: #f5d980; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .warn { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .warn b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .up { color: #ef4444; font-weight: 800; } .dn { color: #60a5fa; font-weight: 800; }
+    .eq { color: #8a8ab0; font-weight: 700; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Haematology gems 2 — clotting</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 11 of 12</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 32px; line-height: 1.02; letter-spacing: -0.02em">Platelets, clotting, transfusion</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Three tables carry most of this topic — and three of the traps below reverse the intuitive answer, which is exactly why they get written.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">Reading the coagulation screen</div>
+    <div class="mxh" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div>Picture</div><div style="text-align: center">PT / INR</div><div style="text-align: center">APTT</div><div style="text-align: center">Platelets</div><div>What settles it</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Haemophilia A or B</div><div class="cell eq">normal</div><div class="cell up">↑</div><div class="cell eq">normal</div><div class="note">X-linked, bleeding into joints and muscles. Factor VIII or IX assay.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">von Willebrand disease</div><div class="cell eq">normal</div><div class="cell up">↑ / normal</div><div class="cell eq">normal</div><div class="note">Commonest inherited bleeding disorder. Mucosal and menstrual bleeding.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Warfarin</div><div class="cell up">↑</div><div class="cell eq">normal / ↑</div><div class="cell eq">normal</div><div class="note">Factors II, VII, IX and X. PT moves first because VII is shortest-lived.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Unfractionated heparin</div><div class="cell eq">normal / ↑</div><div class="cell up">↑</div><div class="cell eq">normal</div><div class="note">Falling platelets on heparin is HIT until disproved, not dilution.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">DIC</div><div class="cell up">↑</div><div class="cell up">↑</div><div class="cell dn">↓</div><div class="note">Fibrinogen low, D-dimer high, and <b style="color:#f5d980">factor VIII low</b>.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Liver disease</div><div class="cell up">↑</div><div class="cell up">↑</div><div class="cell dn">↓</div><div class="note">Looks identical — except <b style="color:#f5d980">factor VIII is normal or high</b>. That is the discriminator.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Vitamin K deficiency</div><div class="cell up">↑</div><div class="cell eq">normal → ↑</div><div class="cell eq">normal</div><div class="note">Corrects with vitamin K. Factor VIII normal, fibrinogen normal.</div></div>
+    <div class="mx" style="grid-template-columns: 1.15fr 0.62fr 0.62fr 0.72fr 1.6fr"><div class="nm">Immune thrombocytopenia</div><div class="cell eq">normal</div><div class="cell eq">normal</div><div class="cell dn">↓↓</div><div class="note">Isolated. Anything else abnormal means it is not ITP.</div></div>
+    <div class="gem"><b>Gems</b> &nbsp;A mixing study that <i>corrects</i> means factor deficiency; one that <i>fails</i> to correct means an inhibitor. An isolated long APTT with <b>thrombosis rather than bleeding</b> is antiphospholipid syndrome — the lupus anticoagulant prolongs the test in the tube while clotting the patient. With no bleeding history at all, it is factor XII deficiency, clinically silent.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #14b8a6">Low platelets — four diagnoses, four different moves</div>
+    <div class="g3h"><div>Diagnosis</div><div>The giveaway</div><div>What to do</div></div>
+    <div class="g3"><div class="a">Immune thrombocytopenia (ITP)</div><div class="b" style="color: #2dd4bf">Isolated low platelets, normal film</div><div class="c">Treat only below 30 ×10⁹/L or if bleeding: steroid ± IVIG. IVIG raises the count faster.</div></div>
+    <div class="g3"><div class="a">Thrombotic thrombocytopenic purpura</div><div class="b" style="color: #2dd4bf">Schistocytes with low platelets</div><div class="c">ADAMTS13 under 10%. Urgent plasma exchange — the pentad is a description, not an entry requirement.</div></div>
+    <div class="g3"><div class="a">Heparin-induced thrombocytopenia</div><div class="b" style="color: #2dd4bf">Platelets fall &gt;50% on day 5–10</div><div class="c">Score with 4Ts. Stop every heparin including line flushes, start a non-heparin anticoagulant.</div></div>
+    <div class="g3"><div class="a">Disseminated intravascular coagulation</div><div class="b" style="color: #2dd4bf">Everything deranged at once</div><div class="c">Treat the precipitant — sepsis, obstetric, malignancy. Products only if actively bleeding.</div></div>
+    <div class="warn"><b>The two that reverse</b> &nbsp;In TTP, platelet transfusion is <b>contraindicated</b> unless bleeding is life-threatening — it feeds the thrombosis. In HIT the patient <b>clots, not bleeds</b>, and warfarin waits until the platelet count recovers, or you risk venous limb gangrene.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #ef4444">Transfusion reactions — timing plus one sign</div>
+    <div class="mxh" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div>Reaction</div><div>Onset</div><div>The sign that names it</div><div>Action</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Acute haemolytic (ABO)</div><div class="note">Minutes</div><div class="note">Fever, loin pain, dark urine, hypotension</div><div class="note">Stop. Saline, recheck the label, tell the lab.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Febrile non-haemolytic</div><div class="note">30–60 min</div><div class="note">Fever and rigors, otherwise well</div><div class="note">Slow or pause, paracetamol.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Allergic, urticarial</div><div class="note">Minutes</div><div class="note">Itch and urticaria alone</div><div class="note">Antihistamine, restart slowly.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Anaphylaxis</div><div class="note">Minutes</div><div class="note">Shock and wheeze — think IgA deficiency</div><div class="note">IM adrenaline. IgA-deficient components in future.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">TACO — overload</div><div class="note">Within 6 h</div><div class="note">Hypertension, <b style="color:#f5d980">raised JVP</b>, pulmonary oedema</div><div class="note">Stop, sit up, diuretic.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">TRALI — lung injury</div><div class="note">Within 6 h</div><div class="note">Hypoxia and infiltrates with a <b style="color:#f5d980">normal JVP</b></div><div class="note">Stop, oxygen, supportive care. No diuretic.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Bacterial contamination</div><div class="note">Rapid</div><div class="note">High fever and shock — usually platelets</div><div class="note">Stop, cultures, broad-spectrum antibiotics.</div></div>
+    <div class="mx" style="grid-template-columns: 1.25fr 0.72fr 1.5fr 1.35fr"><div class="nm">Delayed haemolytic</div><div class="note">5–10 days</div><div class="note">Hb falls again, jaundice, positive DAT</div><div class="note">Supportive; identify the antibody.</div></div>
+    <div class="gem"><b>Gem</b> &nbsp;TACO and TRALI share a window and a chest X-ray. Blood pressure and JVP separate them — both up in overload, normal or down in lung injury. A diuretic fixes one and harms the other, which is why it is asked so often.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

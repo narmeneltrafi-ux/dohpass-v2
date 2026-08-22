@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #c9a84c; } a:hover { color: #e8c870; }
+    .sec { background: #0c0c16; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 7px 13px 5px; }
+    .sh { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+    .r { display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+      font-size: 10px; line-height: 1.3; padding: 2px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .k { color: #b4b4cc; }
+    .v { color: #ededf8; font-weight: 700; text-align: right; max-width: 58%; }
+    .g3 { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; align-items: baseline;
+      font-size: 10px; line-height: 1.28; padding: 2.5px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .g3h { display: grid; grid-template-columns: 1fr 0.8fr 1.25fr; gap: 12px; font-size: 8.5px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a; font-weight: 700; padding-bottom: 3px; }
+    .a { color: #b4b4cc; } .b { font-weight: 700; } .c { color: #ededf8; }
+    .mx, .mxh { display: grid; gap: 8px; align-items: baseline; }
+    .mxh { font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #3e3e5a;
+      font-weight: 700; padding-bottom: 3px; }
+    .mx { font-size: 10px; line-height: 1.28; padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .mx .nm { color: #ededf8; font-weight: 600; }
+    .mx .cell { font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+    .mx .note { color: #8a8ab0; }
+    .gem { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(201,168,76,0.09);
+      border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .gem b { color: #f5d980; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .warn { font-size: 10px; line-height: 1.4; color: #ededf8; background: rgba(239,68,68,0.09);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 5px 9px; margin-top: 5px; }
+    .warn b { color: #ef4444; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+    .up { color: #ef4444; font-weight: 800; } .dn { color: #60a5fa; font-weight: 800; }
+    .eq { color: #8a8ab0; font-weight: 700; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #07070e; color: #ededf8; padding: 31px 44px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a84c; font-weight: 700">DOHPass · Haematology gems 1 — red cells</div>
+      <div style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #3e3e5a; font-weight: 600">Sheet 10 of 12</div>
+    </div>
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 32px; line-height: 1.02; letter-spacing: -0.02em">Anaemia, haemolysis, the film</div>
+    <div style="font-size: 11.5px; color: #b4b4cc; line-height: 1.4">Haematology questions are pattern questions. Nearly all of them resolve to one table, one index, or one thing you can see down a microscope.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">MCV is the first fork</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-top: 3px">
+      <div><div style="font-size: 11px; font-weight: 700; color: #f5d980">Microcytic &lt;80 fL</div><div style="font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 3px">Iron deficiency · thalassaemia · chronic disease (late) · sideroblastic · lead</div></div>
+      <div><div style="font-size: 11px; font-weight: 700; color: #2dd4bf">Normocytic 80–100</div><div style="font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 3px">Acute blood loss · chronic disease · renal · haemolysis · marrow failure · mixed deficiency</div></div>
+      <div><div style="font-size: 11px; font-weight: 700; color: #60a5fa">Macrocytic &gt;100</div><div style="font-size: 10px; color: #8a8ab0; line-height: 1.4; margin-top: 3px">Megaloblastic: B12, folate. Non-megaloblastic: alcohol, liver, hypothyroid, myelodysplasia, reticulocytosis, drugs</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #c9a84c">Iron studies — the table they build distractors from</div>
+    <div class="mxh" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div>Picture</div><div style="text-align: center">Ferritin</div><div style="text-align: center">Serum iron</div><div style="text-align: center">TIBC</div><div style="text-align: center">Transferrin sat</div></div>
+    <div class="mx" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div class="nm">Iron deficiency</div><div class="cell dn">↓</div><div class="cell dn">↓</div><div class="cell up">↑</div><div class="cell dn">↓ &lt;20%</div></div>
+    <div class="mx" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div class="nm">Anaemia of chronic disease</div><div class="cell up">↑ / normal</div><div class="cell dn">↓</div><div class="cell dn">↓</div><div class="cell eq">normal / ↓</div></div>
+    <div class="mx" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div class="nm">Thalassaemia trait</div><div class="cell eq">normal</div><div class="cell eq">normal</div><div class="cell eq">normal</div><div class="cell eq">normal</div></div>
+    <div class="mx" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div class="nm">Haemochromatosis</div><div class="cell up">↑↑</div><div class="cell up">↑</div><div class="cell dn">↓</div><div class="cell up">↑↑ &gt;45%</div></div>
+    <div class="mx" style="grid-template-columns: 1.35fr 0.75fr 0.75fr 0.75fr 0.9fr"><div class="nm">Sideroblastic</div><div class="cell up">↑</div><div class="cell up">↑</div><div class="cell eq">normal</div><div class="cell up">↑</div></div>
+    <div class="gem"><b>Gems</b> &nbsp;Ferritin is an acute-phase reactant — with inflammation the threshold moves from 30 to 100 µg/L, so a "normal" ferritin excludes nothing. Mentzer index (MCV ÷ RBC): under 13 is thalassaemia trait, over 13 is iron deficiency — thal trait runs a <i>high</i> red cell count with a normal RDW. New iron deficiency in a man or a postmenopausal woman means endoscopy at both ends.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #14b8a6">B12 and folate — where the marks actually are</div>
+    <div class="r"><span class="k">Neurology — subacute combined degeneration of the cord</span><span class="v">B12 only, never folate</span></div>
+    <div class="r"><span class="k">Which to replace first</span><span class="v">B12 before folate, always</span></div>
+    <div class="r"><span class="k">Homocysteine / methylmalonic acid</span><span class="v">Both raise homocysteine · only B12 raises MMA</span></div>
+    <div class="r"><span class="k">Pernicious anaemia antibodies</span><span class="v">Anti-intrinsic-factor specific · anti-parietal-cell sensitive</span></div>
+    <div class="r"><span class="k">Culprits to look for in the stem</span><span class="v">Metformin · PPI · ileal Crohn's or resection · vegan diet · nitrous oxide</span></div>
+    <div class="r"><span class="k">Film in either deficiency</span><span class="v">Hypersegmented neutrophils, &gt;5 lobes</span></div>
+    <div class="warn"><b>Trap</b> &nbsp;Giving folate to someone B12-deficient can precipitate or worsen the cord lesion. If a stem offers both, the order is the question.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #3b82f6">Haemolysis — screen, then split on the DAT</div>
+    <div class="r"><span class="k">The screen, all four together</span><span class="v"><span class="up">↑</span> reticulocytes · <span class="up">↑</span> LDH · <span class="up">↑</span> unconjugated bilirubin · <span class="dn">↓</span> haptoglobin</span></div>
+    <div class="g3h" style="padding-top: 4px"><div>Type</div><div>Clue</div><div>What follows</div></div>
+    <div class="g3"><div class="a">Warm autoimmune — IgG, extravascular</div><div class="b" style="color: #60a5fa">DAT positive</div><div class="c">Look for CLL, lymphoma, SLE or methyldopa. Steroids first line.</div></div>
+    <div class="g3"><div class="a">Cold agglutinin — IgM, complement</div><div class="b" style="color: #60a5fa">DAT positive</div><div class="c">Mycoplasma, EBV, Waldenström. Keep warm, rituximab — steroids disappoint.</div></div>
+    <div class="g3"><div class="a">G6PD deficiency — X-linked</div><div class="b" style="color: #8a8ab0">DAT negative</div><div class="c">Oxidant drugs, fava beans, infection. Bite cells and Heinz bodies.</div></div>
+    <div class="g3"><div class="a">Hereditary spherocytosis</div><div class="b" style="color: #8a8ab0">DAT negative</div><div class="c">Raised MCHC, EMA binding test. Spherocytes without a positive DAT.</div></div>
+    <div class="g3"><div class="a">Microangiopathic (MAHA)</div><div class="b" style="color: #8a8ab0">DAT negative</div><div class="c">Schistocytes → TTP, HUS, DIC, HELLP, malignant hypertension, mechanical valve.</div></div>
+    <div class="gem"><b>Gems</b> &nbsp;The G6PD level is falsely normal <i>during</i> the acute episode — the deficient cells have already lysed, so retest at three months. In sickle cell, acute chest syndrome is the leading cause of death: fever, chest pain and a new infiltrate mean antibiotics, oxygen, analgesia and transfusion, not observation.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sh" style="color: #ef4444">The film — one look, one answer</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px">
+      <div>
+        <div class="r"><span class="k">Schistocytes</span><span class="v">MAHA — TTP, HUS, DIC</span></div>
+        <div class="r"><span class="k">Spherocytes</span><span class="v">Spherocytosis or warm AIHA</span></div>
+        <div class="r"><span class="k">Bite cells, Heinz bodies</span><span class="v">G6PD deficiency</span></div>
+        <div class="r"><span class="k">Target cells</span><span class="v">Thalassaemia, liver disease, post-splenectomy</span></div>
+        <div class="r"><span class="k">Howell-Jolly bodies</span><span class="v">Hyposplenism</span></div>
+      </div>
+      <div>
+        <div class="r"><span class="k">Basophilic stippling</span><span class="v">Lead, thalassaemia, sideroblastic</span></div>
+        <div class="r"><span class="k">Tear-drop cells, leucoerythroblastic</span><span class="v">Myelofibrosis or marrow infiltration</span></div>
+        <div class="r"><span class="k">Rouleaux</span><span class="v">Myeloma, very high ESR</span></div>
+        <div class="r"><span class="k">Auer rods</span><span class="v">Acute myeloid leukaemia</span></div>
+        <div class="r"><span class="k">Smudge cells</span><span class="v">Chronic lymphocytic leukaemia</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # DOH IM Revision Pack — design canvas
 
-Nine A4 artboards (794 × 1123 px) for the DOH Internal Medicine specialist exam,
-laid out on a three-page canvas and published as an Artifact.
+Twelve A4 artboards (794 × 1123 px) for the DOH Internal Medicine specialist exam,
+laid out on a four-page canvas and published as an Artifact.
 
 Published at: https://claude.ai/code/artifact/bc351436-b636-4939-b263-3418b3f549bd
 
@@ -18,6 +18,9 @@ Published at: https://claude.ai/code/artifact/bc351436-b636-4939-b263-3418b3f549
 | Algorithm cards | `AlgoMetabolic.dc.html` | DKA/HHS, hyperkalaemia, hyponatraemia |
 | Algorithm cards | `AlgoSepsisGI.dc.html` | Sepsis, upper GI bleed, AKI |
 | Algorithm cards | `AlgoOncology.dc.html` | Neutropenic sepsis, TLS, hypercalcaemia, cord compression, SVCO |
+| Haematology gems | `HaemRedCells.dc.html` | Anaemia by MCV, iron studies matrix, B12/folate, haemolysis, the blood film |
+| Haematology gems | `HaemClotting.dc.html` | Coagulation screen matrix, thrombocytopenia, transfusion reactions |
+| Haematology gems | `HaemMalignancy.dc.html` | Leukaemias, lymphoma, myeloma, MPNs, anticoagulation |
 
 `canvas.json` holds the page split, artboard positions and the two sticky notes.
 
@@ -51,7 +54,7 @@ Then republish the same file path to keep the existing URL.
 
 ## Offline PDF
 
-`build-pdf.py` renders the nine artboards into one 9-page A4 PDF with embedded
+`build-pdf.py` renders the twelve artboards into one 12-page A4 PDF with embedded
 fonts and selectable text — for reading on a phone or tablet, where the canvas
 itself is too heavy to open (the published page carries a ~2.3 MB editor).
 
@@ -73,7 +76,7 @@ in `.fontcache/` afterwards). Two details that are easy to get wrong:
 
 Each artboard is a fixed 794 × 1123 frame with `overflow: hidden`, so content that
 grows past 1123 px is clipped rather than shrunk. Every sheet currently renders
-between 991 and 1060 px measured with ~1.8% extra letter-spacing as a
+between 948 and 1103 px measured with ~1.8% extra letter-spacing as a
 wider-font stress test. Keep that headroom when editing.
 
 ## Clinical caveat

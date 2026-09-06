@@ -7,7 +7,8 @@
 //
 // Env used (already present in your Vercel project — no new secrets):
 //   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-// Optional override:  SEO_BASE_URL (defaults to https://dohpass.com)
+// Optional override:  SEO_BASE_URL (defaults to https://www.dohpass.com — www is the canonical
+//                     host; non-www 307s to www, so a non-www canonical would loop)
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFile, mkdir } from 'node:fs/promises';
@@ -17,7 +18,7 @@ import { renderLandingPage } from './seo-template.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
-const BASE_URL = (process.env.SEO_BASE_URL || 'https://dohpass.com').replace(/\/+$/, '');
+const BASE_URL = (process.env.SEO_BASE_URL || 'https://www.dohpass.com').replace(/\/+$/, '');
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;

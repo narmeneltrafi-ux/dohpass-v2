@@ -91,7 +91,7 @@ function orgSchema(baseUrl) {
  * @param {object[]} questions - sample questions from get_preview_questions
  * @param {string} countDisplay - e.g. "2,400+"
  * @param {object[]} faqs - [{q,a}]
- * @param {string} baseUrl - https://dohpass.com
+ * @param {string} baseUrl - https://www.dohpass.com
  */
 export function renderLandingPage({ page, questions, countDisplay, faqs, baseUrl }) {
   const url = `${baseUrl}/${page.slug}`;

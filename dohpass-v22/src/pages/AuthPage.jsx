@@ -64,7 +64,7 @@ export default function AuthPage() {
         options: { emailRedirectTo: EMAIL_REDIRECT_URL },
       })
       if (error) setError(error.message)
-      else if (data.session) navigate('/diagnostic') // new account → readiness check first
+      else if (data.session) navigate('/dashboard')  // new account → first-run hero (pick exam, 10 free Qs)
       else setAwaitingConfirm(true)                  // confirmation required → show confirm screen
     }
     setLoading(false)

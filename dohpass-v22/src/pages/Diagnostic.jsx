@@ -85,7 +85,7 @@ function SetupPhase({ onStart, onSkip }) {
         <div className="diag-setup-header">
           <h1 className="diag-setup-title">Exam Readiness Check</h1>
           <p className="diag-setup-sub">
-            20 questions · 10 high-yield topics · ~10 minutes
+            Up to 20 questions · high-yield topics · ~10 minutes
           </p>
           <p className="diag-setup-desc">
             Answer honestly — no feedback shown during the assessment. Your results
@@ -188,7 +188,7 @@ function ResultsPhase({ questions, answers, track, profile }) {
   } else if (pct < 60) {
     readiness = 'You have a foundation, but several critical topics fall below the pass threshold. Consistent targeted practice will close these gaps.'
   } else if (pct < 75) {
-    readiness = 'Solid performance. Your weak areas are identifiable and addressable — focused practice on these topics could meaningfully increase your pass probability.'
+    readiness = 'Solid performance. Your weak areas are identifiable and addressable — focused practice on these topics is the most efficient use of your revision time.'
   } else {
     readiness = 'Strong baseline. Reinforcing your weak topics with spaced repetition and targeted drills could push your score to distinction level.'
   }

@@ -34,8 +34,8 @@ const STORY = [
       <>
         <p>Every question is authored by a UAE-based physician, mapped to the current DOH
           blueprint, and put through a review pass against the relevant guideline before it
-          ships. New vignettes are added weekly; existing ones are revised whenever a
-          guideline changes or a reviewer flags an update.</p>
+          ships. Existing questions are revised whenever a
+          guideline changes or a user reports an error.</p>
         <p>We don&rsquo;t recycle questions from international banks. We don&rsquo;t pad the
           count with low-yield trivia.</p>
       </>

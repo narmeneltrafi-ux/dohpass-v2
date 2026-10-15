@@ -40,9 +40,9 @@ function buildFeatures(counts) {
     },
     {
       id: 'updates',
-      eyebrow: 'Weekly updates',
-      title: 'New questions added every week.',
-      body: 'A live queue of new vignettes &mdash; written, peer-reviewed, and pushed to the bank. You always have fresh material; no static PDF that ages out.',
+      eyebrow: 'Maintained',
+      title: 'Revised when guidelines change.',
+      body: 'Report an error to hello@dohpass.com and the question is checked against the current guideline and corrected in the live bank &mdash; not a static PDF that ages out.',
     },
     {
       id: 'mock',

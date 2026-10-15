@@ -4044,7 +4044,7 @@ nav {
   width: 100%;
   max-width: 960px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 18px;
@@ -4086,10 +4086,7 @@ nav {
 .lp-countup { display: inline-block; min-width: 1ch; }
 
 @media (max-width: 720px) {
-  .lp-stats { grid-template-columns: repeat(2, 1fr); }
-  .lp-stats__cell:nth-child(2) { border-right: none; }
-  .lp-stats__cell:nth-child(1),
-  .lp-stats__cell:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .lp-stats { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ── 4. FEATURES (LIGHT) ────────────────────────────────────── */

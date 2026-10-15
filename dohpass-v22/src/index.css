@@ -6720,6 +6720,62 @@ a.lp-contact__value:hover { color: var(--gold); }
   white-space: pre-wrap;
 }
 
+/* ── Structured explanation (formatExplanation) ──────────────── */
+.qui-expl__rich {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.97rem;
+  line-height: 1.75;
+  color: var(--text);
+  max-width: 68ch;
+}
+.qui-expl__p { margin: 0 0 0.9em; }
+.qui-expl__sect { margin-top: 0.4em; }
+.qui-expl__label {
+  display: block;
+  margin: 1.1em 0 0.35em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--action-light);
+}
+.qui-expl__sect:first-child .qui-expl__label { margin-top: 0.2em; }
+.qui-expl__label--gold { color: var(--gold); margin-top: 0; }
+.qui-expl__options {
+  list-style: none;
+  margin: 0 0 0.9em;
+  padding: 0;
+}
+.qui-expl__options li {
+  margin: 0 0 0.6em;
+  padding: 0.15em 0 0.15em 0.9em;
+  border-left: 2px solid var(--border-med);
+  color: var(--text-secondary);
+}
+.qui-expl__opt-label { color: var(--text); font-weight: 650; }
+.qui-expl__pearl {
+  margin: 1em 0 0.9em;
+  padding: 0.85em 1em;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-dim);
+  border-radius: 12px;
+}
+.qui-expl__pearl .qui-expl__p { margin: 0; }
+.qui-expl__pearl .qui-expl__p::first-letter,
+.qui-expl__sect .qui-expl__p::first-letter { text-transform: uppercase; }
+.qui-expl__ref {
+  margin: 0.6em 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.qui-expl__ref span { font-weight: 600; }
+.qui-expl__list { margin: 0 0 0.9em; padding-left: 1.2em; }
+.qui-expl__list li { margin-bottom: 0.3em; }
+@media (max-width: 640px) {
+  .qui-expl__rich { font-size: 0.95rem; line-height: 1.7; }
+}
+
 /* ── Keyboard shortcut hint (desktop only) ───────────────────── */
 .qui-hint {
   margin-top: 2.5rem;

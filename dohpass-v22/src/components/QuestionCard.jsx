@@ -2,6 +2,60 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import { supabase } from '../lib/supabase'
+import { formatExplanation } from '../lib/formatExplanation'
+
+/* Structured explanation: the stored text is unchanged; it is regrouped at
+   display time into short paragraphs, "why not the others", a pearl callout
+   and a reference line, so a 1,000+ character block reads in sections. */
+function ExplanationBody({ text }) {
+  const blocks = formatExplanation(text)
+  if (!blocks.length) return null
+  return (
+    <div className="qui-expl__rich">
+      {blocks.map((b, i) => {
+        if (b.type === 'answer') return (
+          <div key={i} className="qui-expl__sect">
+            <span className="qui-expl__label">{b.label}</span>
+            <p className="qui-expl__p">{b.text}</p>
+          </div>
+        )
+        if (b.type === 'options') return (
+          <div key={i} className="qui-expl__sect">
+            <span className="qui-expl__label">Why not the others</span>
+            <ul className="qui-expl__options">
+              {b.items.map((it, j) => (
+                <li key={j}>
+                  {it.label && <strong className="qui-expl__opt-label">{it.label.replace(/^why\s+/i, '')}: </strong>}
+                  {it.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+        if (b.type === 'pearl') return (
+          <aside key={i} className="qui-expl__pearl">
+            <span className="qui-expl__label qui-expl__label--gold">{b.label}</span>
+            <p className="qui-expl__p">{b.text}</p>
+          </aside>
+        )
+        if (b.type === 'ref') return (
+          <p key={i} className="qui-expl__ref"><span>{b.label}:</span> {b.text}</p>
+        )
+        if (b.type === 'list') return (
+          <ul key={i} className="qui-expl__list">
+            {b.items.map((it, j) => <li key={j}>{it}</li>)}
+          </ul>
+        )
+        return (
+          <p key={i} className="qui-expl__p">
+            {b.label && <strong>{b.label}: </strong>}
+            {b.text}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
 
 /* ───────────────────────────────────────────────────────────────
    Premium question-taking interface.
@@ -315,7 +369,7 @@ export default function QuestionCard({
               <p className="qui-expl__body">{feedback?.msg}</p>
             ) : (
               question.explanation && (
-                <p className="qui-expl__body">{question.explanation}</p>
+                <ExplanationBody text={question.explanation} />
               )
             )}
 

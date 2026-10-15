@@ -34,8 +34,8 @@ const STORY = [
       <>
         <p>Every question is authored by a UAE-based physician, mapped to the current DOH
           blueprint, and put through a review pass against the relevant guideline before it
-          ships. New vignettes are added weekly; existing ones are revised whenever a
-          guideline changes or a reviewer flags an update.</p>
+          ships. Existing questions are revised whenever a
+          guideline changes or a user reports an error.</p>
         <p>We don&rsquo;t recycle questions from international banks. We don&rsquo;t pad the
           count with low-yield trivia.</p>
       </>
@@ -46,7 +46,8 @@ const STORY = [
     title: 'Dr. Ibrahim',
     body: (
       <>
-        <p>Oncology &amp; Palliative Care SHO at Tawam Hospital in Al Ain. Sat the DOH himself,
+        <p>DOH-licensed Internal Medicine Specialist in Oncology &amp; Palliative Care at Tawam Hospital,
+          Al Ain. MRCP (UK). Passed the DOH Internal Medicine Specialist exam himself,
           got tired of the prep options on offer, and decided that if nobody was going to
           build the bank he wanted, he&rsquo;d write it himself.</p>
         <p className="lp-about__founderQuote">
@@ -88,7 +89,7 @@ export default function About() {
                   <div className="lp-about__founderText">
                     <h2 className="lp-about__h2">{s.title}</h2>
                     <div className="lp-about__founderTitle">
-                      Oncology &amp; Palliative Care SHO &middot; Tawam Hospital, Al Ain
+                      Internal Medicine Specialist &middot; Oncology &amp; Palliative Care &middot; Tawam Hospital, Al Ain
                     </div>
                     {s.body}
                   </div>

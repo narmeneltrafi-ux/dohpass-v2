@@ -70,7 +70,7 @@ function Hero() {
               <circle cx="20" cy="10" r="2"/>
             </svg>
           </span>
-          <span>Built by Dr. Ibrahim · Oncology SHO · Tawam Hospital · MRCP(UK)</span>
+          <span>Built by Dr. Ibrahim · DOH Internal Medicine Specialist · Tawam Hospital · MRCP(UK)</span>
         </div>
       </div>
     </section>

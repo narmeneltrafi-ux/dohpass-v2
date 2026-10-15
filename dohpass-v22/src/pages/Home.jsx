@@ -40,7 +40,7 @@ function Hero({ navigate, scrollToFeatures }) {
       <div className="lp-hero__inner">
         <div className="lp-hero__badge">
           <span className="lp-hero__pulse" />
-          DOH 2026 blueprint · Updated daily
+          UAE DOH · GP &amp; Internal Medicine Specialist
         </div>
 
         <h1 className="lp-hero__h1">
@@ -83,20 +83,12 @@ function Hero({ navigate, scrollToFeatures }) {
    3. LIVE STATS BAR
    ─────────────────────────────────────────────────────────────── */
 function StatsBar({ stats }) {
-  function formatUpdated(d) {
-    if (!d) return 'today'
-    const now = new Date()
-    const sameDay = d.toDateString() === now.toDateString()
-    if (sameDay) return 'today'
-    const diffDays = Math.floor((now - d) / 86400000)
-    if (diffDays <= 6) return `${diffDays}d ago`
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  }
 
   // Four distinct cells — each shows a different real number. Specialties
   // falls back to a hardcoded floor when anon RLS hides the topic count;
   // Flashcards replaces the previous "Explanations" cell which duplicated
-  // the Questions count. Updated comes from a separate downstream branch.
+  // the Questions count. The "Updated" cell was removed: anon RLS hides
+  // created_at, so it always fell back to a false "today".
   const cells = [
     { label: 'Questions Live', value: stats?.questions,   suffix: '+' },
     { label: 'Specialties',    value: stats?.specialties, suffix: '+' },
@@ -113,12 +105,6 @@ function StatsBar({ stats }) {
           </span>
         </div>
       ))}
-      <div className="lp-stats__cell">
-        <span className="lp-stats__label">Updated</span>
-        <span className="lp-stats__num lp-stats__num--word">
-          {formatUpdated(stats?.lastUpdated)}
-        </span>
-      </div>
     </div>
   )
 }
@@ -157,9 +143,9 @@ const FEATURES = [
   },
   {
     id: 'daily',
-    eyebrow: 'Daily new questions',
-    title: 'Fresh questions added weekly, reviewed by physicians.',
-    body: 'A live queue of new vignettes — written, peer-reviewed, and pushed to the bank without you having to refresh.',
+    eyebrow: 'Maintained, not static',
+    title: 'Questions revised when guidelines change.',
+    body: 'Spot an error or an outdated answer? Email hello@dohpass.com — every report is checked against the current guideline and the question is corrected in the live bank.',
     Mock: MockDaily,
   },
 ]
@@ -357,17 +343,17 @@ const IconVerified = () => (
 function CredibilityBar() {
   return (
     <section className="lp-cred" id="credibility">
-      <h2 className="lp-cred__h2">Built by UAE physicians, for UAE physicians</h2>
+      <h2 className="lp-cred__h2">Built by a UAE physician, for UAE physicians</h2>
       <div className="lp-cred__card">
         <div className="lp-cred__avatar" aria-label="Founder portrait placeholder">DI</div>
         <div className="lp-cred__body">
           <div className="lp-cred__name">Dr. Ibrahim</div>
           <div className="lp-cred__title">
-            Oncology &amp; Palliative Care SHO · Tawam Hospital, Al Ain
+            Internal Medicine Specialist (DOH) · Oncology &amp; Palliative Care · Tawam Hospital, Al Ain
           </div>
           <div className="lp-cred__credentials">
-            <span className="lp-cred__credential"><IconVerified /> Sat the DOH exam</span>
-            <span className="lp-cred__credential"><IconVerified /> UAE physician</span>
+            <span className="lp-cred__credential"><IconVerified /> Passed the DOH IM Specialist exam</span>
+            <span className="lp-cred__credential"><IconVerified /> MRCP (UK)</span>
             <span className="lp-cred__credential"><IconVerified /> Content written from scratch</span>
           </div>
           <p className="lp-cred__quote">
@@ -660,7 +646,7 @@ const FAQS = [
   },
   {
     q: 'How often are questions updated?',
-    a: 'New vignettes are added weekly. Existing questions are revised whenever a guideline changes or a reviewer flags an update.',
+    a: 'Existing questions are revised whenever a guideline changes or a user reports an error to hello@dohpass.com. New questions are added in batches, not on a fixed schedule.',
   },
   {
     q: 'How does payment work?',

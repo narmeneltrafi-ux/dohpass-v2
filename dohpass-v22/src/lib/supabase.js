@@ -482,6 +482,14 @@ export async function fetchQuestionsByIds(track, ids) {
 export async function fetchDiagnosticQuestions(track) {
   const allIds = await fetchQuestionIdList(track)
 
+  // Free users: RLS returns zero rows from the question tables, which used to
+  // dead-end every new signup at "No diagnostic questions available". Serve the
+  // free-trial questions via the get_trial_questions RPC instead (server-capped,
+  // counts against the trial). Paid users never reach this branch.
+  if (!allIds || allIds.length === 0) {
+    return fetchTrialQuestions(track)
+  }
+
   // Group by normalized topic
   const byTopic = new Map()
   for (const r of allIds) {

@@ -306,6 +306,7 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
    The 10-min diagnostic is demoted to an optional link, not a wall.
    ─────────────────────────────────────────────────────────────── */
 function FirstRunHero({ firstName, navigate, counts, isPaid }) {
+  const totalQuestions = (counts?.specialist || 0) + (counts?.gp || 0)
   return (
     <>
       <header className="lp-dash__hero lp-fr__hero">
@@ -318,13 +319,35 @@ function FirstRunHero({ firstName, navigate, counts, isPaid }) {
         </h1>
         <p className="lp-dash__sub">
           {isPaid
-            ? 'Your full bank is unlocked. Pick a track and jump straight in.'
-            : 'Pick a track to begin — your first questions are free, no payment to start.'}
+            ? 'Your full bank is unlocked. Pick your exam and jump straight in.'
+            : 'Your first 10 questions are free. No card, no payment to start.'}
         </p>
+
+        {/* Trust block — a new visitor is deciding whether a solo-run site is
+            worth their time. Show who is behind it before asking for effort. */}
+        <div className="lp-fr__trust" aria-label="Who built DOHPass">
+          <div className="lp-fr__trust-who">
+            <span className="lp-fr__avatar" aria-hidden="true">HI</span>
+            <div>
+              <div className="lp-fr__trust-name">Built by Dr Huzaifa Ibrahim</div>
+              <div className="lp-fr__trust-creds">
+                MRCP (UK) · DOH Specialist, Internal Medicine · Practising physician in Abu Dhabi
+              </div>
+            </div>
+          </div>
+          <ul className="lp-fr__proof">
+            {totalQuestions > 0 && (
+              <li><strong>{totalQuestions.toLocaleString()}</strong> exam-style questions</li>
+            )}
+            <li>Every answer <strong>explained</strong></li>
+            <li>Mapped to the <strong>DOH blueprint</strong></li>
+          </ul>
+        </div>
       </header>
 
-      <section className="lp-dash__section lp-fr__tracks" aria-label="Choose a track to start">
-        <div className="lp-track-grid">
+      <section className="lp-dash__section lp-fr__tracks" aria-labelledby="lp-fr-pick">
+        <h2 className="lp-fr__pick" id="lp-fr-pick">Which exam are you preparing for?</h2>
+        <div className={`lp-track-grid${isPaid ? '' : ' lp-fr__grid-2'}`}>
           <TrackCard
             Icon={IconStethoscope}
             eyebrow="Specialist"
@@ -347,18 +370,22 @@ function FirstRunHero({ firstName, navigate, counts, isPaid }) {
             progress={null}
             total={counts?.gp}
           />
-          <TrackCard
-            Icon={IconLayers}
-            eyebrow="Flashcards"
-            title="Concept &amp; Drug Cards"
-            desc="High-yield concept, drug and anatomy cards across both tracks."
-            count={counts?.flashcards}
-            route="/gems"
-            navigate={navigate}
-            progress={null}
-            total={null}
-            due={0}
-          />
+          {/* Free first-run users get one decision (which exam), not three.
+              Flashcards stay visible for paid users, who can actually use them. */}
+          {isPaid && (
+            <TrackCard
+              Icon={IconLayers}
+              eyebrow="Flashcards"
+              title="Concept &amp; Drug Cards"
+              desc="High-yield concept, drug and anatomy cards across both tracks."
+              count={counts?.flashcards}
+              route="/gems"
+              navigate={navigate}
+              progress={null}
+              total={null}
+              due={0}
+            />
+          )}
         </div>
 
         <button

@@ -46,7 +46,8 @@ const STORY = [
     title: 'Dr. Ibrahim',
     body: (
       <>
-        <p>Oncology &amp; Palliative Care SHO at Tawam Hospital in Al Ain. Sat the DOH himself,
+        <p>DOH-licensed Internal Medicine Specialist in Oncology &amp; Palliative Care at Tawam Hospital,
+          Al Ain. MRCP (UK). Passed the DOH Internal Medicine Specialist exam himself,
           got tired of the prep options on offer, and decided that if nobody was going to
           build the bank he wanted, he&rsquo;d write it himself.</p>
         <p className="lp-about__founderQuote">
@@ -88,7 +89,7 @@ export default function About() {
                   <div className="lp-about__founderText">
                     <h2 className="lp-about__h2">{s.title}</h2>
                     <div className="lp-about__founderTitle">
-                      Oncology &amp; Palliative Care SHO &middot; Tawam Hospital, Al Ain
+                      Internal Medicine Specialist &middot; Oncology &amp; Palliative Care &middot; Tawam Hospital, Al Ain
                     </div>
                     {s.body}
                   </div>

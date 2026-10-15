@@ -349,11 +349,11 @@ function CredibilityBar() {
         <div className="lp-cred__body">
           <div className="lp-cred__name">Dr. Ibrahim</div>
           <div className="lp-cred__title">
-            Oncology &amp; Palliative Care SHO · Tawam Hospital, Al Ain
+            Internal Medicine Specialist (DOH) · Oncology &amp; Palliative Care · Tawam Hospital, Al Ain
           </div>
           <div className="lp-cred__credentials">
-            <span className="lp-cred__credential"><IconVerified /> Sat the DOH exam</span>
-            <span className="lp-cred__credential"><IconVerified /> UAE physician</span>
+            <span className="lp-cred__credential"><IconVerified /> Passed the DOH IM Specialist exam</span>
+            <span className="lp-cred__credential"><IconVerified /> MRCP (UK)</span>
             <span className="lp-cred__credential"><IconVerified /> Content written from scratch</span>
           </div>
           <p className="lp-cred__quote">

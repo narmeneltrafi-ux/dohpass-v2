@@ -21,7 +21,21 @@ const LABEL_RE =
 const OPTION_START_RE =
   /^(?:why (?:option |answer )?[a-e]\b|option[s]? [a-e]\b|answer [a-e]\b|choice [a-e]\b|\(?[a-e]\)? (?:is|was) (?:incorrect|wrong|not)|why not)/i
 
-const CONTINUATION_RE = /^(however|but|this|it|although|here|instead|thus|therefore|in this|that|while)\b/i
+// An "Option X …" sentence that argues FOR an option is not a distractor.
+const SAYS_CORRECT_RE =
+  /\b(?:is|was)\s+(?:therefore\s+|thus\s+|hence\s+)?(?:the\s+)?(?:correct|right|best|preferred|most appropriate|answer)\b|\bcorrectly\b|\bcaptures\b|\bmatches\b/i
+
+function isDistractorSentence(s, correctLetter) {
+  if (!OPTION_START_RE.test(s)) return false
+  if (SAYS_CORRECT_RE.test(s)) return false
+  if (correctLetter) {
+    const m = s.match(/^(?:why (?:option |answer )?|option |answer |choice |\(?)([a-e])\b/i)
+    if (m && m[1].toUpperCase() === String(correctLetter).trim().toUpperCase()) return false
+  }
+  return true
+}
+
+const CONTINUATION_RE =/^(however|but|this|it|although|here|instead|thus|therefore|in this|that|while)\b/i
 
 // Words that end with a period but do not end a sentence.
 const ABBREVIATIONS = new Set([
@@ -62,7 +76,7 @@ export function splitSentences(text) {
     const end = m.index + 1
     const before = text.slice(start, m.index)
     const lastWord = (before.match(/([A-Za-z.]+)$/) || [, ''])[1].toLowerCase()
-    if (ABBREVIATIONS.has(lastWord) || /\b[A-Z]$/.test(before)) continue
+    if (ABBREVIATIONS.has(lastWord) || /(?:^|\s)[A-Z]$/.test(before) && !/\b(?:option|answer|choice|class|type|stage|grade|group|vitamin|hepatitis)\s+[A-Z]$/i.test(before)) continue
     out.push(text.slice(start, end).trim())
     start = end
   }
@@ -96,7 +110,7 @@ function chunk(sentences) {
 }
 
 // Break one unlabelled (or "why correct") paragraph into blocks.
-function explodeParagraph(text, blocks, firstLabel) {
+function explodeParagraph(text, blocks, firstLabel, correctLetter) {
   const sentences = splitSentences(text)
   let free = []
   let mode = null // 'option' | 'pearl'
@@ -142,7 +156,7 @@ function explodeParagraph(text, blocks, firstLabel) {
       }
     }
     if (mode === 'pearl') { pearl.text += ' ' + s; continue }
-    if (OPTION_START_RE.test(s)) {
+    if (isDistractorSentence(s, correctLetter)) {
       flushFree()
       pushOption(blocks, { text: s })
       mode = 'option'
@@ -159,7 +173,7 @@ function explodeParagraph(text, blocks, firstLabel) {
   flushFree()
 }
 
-export function formatExplanation(raw) {
+export function formatExplanation(raw, correctLetter = null) {
   if (!raw || typeof raw !== 'string') return []
   const text = raw.replace(/\r\n?/g, '\n').trim()
   const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
@@ -183,12 +197,12 @@ export function formatExplanation(raw) {
     }
     // A single line break still marks a new paragraph (the old pre-wrap
     // rendering honoured it), so treat each line on its own.
-    for (const flat of lines) formatLine(flat, blocks)
+    for (const flat of lines) formatLine(flat, blocks, correctLetter)
   }
   return blocks
 }
 
-function formatLine(flat, blocks) {
+function formatLine(flat, blocks, correctLetter) {
   {
     const lab = flat.match(LABEL_RE)
     if (lab) {
@@ -197,11 +211,11 @@ function formatLine(flat, blocks) {
       if (kind === 'option') { pushOption(blocks, { label: lab[1].trim(), text: body }); return }
       if (kind === 'pearl')  { blocks.push({ type: 'pearl', label: prettyLabel(lab[1], kind), text: body }); return }
       if (kind === 'ref')    { blocks.push({ type: 'ref', label: 'Reference', text: body }); return }
-      if (kind === 'answer') { explodeParagraph(body, blocks, prettyLabel(lab[1], kind)); return }
+      if (kind === 'answer') { explodeParagraph(body, blocks, prettyLabel(lab[1], kind), correctLetter); return }
       blocks.push({ type: 'para', label: lab[1].trim(), text: body })
       return
     }
-    explodeParagraph(flat, blocks, null)
+    explodeParagraph(flat, blocks, null, correctLetter)
   }
 }
 

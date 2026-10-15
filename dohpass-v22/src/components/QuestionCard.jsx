@@ -7,8 +7,8 @@ import { formatExplanation } from '../lib/formatExplanation'
 /* Structured explanation: the stored text is unchanged; it is regrouped at
    display time into short paragraphs, "why not the others", a pearl callout
    and a reference line, so a 1,000+ character block reads in sections. */
-function ExplanationBody({ text }) {
-  const blocks = formatExplanation(text)
+function ExplanationBody({ text, correctLetter }) {
+  const blocks = formatExplanation(text, correctLetter)
   if (!blocks.length) return null
   return (
     <div className="qui-expl__rich">
@@ -369,7 +369,7 @@ export default function QuestionCard({
               <p className="qui-expl__body">{feedback?.msg}</p>
             ) : (
               question.explanation && (
-                <ExplanationBody text={question.explanation} />
+                <ExplanationBody text={question.explanation} correctLetter={question.answer} />
               )
             )}
 

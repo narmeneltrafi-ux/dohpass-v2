@@ -1,471 +1,141 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import {
-  supabase,
-  getProfile,
-  createCheckoutSession,
-  fetchQuestionCounts,
-} from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { getProfile, hasAccess } from '../lib/supabase'
 import AppNav from '../components/AppNav.jsx'
-import { track } from '../lib/attribution'
 import LandingFooter from '../components/LandingFooter.jsx'
+import Accordion from '../components/site/Accordion.jsx'
+import { PlanGrid, PlanTerms, PaymentSteps } from '../components/site/PlanGrid.jsx'
+import useQuestionCounts from '../hooks/useQuestionCounts'
+import { FAQ, fmt } from '../lib/siteContent'
+import { PLANS } from '../lib/paymentConfig'
+import { track } from '../lib/attribution'
 
-/* ───────────────────────────────────────────────────────────────
-   STRIPE PRICE IDs — preserved per "do not change checkout logic".
-   Wiring is intentionally OFF while migrating to Lemon Squeezy.
-   ─────────────────────────────────────────────────────────────── */
-const PRICE_GP         = import.meta.env.VITE_STRIPE_PRICE_GP
-const PRICE_SPECIALIST = import.meta.env.VITE_STRIPE_PRICE_SPECIALIST
-const PRICE_ALL_ACCESS = import.meta.env.VITE_STRIPE_PRICE_ALL_ACCESS
-if (!PRICE_GP || !PRICE_SPECIALIST || !PRICE_ALL_ACCESS) {
-  console.error('Pricing: missing VITE_STRIPE_PRICE_* env vars')
-}
+/* Pricing — plans and the bank-transfer flow. Plan names, prices and the
+   per-plan feature list are shared with the landing page (siteContent +
+   paymentConfig), so the two can't disagree. The old Stripe price-ID wiring
+   was removed: payments are manual bank transfer only. */
 
-/* ───────────────────────────────────────────────────────────────
-   ICONS
-   ─────────────────────────────────────────────────────────────── */
-const IconCheck = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+const IconYes = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="20 6 9 17 4 12" />
   </svg>
 )
-const IconChevron = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-)
-const IconShield = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-)
 
-/* Nav now lives in src/components/AppNav.jsx and auto-detects auth. */
-
-/* ───────────────────────────────────────────────────────────────
-   1. HERO
-   ─────────────────────────────────────────────────────────────── */
-function Hero() {
-  return (
-    <section className="lp-hero" aria-labelledby="lp-pricing-h1">
-      <div className="lp-hero__grid" aria-hidden="true" />
-      <div className="lp-hero__inner">
-        <div className="lp-hero__badge">
-          <span className="lp-hero__pulse" />
-          Simple pricing · No subscription · No auto-renew
-        </div>
-        <h1 className="lp-hero__h1" id="lp-pricing-h1">
-          One payment.
-          <br />
-          <span className="lp-hero__h1-gold">Full preparation.</span>
-        </h1>
-        <p className="lp-hero__sub">
-          Complete access to the DOH-mapped question bank. Written by UAE physicians.
-          7-day refund if it&apos;s not the right fit.
-        </p>
-        <div className="founder-strip">
-          <span className="founder-avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5" width="14" height="14" aria-hidden="true">
-              <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
-              <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/>
-              <circle cx="20" cy="10" r="2"/>
-            </svg>
-          </span>
-          <span>Built by Dr. Ibrahim · DOH Internal Medicine Specialist · Tawam Hospital · MRCP(UK)</span>
-        </div>
-      </div>
-    </section>
-  )
+function Cell({ value }) {
+  if (value === true) return <><IconYes /><span className="visually-hidden">Included</span></>
+  if (value === false) return <><span aria-hidden="true" className="dp-cmp__no">—</span><span className="visually-hidden">Not included</span></>
+  return <span className="dp-num">{value}</span>
 }
 
-/* ───────────────────────────────────────────────────────────────
-   2. PRICING CARDS
-   ─────────────────────────────────────────────────────────────── */
-// Render `${n.toLocaleString()}+` when count is loaded, em-dash otherwise.
-// Never falls back to a hardcoded number.
-function liveCount(n) {
-  return n != null ? `${n.toLocaleString()}+` : '—'
-}
-
-function buildPlans(counts) {
+function comparisonRows(counts) {
+  const total = counts ? counts.gp + counts.specialist : null
+  const n = (v) => fmt(v) ?? '—'
   return [
-    {
-      id: 'gp',
-      eyebrow: 'For DOH GP licensing',
-      name: 'GP Track',
-      price: '49',
-      priceId: PRICE_GP,
-      features: [
-        `${liveCount(counts?.gp)} GP questions`,
-        'Mapped to DOH GP blueprint',
-        'Detailed explanations + guideline citations',
-        'One payment · No subscription · No auto-renew',
-      ],
-      ctaLabel: 'Start GP Track',
-      variant: 'ghost',
-    },
-    {
-      id: 'specialist',
-      eyebrow: 'For Internal Medicine Specialist exam',
-      name: 'Specialist Track',
-      price: '69',
-      priceId: PRICE_SPECIALIST,
-      features: [
-        `${liveCount(counts?.specialist)} specialist questions`,
-        'Cardiology, Respiratory, Nephrology & more',
-        'Pearson VUE-style vignettes',
-        'Detailed clinical explanations',
-      ],
-      ctaLabel: 'Start Specialist',
-      variant: 'gold',
-      recommended: true,
-    },
-    {
-      id: 'all_access',
-      eyebrow: 'Both tracks + flashcards',
-      name: 'All Access',
-      price: '89',
-      priceId: PRICE_ALL_ACCESS,
-      features: [
-        'Everything in GP + Specialist',
-        `${liveCount(counts?.flashcards)} flashcards`,
-        'Mock exams',
-        'All future content included',
-      ],
-      ctaLabel: 'Get All Access',
-      variant: 'ghost',
-    },
+    { label: 'Questions', gp: n(counts?.gp), sp: n(counts?.specialist), all: n(total) },
+    { label: 'Question bank', gp: 'GP', sp: 'Specialist', all: 'Both' },
+    { label: 'Explanations for every option', gp: true, sp: true, all: true },
+    { label: 'Progress and weak-topic tracking', gp: true, sp: true, all: true },
+    { label: 'Mock exams', gp: false, sp: false, all: true },
+    { label: 'Flashcards', gp: false, sp: false, all: counts ? n(counts.flashcards) : true },
+    { label: 'Future content', gp: false, sp: false, all: true },
+    { label: 'Email support', gp: true, sp: true, all: true },
   ]
 }
 
-function PlanCard({ plan, currentPlan, onSelect }) {
-  const isCurrent = currentPlan === plan.id
-  return (
-    <article
-      className={`lp-plan lp-pp-plan${plan.recommended ? ' lp-plan--rec' : ''}`}
-      aria-labelledby={`plan-${plan.id}-name`}
-    >
-      {plan.recommended && <span className="lp-plan__rec">Recommended</span>}
+const PRICING_FAQ = [FAQ.payment, FAQ.methods, FAQ.refund, FAQ.switchPlan, FAQ.vat, FAQ.tryFirst]
 
-      <div className="lp-pp-plan__eyebrow">{plan.eyebrow}</div>
-      <h3 className="lp-plan__name lp-pp-plan__name" id={`plan-${plan.id}-name`}>{plan.name}</h3>
-
-      <div className="lp-plan__price lp-pp-plan__price">
-        <span className="lp-plan__num lp-pp-plan__num">{plan.price}</span>
-        <span className="lp-pp-plan__cur">AED</span>
-        <span className="lp-plan__per">/ 30 days</span>
-      </div>
-
-      <ul className="lp-plan__feats">
-        {plan.features.map((f) => (
-          <li key={f}>
-            <span className="lp-plan__check"><IconCheck /></span>
-            {f}
-          </li>
-        ))}
-      </ul>
-
-      {/* Manual bank-transfer rail. Recommended plan gets the solid gold pill;
-          others use the ghost treatment. Current plan is non-actionable. */}
-      {isCurrent ? (
-        <button type="button" disabled aria-disabled="true" className="lp-pp-plan__cta lp-pp-plan__cta--ghost">
-          Current plan
-        </button>
-      ) : (
-        <button
-          type="button"
-          className={`lp-pp-plan__cta ${plan.recommended ? 'lp-pp-plan__cta--gold' : 'lp-pp-plan__cta--outline'}`}
-          onClick={() => onSelect(plan.id)}
-        >
-          {plan.ctaLabel}
-        </button>
-      )}
-    </article>
-  )
-}
-
-function PricingGrid({ counts, profile, onSelect }) {
-  const plans = buildPlans(counts)
-  const currentPlan = profile?.plan || 'free'
-  return (
-    <section className="lp-pp-plans" id="plans" aria-label="Available plans">
-      <div className="lp-pp-plans__grid">
-        {plans.map((p) => <PlanCard key={p.id} plan={p} currentPlan={currentPlan} onSelect={onSelect} />)}
-      </div>
-      <p className="pricing-trust-line">
-        Secure bank transfer · Activated within 24 hours · 7-day money-back guarantee
-      </p>
-      <p className="pricing-trust-line">
-        <Link className="pc-confirm-link" to="/confirm-payment">Already paid? Confirm here →</Link>
-      </p>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   3. TRUST ROW
-   ─────────────────────────────────────────────────────────────── */
-const IconCalendar = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-)
-
-function TrustRow() {
-  const items = [
-    { icon: <IconShield size={14} />, label: '7-day money-back guarantee — no questions asked' },
-    { icon: <IconCalendar size={14} />, label: 'One payment · 30 days · No subscription · No auto-renew' },
-    { icon: <IconShield size={14} />, label: 'Bank transfer · Manual activation within 24 hours' },
-  ]
-  return (
-    <div className="lp-pp-trust">
-      {items.map(({ icon, label }, i) => (
-        <div className="lp-pp-trust__cell" key={i}>
-          <span className="lp-pp-trust__icon">{icon}</span>
-          <span className="lp-pp-trust__label">{label}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   4. COMPARISON TABLE
-   ─────────────────────────────────────────────────────────────── */
-function makeComparisonRows(counts) {
-  const totalQ = counts?.specialist != null && counts?.gp != null
-    ? (counts.specialist + counts.gp)
-    : null
-  return [
-    {
-      label: 'Question count',
-      gp: liveCount(counts?.gp),
-      specialist: liveCount(counts?.specialist),
-      all: liveCount(totalQ),
-    },
-    {
-      label: 'Specialties covered',
-      gp: 'GP only',
-      specialist: 'All specialist',
-      all: 'All',
-    },
-    { label: 'Mock exams', gp: false, specialist: false, all: true },
-    {
-      label: 'Flashcards',
-      gp: false,
-      specialist: false,
-      all: counts?.flashcards != null ? `${counts.flashcards.toLocaleString()}+` : true,
-    },
-    { label: 'Mobile access', gp: true, specialist: true, all: true },
-    { label: 'Email support', gp: true, specialist: true, all: true },
-    { label: 'Future content', gp: false, specialist: false, all: true },
-  ]
-}
-
-function CmpCell({ value }) {
-  if (value === true)  return <span className="lp-pp-cmp__yes" aria-label="Included"><IconCheck /></span>
-  if (value === false) return <span className="lp-pp-cmp__no"  aria-label="Not included">—</span>
-  return <span className="lp-pp-cmp__val">{value}</span>
-}
-
-function ComparisonTable({ counts }) {
-  const [open, setOpen] = useState(false)
-  const rows = makeComparisonRows(counts)
-  return (
-    <div className="lp-pp-cmp">
-      <button
-        type="button"
-        className={`lp-pp-cmp__toggle${open ? ' is-open' : ''}`}
-        aria-expanded={open}
-        aria-controls="lp-pp-cmp-panel"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span>Compare plans</span>
-        <span className="lp-pp-cmp__chev"><IconChevron /></span>
-      </button>
-
-      <div
-        id="lp-pp-cmp-panel"
-        className={`lp-pp-cmp__panelWrap${open ? ' is-open' : ''}`}
-      >
-        <div className="lp-pp-cmp__panel">
-          <div className="lp-pp-cmp__scroll">
-            <table className="lp-pp-cmp__table">
-              <thead>
-                <tr>
-                  <th scope="col" className="lp-pp-cmp__feat">Feature</th>
-                  <th scope="col">GP</th>
-                  <th scope="col" className="lp-pp-cmp__rec">Specialist</th>
-                  <th scope="col">All Access</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.label}>
-                    <th scope="row" className="lp-pp-cmp__feat">{r.label}</th>
-                    <td><CmpCell value={r.gp} /></td>
-                    <td className="lp-pp-cmp__rec"><CmpCell value={r.specialist} /></td>
-                    <td><CmpCell value={r.all} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   5. FAQ
-   ─────────────────────────────────────────────────────────────── */
-const FAQS = [
-  {
-    q: 'Is there a free trial?',
-    a: 'No free trial, but every track has free preview questions so you can see the quality first. A 7-day money-back guarantee covers your first payment \u2014 if it\u2019s not for you, we refund.',
-  },
-  {
-    q: 'How does payment work?',
-    a: 'No subscription and no auto-renew. You pay once by bank transfer for 30 days of access. When it ends, access simply pauses \u2014 renew anytime by sending another transfer. Nothing is ever charged automatically.',
-  },
-  {
-    q: 'What payment methods do you accept?',
-    a: 'We accept direct bank transfer or Wise. Select a plan, follow the transfer instructions on the checkout page, and access is activated within 24 hours of us confirming your transfer.',
-  },
-  {
-    q: 'Can I switch between plans?',
-    a: "Yes — simply pay for the new plan by bank transfer. Email support@dohpass.com and we’ll adjust your access window manually.",
-  },
-  {
-    q: 'Do prices include VAT?',
-    a: 'Prices are inclusive of all applicable taxes.',
-  },
-]
-
-function AccordionItem({ q, a, isOpen, onToggle, idx }) {
-  const id = `lp-pp-faq-${idx}`
-  return (
-    <div className={`lp-faq__item${isOpen ? ' is-open' : ''}`}>
-      <button
-        type="button"
-        className="lp-faq__btn"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={`${id}-panel`}
-        id={`${id}-btn`}
-      >
-        <span>{q}</span>
-        <span className="lp-faq__chev"><IconChevron /></span>
-      </button>
-      <div id={`${id}-panel`} role="region" aria-labelledby={`${id}-btn`} className="lp-faq__panelWrap">
-        <div className="lp-faq__panel">
-          <p>{a}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FAQ() {
-  const [open, setOpen] = useState(0)
-  return (
-    <section className="lp-faq" id="faq">
-      <h2 className="lp-faq__h2">Questions, answered.</h2>
-      <div className="lp-faq__list">
-        {FAQS.map((f, i) => (
-          <AccordionItem
-            key={i}
-            q={f.q}
-            a={f.a}
-            idx={i}
-            isOpen={open === i}
-            onToggle={() => setOpen(open === i ? -1 : i)}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   6. FINAL CTA
-   ─────────────────────────────────────────────────────────────── */
-function FinalCTA({ onSelect }) {
-  return (
-    <section className="lp-closer lp-pp-finale">
-      <div className="lp-closer__glow" aria-hidden="true" />
-      <h2 className="lp-closer__h2">Ready to pass?</h2>
-      <p className="lp-closer__sub">
-        One payment. 30 days. Full access. 7-day refund if it&apos;s not for you.
-      </p>
-      <button
-        type="button"
-        className="lp-pp-plan__cta lp-pp-plan__cta--gold lp-pp-finale__cta"
-        onClick={() => onSelect('specialist')}
-      >
-        Start Specialist
-      </button>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   7. FOOTER (matches Home.jsx)
-   ─────────────────────────────────────────────────────────────── */
-/* Footer now lives in src/components/LandingFooter.jsx. */
-
-/* ───────────────────────────────────────────────────────────────
-   PAGE
-   ─────────────────────────────────────────────────────────────── */
 export default function Pricing() {
-  const navigate = useNavigate()
+  const counts = useQuestionCounts()
   const [profile, setProfile] = useState(null)
-  // Profile is still fetched here so PricingGrid can mark the user's current
-  // plan. Auth state for the navbar is now AppNav's own concern.
-  const [counts, setCounts] = useState(null) // null until loaded — drives em-dash fallback
-
-  function goToCheckout(planId) {
-    navigate(`/checkout?plan=${planId}`)
-  }
 
   useEffect(() => { track('pricing_view') }, [])
-
   useEffect(() => {
     let cancelled = false
     getProfile().then((p) => { if (!cancelled) setProfile(p) })
-    fetchQuestionCounts()
-      .then((c) => { if (!cancelled) setCounts(c) })
-      .catch(() => { /* leave counts as null → em-dash placeholders */ })
     return () => { cancelled = true }
   }, [])
 
-  // PRESERVED for the future Lemon Squeezy wiring. Currently unused — every
-  // plan CTA renders disabled per the migration window. Do NOT delete.
-  // eslint-disable-next-line no-unused-vars
-  async function handleSubscribe(plan) {
-    const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) { navigate('/login'); return }
-    const { url, error } = await createCheckoutSession(plan.priceId, u.id, u.email)
-    if (error) { alert('Failed to start checkout: ' + error); return }
-    window.location.href = url
-  }
+  // Only a plan the user can actually use right now is "current".
+  const currentPlan = hasAccess(profile) ? profile?.plan : null
+  const rows = comparisonRows(counts)
 
   return (
-    <div className="lp-root lp-pp">
-      <div className="hw-orb hw-orb--1 lp-orb-dim" />
-      <div className="hw-orb hw-orb--2 lp-orb-dim" />
-      <div className="hw-orb hw-orb--3 lp-orb-dim" />
-
+    <div className="dp-page">
       <AppNav />
-      <Hero />
-      <PricingGrid counts={counts} profile={profile} onSelect={goToCheckout} />
-      <ComparisonTable counts={counts} />
-      <FAQ />
-      <FinalCTA onSelect={goToCheckout} />
+      <main id="main">
+        <section className="dp-pagehead" aria-labelledby="pricing-h1">
+          <div className="dp-wrap">
+            <h1 className="dp-pagehead__title" id="pricing-h1">One payment, 30 days of access</h1>
+            <p className="dp-pagehead__sub">
+              Choose the bank for the exam you are sitting. Pay by UAE bank transfer or Wise.
+              Nothing renews automatically, and your first payment has a 7-day refund.
+            </p>
+          </div>
+        </section>
+
+        <section className="dp-section dp-section--paper dp-section--tight on-paper" aria-label="Plans">
+          <div className="dp-wrap">
+            <PlanGrid counts={counts} currentPlan={currentPlan} headingLevel={2} />
+            <PlanTerms />
+            <div className="dp-paybox">
+              <h2 className="dp-paybox__title">How paying by bank transfer works</h2>
+              <PaymentSteps headingLevel={3} />
+              <p className="dp-paybox__links">
+                <Link to="/confirm-payment">Already paid? Confirm your transfer</Link>
+                <a href="mailto:support@dohpass.com">Questions about paying? support@dohpass.com</a>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="dp-section dp-section--white on-paper" aria-labelledby="cmp-title">
+          <div className="dp-wrap">
+            <header className="dp-section__head">
+              <h2 className="dp-h2" id="cmp-title">Compare plans</h2>
+            </header>
+            <div className="dp-cmp" role="region" aria-labelledby="cmp-title" tabIndex={0}>
+              <table className="dp-cmp__table">
+                <thead>
+                  <tr>
+                    <th scope="col"><span className="visually-hidden">Feature</span></th>
+                    <th scope="col">GP Track</th>
+                    <th scope="col">Specialist Track</th>
+                    <th scope="col">All Access</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.label}>
+                      <th scope="row">{r.label}</th>
+                      <td><Cell value={r.gp} /></td>
+                      <td><Cell value={r.sp} /></td>
+                      <td><Cell value={r.all} /></td>
+                    </tr>
+                  ))}
+                  <tr className="dp-cmp__price">
+                    <th scope="row">Price for 30 days</th>
+                    <td><span className="dp-num">AED {PLANS.gp.amount}</span></td>
+                    <td><span className="dp-num">AED {PLANS.specialist.amount}</span></td>
+                    <td><span className="dp-num">AED {PLANS.all_access.amount}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section className="dp-section dp-section--paper on-paper" aria-labelledby="pfaq-title">
+          <div className="dp-wrap dp-split">
+            <header className="dp-split__aside">
+              <h2 className="dp-h2" id="pfaq-title">Paying and access</h2>
+              <p className="dp-lede">
+                Still unsure? Email <a href="mailto:support@dohpass.com">support@dohpass.com</a>.
+              </p>
+            </header>
+            <Accordion items={PRICING_FAQ} />
+          </div>
+        </section>
+      </main>
       <LandingFooter />
     </div>
   )

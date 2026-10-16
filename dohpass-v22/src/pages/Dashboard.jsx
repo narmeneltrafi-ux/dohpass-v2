@@ -336,10 +336,12 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
         </div>
       )}
 
-      <button className="lp-track__cta" type="button">
+      {/* The whole card is the button; this is its visible label, not a
+          second (nested) interactive element. */}
+      <span className="lp-track__cta" aria-hidden="true">
         {due > 0 && eyebrow === 'Flashcards' ? `Review ${due} due` : hasProgress ? 'Continue' : 'Start'}
         <IconArrow />
-      </button>
+      </span>
     </article>
   )
 }

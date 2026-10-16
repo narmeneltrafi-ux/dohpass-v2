@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { ACTIVATION_WINDOW, SUPPORT_EMAIL } from '../lib/paymentConfig';
 
 const TRACKS = [
   { value: 'gp', label: 'GP Track' },
@@ -31,7 +32,7 @@ export default function PaymentConfirm() {
     });
     if (error) {
       setStatus('error');
-      setErrorMsg('Something went wrong. Please try again, or email support@dohpass.com.');
+      setErrorMsg(`Your details could not be sent. Try again, or email ${SUPPORT_EMAIL} with your payment reference.`);
       return;
     }
     setStatus('done');
@@ -39,23 +40,28 @@ export default function PaymentConfirm() {
 
   if (status === 'done') {
     return (
-      <div className="pc-page pc-page--center">
-        <div className="pc-success-icon">✅</div>
-        <h1 className="pc-title">Payment received — thank you</h1>
+      <main id="main" className="pc-wrap on-paper">
+      <div className="pc-page pc-page--center" role="status">
+        <div className="pc-success-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <h1 className="pc-title">Details received</h1>
         <p className="pc-sub">
-          We'll activate your account manually, usually within a few hours. You'll get access on
-          the email you entered: <span className="pc-strong">{form.login_email}</span>.
+          We'll match your transfer and activate access within {ACTIVATION_WINDOW}, on the
+          account for <span className="pc-strong">{form.login_email}</span>.
         </p>
         <p className="pc-finehint">
-          If you don't have access by tomorrow, email support@dohpass.com with your reference.
+          No access after {ACTIVATION_WINDOW}? Email {SUPPORT_EMAIL} with your payment reference.
         </p>
       </div>
+      </main>
     );
   }
 
   return (
+    <main id="main" className="pc-wrap on-paper">
     <div className="pc-page">
-      <h1 className="pc-title">Confirm your payment</h1>
+      <h1 className="pc-title">Confirm a bank transfer</h1>
       <p className="pc-sub">
         Already paid by bank transfer / Wise? Enter your details below and we'll activate your
         access. Use the <strong>same email you signed up with</strong>.
@@ -65,7 +71,7 @@ export default function PaymentConfirm() {
           <input type="email" inputMode="email" autoComplete="email" value={form.login_email}
             onChange={set('login_email')} placeholder="you@example.com" className="pc-input" />
           {form.login_email && !emailOk && (
-            <span className="pc-invalid">Enter a valid email</span>
+            <span className="pc-invalid">Enter the email address you signed up with, like name@example.com.</span>
           )}
         </Field>
         <Field label="Track purchased" required>
@@ -89,13 +95,14 @@ export default function PaymentConfirm() {
         <Field label="Anything else?" hint="Optional">
           <textarea rows={2} value={form.note} onChange={set('note')} className="pc-input pc-input--noresize" />
         </Field>
-        {status === 'error' && <p className="pc-invalid">{errorMsg}</p>}
+        {status === 'error' && <p className="pc-invalid" role="alert">{errorMsg}</p>}
         <button type="button" onClick={handleSubmit} disabled={!canSubmit}
-          className="pc-submit">
-          {status === 'submitting' ? 'Submitting…' : 'Confirm payment'}
+          className="pc-submit" aria-busy={status === 'submitting'}>
+          {status === 'submitting' ? 'Sending…' : 'Send payment details'}
         </button>
       </div>
     </div>
+    </main>
   );
 }
 

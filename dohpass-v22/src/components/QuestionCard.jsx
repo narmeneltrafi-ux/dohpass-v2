@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import { supabase } from '../lib/supabase'
 import { formatExplanation } from '../lib/formatExplanation'
+import { publicSource } from '../lib/publicSource'
 
 /* Structured explanation: the stored text is unchanged; it is regrouped at
    display time into short paragraphs, "why not the others", a pearl callout
@@ -78,11 +79,6 @@ const IconArrowLeft = ({ size = 14 }) => (
     <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 )
-const IconArrowRight = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-)
 const IconCheck = ({ size = 12 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="20 6 9 17 4 12" />
@@ -102,6 +98,23 @@ const IconSparkle = ({ size = 12 }) => (
 
 function letterFor(i) { return String.fromCharCode(65 + i) }
 
+// Some legacy rows store options as "A. text" / "A: text". The letter is
+// already shown in its own badge, so strip the duplicate — but only when
+// every option carries its own letter, so text like "A. fumigatus" in a
+// single option is never touched. Display only; scoring is unaffected.
+const PREFIX = /^\s*([A-E])\s*[.:)\-]\s+/
+function displayOptions(options) {
+  const all = options.length > 1 && options.every((o, i) => {
+    const m = PREFIX.exec(String(o ?? ''))
+    return m && m[1] === letterFor(i)
+  })
+  return all ? options.map((o) => String(o).replace(PREFIX, '')) : options
+}
+function sentenceCase(s) {
+  const t = String(s).trim()
+  return t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : t
+}
+
 export default function QuestionCard({
   question, index, total,
   selectedOption, submitted, onSelect, onSubmit, onNext, feedback, track,
@@ -120,10 +133,11 @@ export default function QuestionCard({
   useEffect(() => { setAiExpl(null) }, [index])       // reset on every new question
 
   const options = question?.options || []
+  const shownOptions = displayOptions(options)
   const correctIdx = question ? resolveCorrectIndex(options, question.answer) : -1
   const dataIssue = submitted && correctIdx === -1
   const accentClass = track === 'blue' ? 'qui-blue' : 'qui-gold'
-  const modeLabel = mode === 'timed' ? 'TIMED' : 'TUTOR MODE'
+  const modeLabel = mode === 'timed' ? 'Timed' : mode === 'diagnostic' ? 'Diagnostic' : 'Tutor mode'
   const pct = total > 0 ? ((index + 1) / total) * 100 : 0
 
   /* haptic + delayed select so taps feel weighty */
@@ -208,10 +222,15 @@ export default function QuestionCard({
     }
   }, [submitted])
 
-  /* scroll to top of new question after Next */
+  /* scroll to top of new question after Next — never on first mount (that
+     pushed the trial banner and topic tag under the sticky bar) */
+  const lastIndexRef = useRef(index)
   useEffect(() => {
+    if (lastIndexRef.current === index) return
+    lastIndexRef.current = index
     if (!submitted && stemRef.current) {
-      stemRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      stemRef.current.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
     }
   }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -263,21 +282,10 @@ export default function QuestionCard({
         <div className="qui-meta">
           <div className="qui-meta__tags">
             {(question.topic || question.subtopic) && (
-              <span className="qui-meta__tag">
-                {String(question.topic || question.subtopic).toUpperCase()}
-              </span>
+              <span className="qui-meta__tag">{String(question.topic || question.subtopic)}</span>
             )}
             {question.difficulty && (
-              <>
-                <span className="qui-meta__sep" aria-hidden="true">·</span>
-                <span className="qui-meta__tag">{String(question.difficulty).toUpperCase()}</span>
-              </>
-            )}
-            {question.source && (
-              <>
-                <span className="qui-meta__sep" aria-hidden="true">·</span>
-                <span className="qui-meta__tag">{String(question.source).toUpperCase()}</span>
-              </>
+              <span className="qui-meta__tag">{sentenceCase(question.difficulty)}</span>
             )}
           </div>
           {chromeBookmark ? <div className="qui-meta__bookmark">{chromeBookmark}</div> : null}
@@ -303,15 +311,15 @@ export default function QuestionCard({
                 data-option-index={i}
               >
                 <span className="qui-opt__letter" aria-hidden="true">{letterFor(i)}</span>
-                <span className="qui-opt__text">{opt}</span>
+                <span className="qui-opt__text">{shownOptions[i]}</span>
                 {submitted && state === 'correct' && (
-                  <span className="qui-opt__icon qui-opt__icon--ok" aria-label="Correct answer">
-                    <IconCheck />
+                  <span className="qui-opt__icon qui-opt__icon--ok">
+                    <IconCheck />{selectedOption === i ? 'Your answer' : 'Correct answer'}
                   </span>
                 )}
                 {submitted && state === 'incorrect' && (
-                  <span className="qui-opt__icon qui-opt__icon--bad" aria-label="Your selected answer was incorrect">
-                    <IconX />
+                  <span className="qui-opt__icon qui-opt__icon--bad">
+                    <IconX />Your answer
                   </span>
                 )}
               </button>
@@ -354,14 +362,15 @@ export default function QuestionCard({
                   whether the user got it right. The only red case is a true
                   data-loading fault ("Data issue"). */}
               <span className={`qui-expl__pill${dataIssue ? ' qui-expl__pill--bad' : ' qui-expl__pill--ok'}`}>
+                {dataIssue ? <IconX /> : <IconCheck />}
                 {dataIssue
                   ? 'Data issue'
                   : feedback?.correct
                     ? `Correct — ${question.answer}`
                     : `Correct answer: ${question.answer}`}
               </span>
-              {!dataIssue && question.source && (
-                <span className="qui-expl__source">{question.source}</span>
+              {!dataIssue && publicSource(question.source) && (
+                <span className="qui-expl__source">{publicSource(question.source)}</span>
               )}
             </div>
 
@@ -412,7 +421,7 @@ export default function QuestionCard({
                 disabled={submitting}
                 aria-label="Submit Answer"
               >
-                {submitting ? 'Submitting…' : 'Submit Answer'} <IconArrowRight />
+                {submitting ? 'Submitting…' : 'Submit answer'}
               </button>
             )
           ) : (
@@ -422,15 +431,15 @@ export default function QuestionCard({
               onClick={onNext}
             >
               {index + 1 >= total
-                ? (mode === 'timed' ? 'Finish Exam' : 'Finish Session')
-                : 'Next Question'} <IconArrowRight />
+                ? (mode === 'timed' ? 'Finish exam' : 'Finish session')
+                : 'Next question'}
             </button>
           )}
         </div>
 
-        <div className="qui-hint" aria-hidden="true">
-          1–{Math.min(options.length, 5)} to select · Enter to submit · → for next
-        </div>
+        <p className="qui-hint" aria-hidden="true">
+          Keys: <kbd>1</kbd>–<kbd>{Math.min(options.length, 5)}</kbd> choose, <kbd>Enter</kbd> submit, <kbd>→</kbd> next question
+        </p>
       </div>
     </div>
   )

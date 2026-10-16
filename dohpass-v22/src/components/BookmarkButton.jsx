@@ -1,24 +1,19 @@
+// Save/unsave toggle shown in the question metadata row. Styling lives in
+// styles/question.css (.bm-btn) so it follows the question screen's light
+// and dark themes; aria-pressed exposes the toggle state to assistive tech.
 export function BookmarkButton({ questionId, topic, bookmarks, toggle }) {
   const isBookmarked = bookmarks.has(String(questionId))
   return (
     <button
+      type="button"
+      className="bm-btn"
+      aria-pressed={isBookmarked}
       onClick={(e) => { e.stopPropagation(); toggle(String(questionId), topic) }}
-      style={{
-        background: isBookmarked ? 'rgba(212,175,55,0.15)' : 'transparent',
-        border: `1px solid ${isBookmarked ? '#D4AF37' : 'rgba(255,255,255,0.15)'}`,
-        borderRadius: '8px',
-        padding: '6px 8px',
-        cursor: 'pointer',
-        color: isBookmarked ? '#D4AF37' : '#666',
-        transition: 'all 0.2s ease',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        fontSize: '13px',
-      }}
-      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+      title={isBookmarked ? 'Remove from saved questions' : 'Save this question'}
     >
-      {isBookmarked ? '★' : '☆'}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </svg>
       {isBookmarked ? 'Saved' : 'Save'}
     </button>
   )

@@ -21,6 +21,7 @@ import QuestionCard from '../components/QuestionCard'
 import ResultsScreen from '../components/ResultsScreen'
 import { BookmarkButton } from '../components/BookmarkButton'
 import { useBookmarks } from '../hooks/useBookmarks'
+import { PLANS } from '../lib/paymentConfig'
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
@@ -48,7 +49,12 @@ function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
   return (
     <div className="paywall-wrap">
       <div className="paywall-card">
-        <div className="paywall-icon">🔒</div>
+        <div className="paywall-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="11" width="16" height="10" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+        </div>
         <h2 className="paywall-title">{title}</h2>
         <p className="paywall-body">{body}</p>
         <button className="btn-primary blue paywall-cta" onClick={() => navigate(ctaPath)}>
@@ -325,9 +331,9 @@ export default function GPQuiz() {
           <div className="quiz-title blue">General Practitioner</div>
         </div>
         <PaywallGate
-          title="Trial used up"
-          body="You've used all 10 free trial questions. Upgrade to continue practicing."
-          ctaLabel="Upgrade to Unlimited"
+          title="You've used your 10 free questions"
+          body={`Keep going with the full GP bank: AED ${PLANS.gp.amount} for 30 days, paid once by bank transfer. Nothing renews automatically.`}
+          ctaLabel={`Get ${PLANS.gp.name}`}
           ctaPath="/checkout?plan=gp"
         />
       </div>
@@ -346,9 +352,9 @@ export default function GPQuiz() {
         </div>
         <PaywallGate
           title="Preview limit reached"
-          body="Create a free account to unlock 10 questions — no payment needed"
-          ctaLabel="Sign up free"
-          ctaPath="/login"
+          body="Create a free account for 10 more questions with full explanations. No payment details needed."
+          ctaLabel="Create a free account"
+          ctaPath="/login?mode=signup"
         />
       </div>
     )
@@ -378,9 +384,9 @@ export default function GPQuiz() {
           </div>
           <PaywallGate
             title="Preview complete"
-            body="Create a free account to unlock 10 questions — no payment needed"
-            ctaLabel="Sign up free"
-            ctaPath="/login"
+            body="Create a free account for 10 more questions with full explanations. No payment details needed."
+            ctaLabel="Create a free account"
+            ctaPath="/login?mode=signup"
           />
         </div>
       )

@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchQuestionCounts } from '../lib/supabase';
-import { track } from '../lib/attribution';
+import { useEffect, useId, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { track } from '../lib/attribution'
+import { fmt } from '../lib/siteContent'
 
 // ─────────────────────────────────────────────────────────────
-// Curated 5-question demo. Hardcoded by design — zero DB calls,
-// zero RLS surface, full control over the psychological arc:
-// win → win → wobble → miss → win → WALL.
-// Questions written to DOH Specialist compliance standard.
+// Five-question sample, answerable on the landing page.
+// Hardcoded by design: zero DB calls, zero RLS surface. Content written
+// to the DOH Specialist standard and clinically signed off — do not edit
+// clinical text here without review.
+// Flow mirrors the real question screen: select → Submit answer →
+// marked options + explanation → Next question.
 // ─────────────────────────────────────────────────────────────
 
 const DEMO_QUESTIONS = [
@@ -146,150 +148,211 @@ const DEMO_QUESTIONS = [
       learning: 'Non-valvular AF with CHA₂DS₂-VA ≥2: DOAC first-line. Antiplatelets are not a substitute.',
     },
   },
-];
+]
 
-const FREE_LIMIT = 5;
+// Exported so the explanation-anatomy section on the landing page shows the
+// same signed-off content rather than a second copy of it.
+export const ANATOMY_QUESTION = DEMO_QUESTIONS[1]
 
-export default function SampleQuestionDemo() {
-  const navigate = useNavigate();
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [revealed, setRevealed] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [answeredCount, setAnsweredCount] = useState(0);
-  const [hitWall, setHitWall] = useState(false);
-  const [bankSize, setBankSize] = useState(null);
+const IconCheck = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+const IconCross = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+)
+const IconBook = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+)
 
+function optionText(q, key) {
+  return q.options.find((o) => o.key === key)?.text ?? ''
+}
+
+export default function SampleQuestionDemo({ totalQuestions = null }) {
+  const navigate = useNavigate()
+  const uid = useId()
+  const [index, setIndex] = useState(0)
+  const [selected, setSelected] = useState(null)
+  const [revealed, setRevealed] = useState(false)
+  const [answered, setAnswered] = useState(0)
+  const [done, setDone] = useState(false)
+  const verdictRef = useRef(null)
+  const headRef = useRef(null)
+  const prevFlow = useRef({ revealed, index, done })
+
+  const q = DEMO_QUESTIONS[index]
+  const isCorrect = selected === q.correct
+  const isLast = index + 1 >= DEMO_QUESTIONS.length
+
+  useEffect(() => { if (done) track('demo_complete', { answered }) }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus follows the flow for keyboard and screen-reader users: result after
+  // submitting, the new question after "Next". Only fires on a real change of
+  // step (never on mount, even under StrictMode's double effects), so the
+  // landing page never steals focus on load.
   useEffect(() => {
-    let cancelled = false;
-    fetchQuestionCounts().then((c) => {
-      const total = (c?.specialist || 0) + (c?.gp || 0);
-      if (!cancelled && total > 0) setBankSize(total);
-    });
-    return () => { cancelled = true; };
-  }, []);
+    const prev = prevFlow.current
+    const changed = prev.revealed !== revealed || prev.index !== index || prev.done !== done
+    prevFlow.current = { revealed, index, done }
+    if (!changed) return
+    if (!done && revealed) verdictRef.current?.focus({ preventScroll: true })
+    else headRef.current?.focus({ preventScroll: true })
+  }, [revealed, index, done])
 
-  useEffect(() => {
-    if (hitWall) track('demo_complete', { answered: answeredCount });
-  }, [hitWall]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const q = DEMO_QUESTIONS[index];
-  const isCorrect = selected === q.correct;
-
-  const handleSelect = (key) => {
-    if (revealed) return;
-    setSelected(key);
-    setRevealed(true);
-    const correct = key === q.correct;
-    setStreak((s) => (correct ? s + 1 : 0));
-    if (answeredCount === 0) track('demo_first_answer', { q: q.id });
-    setAnsweredCount((c) => c + 1);
-  };
-
-  const handleNext = () => {
-    if (answeredCount >= FREE_LIMIT) {
-      setHitWall(true);
-      return;
-    }
-    if (index + 1 >= DEMO_QUESTIONS.length) {
-      setHitWall(true);
-      return;
-    }
-    setIndex((i) => i + 1);
-    setSelected(null);
-    setRevealed(false);
-  };
-
-  if (hitWall) {
-    return (
-      <div className="sqd-wrap">
-        <div className="sqd-wall">
-          <div className="sqd-wall__streak">
-            {streak >= 3 ? `🔥 ${streak} in a row` : `You answered ${answeredCount} questions`}
-          </div>
-          <h3 className="sqd-wall__title">
-            {bankSize
-              ? `That was ${answeredCount} of ${bankSize.toLocaleString()}.`
-              : `That was ${answeredCount} sample questions.`}
-          </h3>
-          <p className="sqd-wall__sub">
-            The full bank is written in the same format — a full explanation for
-            every answer, and the guideline behind it where one applies.
-          </p>
-          <button className="aw-btn sqd-wall__cta" onClick={() => navigate('/login?mode=signup')}>
-            Create your free account →
-          </button>
-          <p className="sqd-wall__trust">Free to start · 10 more questions on signup</p>
-        </div>
-      </div>
-    );
+  function submit(e) {
+    e.preventDefault()
+    if (!selected || revealed) return
+    setRevealed(true)
+    if (answered === 0) track('demo_first_answer', { q: q.id })
+    setAnswered((n) => n + 1)
   }
 
+  function next() {
+    if (isLast) { setDone(true); return }
+    setIndex((i) => i + 1)
+    setSelected(null)
+    setRevealed(false)
+  }
+
+  function restart() {
+    setIndex(0); setSelected(null); setRevealed(false); setAnswered(0); setDone(false)
+  }
+
+  if (done) {
+    const total = fmt(totalQuestions)
+    return (
+      <section className="dp-sheet dp-sheet--wall" aria-labelledby={`${uid}-wall`}>
+        <h2 className="dp-sheet__wall-title" id={`${uid}-wall`} tabIndex={-1} ref={headRef}>
+          That was all five sample questions.
+        </h2>
+        <p className="dp-sheet__wall-body">
+          {total
+            ? `The full bank has ${total} questions written the same way, each explained option by option.`
+            : 'The full bank is written the same way, with every option explained.'}
+        </p>
+        <button type="button" className="btn btn--primary btn--lg" onClick={() => navigate('/login?mode=signup')}>
+          Create a free account
+        </button>
+        <p className="dp-sheet__wall-note">10 more questions free. No payment details needed.</p>
+        <button type="button" className="link-btn dp-sheet__restart" onClick={restart}>
+          Start the sample again
+        </button>
+      </section>
+    )
+  }
+
+  const stemId = `${uid}-stem`
+
   return (
-    <div className="sqd-wrap">
-      <div className="sqd-card">
-        <div className="sqd-head">
-          <span className="sqd-tag">{q.system} · {q.difficulty}</span>
-          <span className="sqd-meta">
-            {streak > 0 && <span className="sqd-streak">🔥 {streak} streak</span>}
-            <span className="sqd-counter">Q {answeredCount + (revealed ? 0 : 1)} / {FREE_LIMIT} free</span>
-          </span>
-        </div>
+    <section className="dp-sheet" aria-labelledby={`${uid}-head`}>
+      <header className="dp-sheet__head">
+        <h2 className="dp-sheet__count" id={`${uid}-head`} tabIndex={-1} ref={headRef}>
+          Sample question {index + 1} <span>of {DEMO_QUESTIONS.length}</span>
+        </h2>
+        <p className="dp-sheet__meta">
+          <span className="tag">{q.system}</span>
+          <span className="tag">{q.difficulty}</span>
+        </p>
+      </header>
 
-        <p className="sqd-stem">{q.stem}</p>
-        <p className="sqd-leadin">{q.leadIn}</p>
-
-        <div className="sqd-options">
-          {q.options.map((opt) => {
-            let cls = 'sqd-opt';
-            if (revealed) {
-              if (opt.key === q.correct) cls += ' sqd-opt--correct';
-              else if (opt.key === selected) cls += ' sqd-opt--wrong';
-              else cls += ' sqd-opt--dim';
-            }
-            return (
-              <button
-                key={opt.key}
-                className={cls}
-                onClick={() => handleSelect(opt.key)}
-                disabled={revealed}
-              >
-                <span className="sqd-opt__key">{opt.key}</span>
-                <span className="sqd-opt__text">{opt.text}</span>
-                {revealed && opt.key === q.correct && <span className="sqd-opt__icon">✓</span>}
-                {revealed && opt.key === selected && opt.key !== q.correct && (
-                  <span className="sqd-opt__icon">✕</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {revealed && (
-          <div className={`sqd-explain ${isCorrect ? 'sqd-explain--ok' : 'sqd-explain--miss'}`}>
-            <div className="sqd-explain__head">
-              <span className="sqd-explain__verdict">
-                {isCorrect ? 'Correct' : 'Not quite'}
-              </span>
-              <span className="sqd-explain__cite">{q.citation}</span>
-            </div>
-            <p className="sqd-explain__why">{q.explanation.correct}</p>
-            <div className="sqd-explain__distractors">
-              {Object.entries(q.explanation.distractors).map(([k, v]) => (
-                <p key={k}><strong>{k}</strong> — {v}</p>
-              ))}
-            </div>
-            <p className="sqd-explain__learn">
-              <strong>Key point:</strong> {q.explanation.learning}
-            </p>
-            <button className="sqd-next" onClick={handleNext}>
-              {answeredCount >= FREE_LIMIT || index + 1 >= DEMO_QUESTIONS.length
-                ? 'See what you\'re missing →'
-                : 'Next question →'}
+      <form className="dp-sheet__body" onSubmit={submit}>
+        <p className="dp-sheet__stem" id={stemId}>{q.stem}</p>
+        <fieldset className="dp-sheet__fieldset" disabled={revealed} aria-describedby={stemId}>
+          <legend className="dp-sheet__leadin">{q.leadIn}</legend>
+          <div className="dp-opts">
+            {q.options.map((opt) => {
+              let state = selected === opt.key ? 'selected' : 'idle'
+              if (revealed) {
+                if (opt.key === q.correct) state = 'correct'
+                else if (opt.key === selected) state = 'incorrect'
+                else state = 'muted'
+              }
+              const id = `${uid}-o${opt.key}`
+              return (
+                <label className={`dp-opt dp-opt--${state}`} htmlFor={id} key={opt.key}>
+                  <input
+                    type="radio"
+                    id={id}
+                    name={`${uid}-answer`}
+                    value={opt.key}
+                    checked={selected === opt.key}
+                    onChange={() => setSelected(opt.key)}
+                  />
+                  <span className="dp-opt__key" aria-hidden="true">{opt.key}</span>
+                  <span className="dp-opt__text">{opt.text}</span>
+                  {state === 'correct' && (
+                    <span className="dp-opt__flag dp-opt__flag--ok">
+                      <IconCheck size={14} />{selected === opt.key ? 'Your answer' : 'Correct answer'}
+                    </span>
+                  )}
+                  {state === 'incorrect' && (
+                    <span className="dp-opt__flag dp-opt__flag--bad"><IconCross size={14} />Your answer</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
+        {!revealed && (
+          <div className="dp-sheet__actions">
+            <button type="submit" className="btn btn--primary" disabled={!selected}>
+              Submit answer
             </button>
+            <span className="dp-sheet__hint">{selected ? 'Answer locks when you submit.' : 'Choose one answer.'}</span>
           </div>
         )}
-      </div>
-    </div>
-  );
+      </form>
+
+      {revealed && (
+        <div className="dp-sheet__result">
+          <p
+            className={`dp-verdict ${isCorrect ? 'dp-verdict--ok' : 'dp-verdict--bad'}`}
+            tabIndex={-1}
+            ref={verdictRef}
+            role="status"
+          >
+            <span className="dp-verdict__icon">{isCorrect ? <IconCheck /> : <IconCross />}</span>
+            <span>
+              <strong>{isCorrect ? 'Correct.' : 'Not quite.'}</strong>{' '}
+              The answer is {q.correct}: {optionText(q, q.correct)}.
+            </span>
+          </p>
+
+          <div className="dp-expl">
+            <h3 className="dp-expl__label">Why {q.correct}</h3>
+            <p>{q.explanation.correct}</p>
+
+            <h3 className="dp-expl__label">Why not the others</h3>
+            <ul className="dp-expl__others">
+              {Object.entries(q.explanation.distractors).map(([k, v]) => (
+                <li key={k}><span className="dp-expl__letter">{k}</span><span>{v}</span></li>
+              ))}
+            </ul>
+
+            <div className="dp-expl__key">
+              <h3 className="dp-expl__label">Key point</h3>
+              <p>{q.explanation.learning}</p>
+            </div>
+
+            <p className="dp-expl__ref"><IconBook /><span><span className="visually-hidden">Reference: </span>{q.citation}</span></p>
+          </div>
+
+          <div className="dp-sheet__actions">
+            <button type="button" className="btn btn--primary" onClick={next}>
+              {isLast ? 'Finish sample' : 'Next question'}
+            </button>
+            <span className="dp-sheet__hint">{answered} of {DEMO_QUESTIONS.length} answered</span>
+          </div>
+        </div>
+      )}
+    </section>
+  )
 }

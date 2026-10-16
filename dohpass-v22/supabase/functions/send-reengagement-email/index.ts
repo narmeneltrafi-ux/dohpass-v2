@@ -21,41 +21,52 @@ interface Template {
 const BUTTON_STYLE =
   "background:#C9A227;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;";
 
-const SIGNATURE = `<p style="color:#666;font-size:13px;">— Dr. Ibrahim, DOHPass</p>`;
+const SIGNATURE =
+  `<p style="color:#666;font-size:13px;">— Dr. Huzaifa Ibrahim<br>` +
+  `Internal Medicine Specialist (DOH) · Founder, DOHPass</p>` +
+  `<p style="color:#999;font-size:12px;">Rather not get these? Reply "stop" and I'll take you off the list.</p>`;
 
+// Links carry UTM tags so returns from each email are visible in the funnel.
+const link = (day: Day) =>
+  `https://www.dohpass.com/dashboard?utm_source=email&utm_medium=reengagement&utm_campaign=day${day}`;
+
+// Copy rules (DOHPass master prompt §3C, §5E/F): no invented statistics, no
+// fear or shame, no fake deadlines. Every claim must be true of the product.
 const TEMPLATES: Record<Day, Template> = {
   2: {
-    subject: "5 questions. That's all.",
+    subject: "Your 10 free DOH questions are ready",
     html:
-      `<p>You signed up for DOHPass but haven't started yet. That's normal — the exam feels far away.</p>` +
-      `<p>Here's the thing: candidates who practice 5 questions a day for 60 days pass at a higher rate than those who cram for 2 weeks.</p>` +
-      `<p>5 questions. Today. That's it.</p>` +
-      `<p><a href="https://dohpass.com/dashboard" style="${BUTTON_STYLE}">Start now →</a></p>` +
+      `<p>You signed up for DOHPass a couple of days ago but haven't answered a question yet.</p>` +
+      `<p>Your first 10 questions are free. Pick your exam — GP or Internal Medicine Specialist — and you get a full explanation after each answer: why the right one is right, and why the others aren't.</p>` +
+      `<p><a href="${link(2)}" style="${BUTTON_STYLE}">Answer my first question →</a></p>` +
       SIGNATURE,
   },
   5: {
-    subject: "The exam doesn't wait",
+    subject: "One question, two minutes",
     html:
-      `<p>Every day you're not practicing, someone else is.</p>` +
-      `<p>DOH pass rates are not kind to last-minute prep. The question bank is there. 5 minutes is enough to start.</p>` +
-      `<p><a href="https://dohpass.com/dashboard" style="${BUTTON_STYLE}">Pick up where you left off →</a></p>` +
+      `<p>If 10 questions feels like a lot right now, start with one.</p>` +
+      `<p>It's a single clinical vignette with one best answer, followed by the explanation. You'll know quickly whether the format suits how you study.</p>` +
+      `<p><a href="${link(5)}" style="${BUTTON_STYLE}">Try one question →</a></p>` +
       SIGNATURE,
   },
   10: {
-    subject: "What kind of doctor passes the DOH?",
+    subject: "How I'd use DOHPass if I were starting today",
     html:
-      `<p>Not the smartest one. The most consistent one.</p>` +
-      `<p>20 minutes a day. That's the difference between candidates who pass first attempt and those who sit it twice.</p>` +
-      `<p>You built the habit of showing up every day in the hospital. This is the same thing.</p>` +
-      `<p><a href="https://dohpass.com/dashboard" style="${BUTTON_STYLE}">Start your 20 minutes →</a></p>` +
+      `<p>I passed the DOH Internal Medicine Specialist exam this year. If I were starting prep again, I'd do this:</p>` +
+      `<p>1. Answer a short block of questions.<br>` +
+      `2. Read every explanation, including the ones you got right.<br>` +
+      `3. Go back to the topics you missed before moving on.</p>` +
+      `<p>Your 10 free questions are still there — enough to see where you stand.</p>` +
+      `<p><a href="${link(10)}" style="${BUTTON_STYLE}">Start a short block →</a></p>` +
       SIGNATURE,
   },
   14: {
-    subject: "Should I close your account?",
+    subject: "Last email from me",
     html:
-      `<p>You haven't logged in since signing up. That's okay — timing matters.</p>` +
-      `<p>I'm going to assume DOH prep isn't a priority right now and pause your access in 48 hours. If I'm wrong, just click below — I'll keep everything exactly as it is.</p>` +
-      `<p><a href="https://dohpass.com/dashboard" style="${BUTTON_STYLE}">Keep my account active →</a></p>` +
+      `<p>This is the last reminder I'll send.</p>` +
+      `<p>Your account stays open and your 10 free questions don't expire — they'll be there whenever your exam gets closer.</p>` +
+      `<p>Good luck with your prep.</p>` +
+      `<p><a href="${link(14)}" style="${BUTTON_STYLE}">Open DOHPass →</a></p>` +
       SIGNATURE,
   },
 };
@@ -111,9 +122,9 @@ Deno.serve(async (req) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "DOHPass <support@dohpass.com>",
+      from: "Dr. Huzaifa Ibrahim / DOHPass <hello@dohpass.com>",
       to: [email],
-      reply_to: "support@dohpass.com",
+      reply_to: "hello@dohpass.com",
       subject: template.subject,
       html: template.html,
     }),

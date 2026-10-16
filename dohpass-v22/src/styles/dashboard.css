@@ -104,3 +104,19 @@
   border-radius: var(--r-md);
   box-shadow: none;
 }
+
+/* Banner actions: renewal is the one brass action; the readiness check is
+   secondary, so it gets the quiet treatment and can't compete with it. */
+.lp-dash .diag-dash-banner { background: var(--ink-900); border-color: var(--ink-700); }
+.lp-dash .diag-dash-banner__cta {
+  background: transparent;
+  border: 1px solid var(--ink-500);
+  color: var(--fog-50);
+  border-radius: var(--r-sm);
+  min-height: 40px;
+}
+.lp-dash .diag-dash-banner__cta:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--fog-400); }
+.lp-dash .diag-dash-banner--renew { border-color: rgba(201, 168, 76, 0.45); }
+.lp-dash .diag-dash-banner--renew .diag-dash-banner__cta { background: var(--brass-500); border-color: var(--brass-500); color: var(--ink-950); }
+.lp-dash .diag-dash-banner--renew .diag-dash-banner__cta:hover { background: var(--brass-400); }
+.lp-dash .exam-countdown { background: var(--ink-900); border-color: var(--ink-700); }

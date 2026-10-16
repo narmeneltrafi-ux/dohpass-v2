@@ -267,7 +267,7 @@ function RenewalBanner({ profile, navigate }) {
     ? 'Renew by bank transfer to keep going — your progress and history stay as they are.'
     : 'Your progress is saved. Renew by bank transfer to pick up where you left off.'
   return (
-    <div className="diag-dash-banner" role="region" aria-label="Access renewal">
+    <div className="diag-dash-banner diag-dash-banner--renew" role="region" aria-label="Access renewal">
       <div className="diag-dash-banner__body">
         <strong className="diag-dash-banner__title">{title}</strong>
         <span className="diag-dash-banner__sub">{sub}</span>

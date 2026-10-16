@@ -1,0 +1,168 @@
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD ALIGNMENT + RESTRAINT  (overrides on .lp-dash)
+   The dashboard had four different content widths (900 / 960 /
+   1080 / full-bleed) and gold on almost every element once teal was
+   retired. This layer puts every block on one column, removes the
+   all-caps micro-labels, and keeps brass for actions and progress.
+   ═══════════════════════════════════════════════════════════════ */
+
+.lp-dash {
+  --dash-col: min(1016px, calc(100% - 2 * var(--gutter)));
+  padding-top: calc(var(--nav-h) + clamp(1.5rem, 1rem + 2vw, 2.5rem));
+  font-family: var(--font-sans);
+}
+
+/* One column for every block */
+.lp-dash .exam-countdown,
+.lp-dash .diag-dash-banner,
+.lp-dash .lp-dash__hero,
+.lp-dash .lp-dash__statswrap,
+.lp-dash .lp-goal,
+.lp-dash .lp-dash__upgrade-wrap,
+.lp-dash .lp-dash__section {
+  box-sizing: border-box;
+  width: var(--dash-col);
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+.lp-dash .exam-countdown,
+.lp-dash .diag-dash-banner,
+.lp-dash .lp-goal {
+  padding-left: var(--sp-5);
+  padding-right: var(--sp-5);
+  border-radius: var(--r-md);
+}
+.lp-dash .diag-dash-banner { margin-bottom: var(--sp-6); }
+.lp-dash .lp-goal { margin-top: var(--sp-4); margin-bottom: var(--sp-12); }
+.lp-dash .lp-dash__statswrap { margin-top: var(--sp-8); margin-bottom: 0; }
+.lp-dash .lp-dash__section { margin-bottom: var(--sp-12); }
+
+/* Headings: sentence case, real hierarchy */
+.lp-dash .lp-dash__h1 { font-weight: 600; letter-spacing: -0.025em; }
+.lp-dash .lp-dash__h1-name { color: inherit; }
+.lp-dash .lp-dash__h2 {
+  margin: 0 0 var(--sp-4);
+  color: var(--fog-50);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Stats: four cells, four columns (two on phones), left-aligned figures */
+.lp-dash .lp-stats {
+  max-width: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-radius: var(--r-md);
+  background: var(--ink-900);
+  border: 1px solid var(--ink-700);
+  box-shadow: none;
+}
+.lp-dash .lp-stats__cell {
+  min-height: 0;
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--sp-5);
+  border-right: 1px solid var(--ink-700);
+}
+.lp-dash .lp-stats__cell:last-child { border-right: 0; }
+.lp-dash .lp-stats__label {
+  color: var(--fog-400);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.lp-dash .lp-stats__num { font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 699px) {
+  .lp-dash .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-dash .lp-stats__cell:nth-child(2) { border-right: 0; }
+  .lp-dash .lp-stats__cell:nth-child(n + 3) { border-top: 1px solid var(--ink-700); }
+}
+
+/* Calm the gold: brass stays on actions and progress fills only */
+.lp-dash .exam-countdown__days { color: var(--fog-50); }
+.lp-dash .lp-dash__readiness--gold { background: var(--ink-850); border-color: var(--ink-600); color: var(--fog-200); }
+.lp-dash .lp-dash__readiness--blue { background: var(--ink-850); border-color: var(--ink-600); color: var(--fog-200); }
+.lp-dash .lp-track__eyebrow { letter-spacing: 0; text-transform: none; font-size: var(--fs-14); color: var(--fog-300); }
+.lp-dash .lp-track__due { background: var(--ink-800); border-color: var(--ink-600); color: var(--fog-50); letter-spacing: 0; }
+.lp-dash .lp-goal__label { letter-spacing: 0; text-transform: none; font-size: var(--fs-14); color: var(--fog-300); }
+.lp-dash .lp-drill__chip { background: var(--ink-850); border-color: var(--ink-600); color: var(--fog-50); border-radius: var(--r-xs); }
+.lp-dash .lp-drill__chip-pct { color: var(--bad-on-dark); opacity: 1; font-weight: 600; }
+.lp-dash .lp-tutor-open { background: transparent; border-color: var(--ink-500); color: var(--fog-50); }
+.lp-dash .lp-mockx:hover .lp-tutor-open,
+.lp-dash .lp-mockx:focus-visible .lp-tutor-open { background: rgba(255, 255, 255, 0.05); border-color: var(--fog-400); color: var(--fog-50); }
+.lp-dash .lp-track__cta { border-radius: var(--r-sm); }
+
+/* Cards: one radius, hairline borders, no glow */
+.lp-dash .lp-track,
+.lp-dash .lp-drill,
+.lp-dash .lp-mockx {
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+
+/* Banner actions: renewal is the one brass action; the readiness check is
+   secondary, so it gets the quiet treatment and can't compete with it. */
+.lp-dash .diag-dash-banner { background: var(--ink-900); border-color: var(--ink-700); }
+.lp-dash .diag-dash-banner__cta {
+  background: transparent;
+  border: 1px solid var(--ink-500);
+  color: var(--fog-50);
+  border-radius: var(--r-sm);
+  min-height: 40px;
+}
+.lp-dash .diag-dash-banner__cta:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--fog-400); }
+.lp-dash .diag-dash-banner--renew { border-color: rgba(201, 168, 76, 0.45); }
+.lp-dash .diag-dash-banner--renew .diag-dash-banner__cta { background: var(--brass-500); border-color: var(--brass-500); color: var(--ink-950); }
+.lp-dash .diag-dash-banner--renew .diag-dash-banner__cta:hover { background: var(--brass-400); }
+.lp-dash .exam-countdown { background: var(--ink-900); border-color: var(--ink-700); }
+
+/* ── Next step (returning hero) ─────────────────────────────── */
+.lp-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-6);
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--r-md);
+  background: var(--ink-900);
+}
+.lp-next--pending { min-height: 94px; border-color: transparent; background: transparent; }
+.lp-next__body { min-width: 0; }
+.lp-next__label { margin: 0; color: var(--fog-400); font-size: var(--fs-14); font-weight: 500; }
+.lp-next__title { margin: 2px 0 0; color: var(--fog-50); font-size: var(--fs-21); font-weight: 600; letter-spacing: -0.01em; }
+.lp-next__topics { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lp-next__cta { flex-shrink: 0; }
+@media (max-width: 559px) { .lp-next__cta { width: 100%; } }
+
+/* Free users: the upgrade prompt is real but secondary to using the
+   free questions — the gate at question 10 makes the offer. */
+.lp-dash .lp-dash__upgrade { border-color: var(--ink-700); background: var(--ink-900); }
+.lp-dash .lp-dash__upgrade__cta { background: transparent; border-color: var(--ink-500); color: var(--fog-50); border-radius: var(--r-sm); min-height: 40px; }
+.lp-dash .lp-dash__upgrade__cta:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--fog-400); }
+
+/* Countdown on phones: one left-aligned column, label unwrapped */
+@media (max-width: 480px) {
+  .lp-dash .exam-countdown__right { text-align: left; }
+  .lp-dash .exam-countdown__target-label { max-width: none; }
+}
+
+/* ── First run: neutral welcome, brass kept for the choice ──── */
+.lp-dash .lp-fr__eyebrow { color: var(--fog-300); background: transparent; border-color: var(--ink-600); border-radius: var(--r-xs); letter-spacing: 0; }
+.lp-dash .lp-fr__eyebrow-dot { background: var(--ok-on-dark); }
+.lp-dash .lp-fr__trust { margin-top: var(--sp-8); margin-bottom: 0; border-color: var(--ink-700); background: var(--ink-900); border-radius: var(--r-md); }
+.lp-dash .lp-fr__avatar { color: var(--fog-50); background: var(--ink-800); border: 1px solid var(--ink-600); }
+.lp-dash .lp-fr__proof { border-top-color: var(--ink-700); }
+.lp-dash .lp-fr__proof li::before { color: var(--fog-200); }
+.lp-dash .lp-fr__tracks { margin-top: var(--sp-8); }
+.lp-dash .lp-fr__tracks .lp-track__cta { background: var(--brass-500); border-color: var(--brass-500); color: var(--ink-950); }
+.lp-dash .lp-fr__tracks .lp-track:hover .lp-track__cta { background: var(--brass-400); }
+.lp-dash .lp-fr__diag-link { width: auto; justify-content: flex-start; margin: var(--sp-6) 0 0; padding: var(--sp-2) 0; color: var(--fog-300); }
+.lp-dash .lp-fr__diag-link:hover { color: var(--fog-50); text-decoration: underline; text-underline-offset: 4px; }

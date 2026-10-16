@@ -1,365 +1,244 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { fetchLandingStats } from '../lib/supabase'
-import CountUp from '../components/CountUp.jsx'
+import { useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
-import SampleQuestionDemo from '../components/SampleQuestionDemo.jsx'
+import SampleQuestionDemo, { ANATOMY_QUESTION } from '../components/SampleQuestionDemo.jsx'
+import Accordion from '../components/site/Accordion.jsx'
+import TrustPanel from '../components/site/TrustPanel.jsx'
+import Closer from '../components/site/Closer.jsx'
+import { PlanGrid, PlanTerms, PaymentSteps } from '../components/site/PlanGrid.jsx'
+import useQuestionCounts from '../hooks/useQuestionCounts'
+import { FAQ, SPECIALIST_SYSTEMS, GP_SYSTEMS, fmt } from '../lib/siteContent'
 import { track } from '../lib/attribution'
 
 /* ───────────────────────────────────────────────────────────────
-   ICONS
-   ─────────────────────────────────────────────────────────────── */
-const IconArrow = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-)
-const IconCheck = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
-const IconChevron = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-)
-
-/* ───────────────────────────────────────────────────────────────
-   PRIMITIVES
+   Landing page. One idea carries it: the product shows itself.
+   The hero's right column is a real, answerable question; every
+   section after it is evidence for a claim the hero makes.
+   Live numbers come from get_question_counts (one call, shared).
    ─────────────────────────────────────────────────────────────── */
 
-/* ───────────────────────────────────────────────────────────────
-   2. HERO
-   ─────────────────────────────────────────────────────────────── */
-function Hero({ navigate, scrollToFeatures }) {
+function Count({ value }) {
+  // Fixed-width placeholder while loading so nothing shifts.
+  return <span className="dp-num">{value ?? '—'}</span>
+}
+
+function Hero({ onStart, total }) {
   return (
-    <section className="lp-hero" id="hero">
-      <div className="lp-hero__grid" aria-hidden="true" />
-
-      <div className="lp-hero__inner">
-        <div className="lp-hero__badge">
-          <span className="lp-hero__pulse" />
-          UAE DOH · GP &amp; Internal Medicine Specialist
-        </div>
-
-        <h1 className="lp-hero__h1">
-          Your exam is specific.
-          <br />
-          <span className="lp-hero__h1-gold">
-            Your prep should be too.
-          </span>
+    <section className="dp-hero" aria-labelledby="hero-title">
+      <div className="dp-wrap">
+        <h1 className="dp-hero__title" id="hero-title">
+          <span>Your DOH exam is specific.</span> <span>Your prep should be too.</span>
         </h1>
-
-        <p className="lp-hero__sub">
-          Every question mapped to the current UAE DOH blueprint.
-          Not adapted from another exam. Not recycled.
-          Written from scratch for the exam you're actually sitting.
-        </p>
-
-        <p className="lp-hero__founder">
-          "Built by a UAE physician who sat the DOH exam
-          and found nothing purpose-built for it."
-        </p>
-
-        <div className="lp-hero__ctas">
-          <button className="aw-btn" onClick={scrollToFeatures}>
-            Try a sample question <IconArrow />
-          </button>
-          <button className="lp-ghost" onClick={() => navigate('/login?mode=signup')}>
-            Start Free <IconArrow />
-          </button>
+        <div className="dp-hero__grid">
+        <div className="dp-hero__copy">
+          <p className="dp-hero__sub">
+            Single-best-answer practice questions for the DOH Internal Medicine Specialist
+            and GP exams. Each answer is explained option by option, with the guideline
+            behind it where one applies.
+          </p>
+          <div className="dp-hero__actions">
+            <button type="button" className="btn btn--primary btn--lg" onClick={onStart} data-hero-cta>
+              Start free
+            </button>
+            <a className="dp-hero__try" href="#sample">Try a sample question</a>
+          </div>
+          <p className="dp-hero__note">
+            10 questions free when you sign up. No payment details needed.
+          </p>
+          <div className="dp-byline">
+            <span className="dp-byline__mono" aria-hidden="true">DI</span>
+            <p>
+              Built by <strong>Dr. Ibrahim</strong>, DOH-licensed Internal Medicine
+              Specialist, MRCP&nbsp;(UK), Tawam Hospital.
+            </p>
+          </div>
         </div>
-
-        <p className="lp-hero__trust">
-          No credit card &nbsp;·&nbsp; Free preview
-        </p>
+        <div className="dp-hero__sheet" id="sample">
+          <SampleQuestionDemo totalQuestions={total} />
+        </div>
+        </div>
       </div>
     </section>
   )
 }
 
-/* ───────────────────────────────────────────────────────────────
-   3. LIVE STATS BAR
-   ─────────────────────────────────────────────────────────────── */
-function StatsBar({ stats }) {
-
-  // Four distinct cells — each shows a different real number. Specialties
-  // falls back to a hardcoded floor when anon RLS hides the topic count;
-  // Flashcards replaces the previous "Explanations" cell which duplicated
-  // the Questions count. The "Updated" cell was removed: anon RLS hides
-  // created_at, so it always fell back to a false "today".
-  const cells = [
-    { label: 'Questions Live', value: stats?.questions,   suffix: '+' },
-    { label: 'Specialties',    value: stats?.specialties, suffix: '+' },
-    { label: 'Flashcards',     value: stats?.flashcards,  suffix: '+' },
-  ]
-
+function ExamPanel({ id, title, count, desc, systems, to, cta }) {
   return (
-    <div className="lp-stats" role="region" aria-label="Live question bank stats">
-      {cells.map((c, i) => (
-        <div className="lp-stats__cell" key={i}>
-          <span className="lp-stats__label">{c.label}</span>
-          <span className="lp-stats__num">
-            <CountUp value={c.value ?? null} suffix={c.suffix || ''} />
-          </span>
-        </div>
-      ))}
-    </div>
+    <article className="dp-exam" id={id} aria-labelledby={`${id}-title`}>
+      <h3 className="dp-exam__title" id={`${id}-title`}>{title}</h3>
+      <p className="dp-exam__count"><Count value={count} /> questions</p>
+      <p className="dp-exam__desc">{desc}</p>
+      <h4 className="dp-exam__label">Systems with the most questions</h4>
+      <ul className="dp-exam__systems">
+        {systems.slice(0, 9).map((s) => <li key={s}>{s}</li>)}
+        <li className="dp-exam__more">and more</li>
+      </ul>
+      <div className="dp-exam__cta">
+        <Link className="btn btn--quiet" to={to}>{cta}</Link>
+        <span className="dp-exam__note">No account needed</span>
+      </div>
+    </article>
   )
 }
 
-/* ───────────────────────────────────────────────────────────────
-   4. FEATURES — SCROLL-SPY (LIGHT)
-   ─────────────────────────────────────────────────────────────── */
-const FEATURES = [
-  {
-    id: 'tracks',
-    eyebrow: 'Two tracks, one path',
-    title: 'GP and Specialist — pick the track that matches your exam.',
-    body: 'Each bank is mapped to its own DOH blueprint, so you never waste time on questions that won\'t be tested.',
-    Mock: MockTracks,
-  },
-  {
-    id: 'realistic',
-    eyebrow: 'Real exam-style questions',
-    title: 'Pearson-VUE-style vignettes, single best answer.',
-    body: 'No filler MCQs. Each question is a clinical scenario built to match the format and pacing of the live DOH exam.',
-    Mock: MockQuestion,
-  },
-  {
-    id: 'explanations',
-    eyebrow: 'In-depth explanations',
-    title: 'Every answer explained, step by step.',
-    body: 'Why the right answer is right, why the distractors are wrong, and — for most questions — the named guideline it traces back to.',
-    Mock: MockExplanation,
-  },
-  {
-    id: 'mobile',
-    eyebrow: 'Mobile-first',
-    title: 'Practice on call, on the metro, between cases.',
-    body: 'The whole interface is built for one-handed use on phones, with a desktop view that scales up cleanly.',
-    Mock: MockMobile,
-  },
-  {
-    id: 'daily',
-    eyebrow: 'Maintained, not static',
-    title: 'Questions revised when guidelines change.',
-    body: 'Spot an error or an outdated answer? Email hello@dohpass.com — every report is checked against the current guideline and the question is corrected in the live bank.',
-    Mock: MockDaily,
-  },
+function Exams({ counts }) {
+  return (
+    <section className="dp-section dp-section--paper on-paper" aria-labelledby="exams-title">
+      <div className="dp-wrap">
+        <header className="dp-section__head">
+          <h2 className="dp-h2" id="exams-title">Two exams, two separate banks</h2>
+          <p className="dp-lede">
+            Each bank is organised around its own DOH exam, so your time goes on material you
+            will actually be tested on.
+          </p>
+        </header>
+        <div className="dp-exams">
+          <ExamPanel
+            id="specialist"
+            title="Internal Medicine Specialist"
+            count={fmt(counts?.specialist)}
+            desc="Internal medicine at specialist level, from gastroenterology and neurology to oncology and geriatrics."
+            systems={SPECIALIST_SYSTEMS}
+            to="/specialist"
+            cta="Try Specialist questions"
+          />
+          <ExamPanel
+            id="gp"
+            title="General Practitioner"
+            count={fmt(counts?.gp)}
+            desc="Primary care across adult medicine, women’s health, paediatrics, mental health and prevention."
+            systems={GP_SYSTEMS}
+            to="/gp"
+            cta="Try GP questions"
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Anatomy() {
+  const q = ANATOMY_QUESTION
+  const answer = q.options.find((o) => o.key === q.correct)
+  return (
+    <section className="dp-section dp-section--white on-paper" aria-labelledby="anatomy-title">
+      <div className="dp-wrap dp-split">
+        <header className="dp-split__aside">
+          <h2 className="dp-h2" id="anatomy-title">Explanations that teach the decision</h2>
+          <p className="dp-lede">
+            On the day, knowing a fact is not enough. Each explanation shows why the right option
+            wins and why every other option loses — the reasoning the exam is testing.
+          </p>
+          <p className="dp-small">This is the explanation for the DKA question in the sample above.</p>
+        </header>
+
+        <figure className="dp-doc" aria-label="An annotated DOHPass explanation">
+          <div className="dp-doc__top">
+            <span className="tag">{q.system}</span>
+            <span className="tag">{q.topic}</span>
+          </div>
+          <div className="dp-doc__row">
+            <p className="dp-doc__note">The answer, and why</p>
+            <div className="dp-doc__body">
+              <p className="dp-doc__answer"><span className="dp-doc__key">{q.correct}</span>{answer?.text}</p>
+              <p>{q.explanation.correct}</p>
+            </div>
+          </div>
+          <div className="dp-doc__row">
+            <p className="dp-doc__note">Every distractor, ruled out</p>
+            <ul className="dp-doc__body dp-doc__others">
+              {Object.entries(q.explanation.distractors).map(([k, v]) => (
+                <li key={k}><span className="dp-doc__key dp-doc__key--muted">{k}</span><span>{v}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div className="dp-doc__row">
+            <p className="dp-doc__note">The rule to keep</p>
+            <p className="dp-doc__body dp-doc__rule">{q.explanation.learning}</p>
+          </div>
+          <div className="dp-doc__row">
+            <p className="dp-doc__note">Where it comes from</p>
+            <p className="dp-doc__body dp-doc__cite">{q.citation}</p>
+          </div>
+        </figure>
+      </div>
+    </section>
+  )
+}
+
+/* Illustrative only — clearly labelled. Real numbers live on each
+   user's dashboard; nothing here is presented as anyone's results. */
+const EXAMPLE_TOPICS = [
+  { topic: 'Cardiology', pct: 81 },
+  { topic: 'Endocrinology', pct: 74 },
+  { topic: 'Respiratory', pct: 66 },
+  { topic: 'Haematology', pct: 58 },
+  { topic: 'Nephrology', pct: 49 },
 ]
 
-function FeaturesSection() {
-  const [activeIdx, setActiveIdx] = useState(0)
-  const sectionRefs = useRef([])
-
-  useEffect(() => {
-    const obs = new IntersectionObserver((entries) => {
-      // pick the entry whose center is closest to the viewport center
-      const visible = entries.filter(e => e.isIntersecting)
-      if (visible.length === 0) return
-      const winMid = window.innerHeight / 2
-      let best = visible[0]
-      let bestDist = Infinity
-      visible.forEach((e) => {
-        const r = e.target.getBoundingClientRect()
-        const mid = r.top + r.height / 2
-        const dist = Math.abs(mid - winMid)
-        if (dist < bestDist) { bestDist = dist; best = e }
-      })
-      const idx = Number(best.target.dataset.idx)
-      if (!Number.isNaN(idx)) setActiveIdx(idx)
-    }, { threshold: [0.3, 0.5, 0.7] })
-
-    sectionRefs.current.forEach((el) => el && obs.observe(el))
-    return () => obs.disconnect()
-  }, [])
-
+function Progress() {
   return (
-    <section className="lp-features" id="features" aria-label="Features">
-      <div className="lp-features__inner">
-        <aside className="lp-spy" aria-hidden="true">
-          <ul>
-            {FEATURES.map((f, i) => (
-              <li
-                key={f.id}
-                className={`lp-spy__item${i === activeIdx ? ' lp-spy__item--active' : ''}`}
-              >
-                <span className="lp-spy__dot" />
-                <span className="lp-spy__label">{f.eyebrow}</span>
+    <section className="dp-section dp-section--paper on-paper" aria-labelledby="progress-title">
+      <div className="dp-wrap dp-split dp-split--reverse">
+        <header className="dp-split__aside">
+          <h2 className="dp-h2" id="progress-title">See which topics are costing you marks</h2>
+          <p className="dp-lede">
+            Every answer is recorded, so your dashboard shows where you are strong and where you
+            are not — and what to study next.
+          </p>
+          <dl className="dp-facts">
+            <div><dt>Accuracy by topic</dt><dd>Weak systems surface on their own as you practise.</dd></div>
+            <div><dt>Focus drill</dt><dd>A session built from your lowest-scoring topics.</dd></div>
+            <div><dt>Spaced review</dt><dd>Flashcards come back just before you are likely to forget them.</dd></div>
+            <div><dt>Exam countdown</dt><dd>Set your exam date and see how many questions a day will finish the bank.</dd></div>
+          </dl>
+        </header>
+
+        <figure className="dp-example" aria-labelledby="example-cap">
+          <figcaption className="dp-example__cap" id="example-cap">
+            <span className="tag tag--brass">Example data</span>
+            Accuracy by topic
+          </figcaption>
+          <ul className="dp-bars">
+            {EXAMPLE_TOPICS.map((t, i) => (
+              <li key={t.topic} className={i === EXAMPLE_TOPICS.length - 1 ? 'is-weakest' : undefined}>
+                <span className="dp-bars__topic">{t.topic}</span>
+                <span className="dp-bars__track" aria-hidden="true">
+                  <span className="dp-bars__fill" style={{ width: `${t.pct}%` }} />
+                </span>
+                <span className="dp-bars__pct">{t.pct}%</span>
               </li>
             ))}
           </ul>
-        </aside>
-
-        <div className="lp-features__col">
-          {FEATURES.map((f, i) => {
-            const Mock = f.Mock
-            return (
-              <article
-                key={f.id}
-                ref={(el) => (sectionRefs.current[i] = el)}
-                data-idx={i}
-                className="lp-feature"
-              >
-                <div className="lp-feature__text">
-                  <span className="lp-feature__eyebrow">{f.eyebrow}</span>
-                  <h3 className="lp-feature__title">{f.title}</h3>
-                  <p className="lp-feature__body">{f.body}</p>
-                </div>
-                <div className="lp-feature__visual">
-                  <Mock />
-                </div>
-              </article>
-            )
-          })}
-        </div>
+          <p className="dp-example__foot">
+            Weakest topic: <strong>Nephrology</strong>. It leads your next focus drill.
+          </p>
+        </figure>
       </div>
     </section>
   )
 }
 
-/* ── Static JSX mockups for the feature visuals ───────────────── */
-function MockTracks() {
+function Pricing({ counts }) {
   return (
-    <div className="lp-mock lp-mock--tracks">
-      <div className="lp-mock__card lp-mock__card--gold">
-        <div className="lp-mock__cardTop">
-          <span className="lp-mock__pill lp-mock__pill--gold">Specialist</span>
-          <span className="lp-mock__count">3,000+ Q</span>
-        </div>
-        <div className="lp-mock__rows">
-          <span>Cardiology</span><span>Respiratory</span><span>Nephrology</span>
-        </div>
-      </div>
-      <div className="lp-mock__card lp-mock__card--blue">
-        <div className="lp-mock__cardTop">
-          <span className="lp-mock__pill lp-mock__pill--blue">GP</span>
-          <span className="lp-mock__count">1,000+ Q</span>
-        </div>
-        <div className="lp-mock__rows">
-          <span>Primary Care</span><span>Endocrinology</span><span>Women&apos;s Health</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MockQuestion() {
-  return (
-    <div className="lp-mock lp-mock--question">
-      <div className="lp-mock__qTop">
-        <span className="lp-mock__pill lp-mock__pill--soft">Cardiology · Vignette</span>
-        <span className="lp-mock__qIdx">Q 14 / 50</span>
-      </div>
-      <p className="lp-mock__stem">
-        A 68-year-old man with hypertension presents with central chest pain radiating to the left arm
-        for 40 minutes. ECG shows ST elevation in leads II, III, and aVF. What is the single best
-        next step?
-      </p>
-      <ul className="lp-mock__opts">
-        <li><span className="lp-mock__opt-key">A</span>Aspirin 300mg only</li>
-        <li className="is-correct"><span className="lp-mock__opt-key">B</span>Primary PCI within 90 minutes</li>
-        <li><span className="lp-mock__opt-key">C</span>Thrombolysis with streptokinase</li>
-        <li><span className="lp-mock__opt-key">D</span>CT pulmonary angiogram</li>
-      </ul>
-    </div>
-  )
-}
-
-function MockExplanation() {
-  return (
-    <div className="lp-mock lp-mock--exp">
-      <div className="lp-mock__expHead">
-        <span className="lp-mock__expBadge">Correct: B</span>
-        <span className="lp-mock__expSrc">ESC STEMI Guidelines 2023</span>
-      </div>
-      <p className="lp-mock__expBody">
-        Inferior STEMI within the 12-hour window mandates primary PCI as the reperfusion strategy of
-        choice when available within 120 minutes of first medical contact. Thrombolysis is reserved
-        for centres without timely PCI access.
-      </p>
-      <ul className="lp-mock__expWhy">
-        <li><b>A</b> — antiplatelet alone does not reperfuse.</li>
-        <li><b>C</b> — only if PCI not available in window.</li>
-        <li><b>D</b> — wrong vascular territory.</li>
-      </ul>
-    </div>
-  )
-}
-
-function MockMobile() {
-  return (
-    <div className="lp-mock lp-mock--mobile">
-      <div className="lp-phone">
-        <div className="lp-phone__notch" />
-        <div className="lp-phone__screen">
-          <div className="lp-phone__bar">
-            <span>Q 27</span><span>4 / 5 streak</span>
-          </div>
-          <p className="lp-phone__q">Which antibiotic is first-line for uncomplicated UTI in a non-pregnant adult?</p>
-          <div className="lp-phone__opts">
-            <span>Nitrofurantoin</span>
-            <span>Amoxicillin</span>
-            <span>Ciprofloxacin</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MockDaily() {
-  return (
-    <div className="lp-mock lp-mock--daily">
-      <div className="lp-mock__feed">
-        {[
-          { tag: 'New', topic: 'Endocrine', when: 'Today' },
-          { tag: 'New', topic: 'Renal',     when: 'Today' },
-          { tag: 'Reviewed', topic: 'GI',   when: 'Yesterday' },
-          { tag: 'Reviewed', topic: 'Cardio', when: '2d ago' },
-        ].map((r, i) => (
-          <div className="lp-mock__feedRow" key={i}>
-            <span className={`lp-mock__feedTag${r.tag === 'New' ? ' is-new' : ''}`}>{r.tag}</span>
-            <span className="lp-mock__feedTopic">{r.topic}</span>
-            <span className="lp-mock__feedWhen">{r.when}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   5. CREDIBILITY BAR
-   ─────────────────────────────────────────────────────────────── */
-const IconVerified = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
-
-function CredibilityBar() {
-  return (
-    <section className="lp-cred" id="credibility">
-      <h2 className="lp-cred__h2">Built by a UAE physician, for UAE physicians</h2>
-      <div className="lp-cred__card">
-        <div className="lp-cred__avatar" aria-label="Founder portrait placeholder">DI</div>
-        <div className="lp-cred__body">
-          <div className="lp-cred__name">Dr. Ibrahim</div>
-          <div className="lp-cred__title">
-            Internal Medicine Specialist (DOH) · Oncology &amp; Palliative Care · Tawam Hospital, Al Ain
-          </div>
-          <div className="lp-cred__credentials">
-            <span className="lp-cred__credential"><IconVerified /> Passed the DOH IM Specialist exam</span>
-            <span className="lp-cred__credential"><IconVerified /> MRCP (UK)</span>
-            <span className="lp-cred__credential"><IconVerified /> Content written from scratch</span>
-          </div>
-          <p className="lp-cred__quote">
-            &ldquo;Built from the questions I wished I&apos;d had during my own DOH prep.
-            Every other resource was USMLE or MRCP adapted. This is purpose-built.&rdquo;
+    <section className="dp-section dp-section--paper on-paper" id="pricing" aria-labelledby="pricing-title">
+      <div className="dp-wrap">
+        <header className="dp-section__head">
+          <h2 className="dp-h2" id="pricing-title">One payment, 30 days of access</h2>
+          <p className="dp-lede">
+            Choose the bank for the exam you are sitting. Pay by UAE bank transfer; nothing renews
+            automatically.
+          </p>
+        </header>
+        <PlanGrid counts={counts} />
+        <PlanTerms />
+        <div className="dp-paybox">
+          <h3 className="dp-paybox__title">How paying by bank transfer works</h3>
+          <PaymentSteps headingLevel={4} />
+          <p className="dp-paybox__links">
+            <Link to="/pricing">Compare plans in detail</Link>
+            <Link to="/confirm-payment">Already paid? Confirm your transfer</Link>
           </p>
         </div>
       </div>
@@ -367,426 +246,54 @@ function CredibilityBar() {
   )
 }
 
-/* ───────────────────────────────────────────────────────────────
-   5b. AUTHORITY STRIP
-   ─────────────────────────────────────────────────────────────── */
-const IconMap = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-    <line x1="9" y1="3" x2="9" y2="18" />
-    <line x1="15" y1="6" x2="15" y2="21" />
-  </svg>
-)
-const IconRefresh = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="23 4 23 10 17 10" />
-    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-  </svg>
-)
-const IconShieldCheck = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <polyline points="9 12 11 14 15 10" />
-  </svg>
-)
+const HOME_FAQ = [FAQ.tryFirst, FAQ.blueprint, FAQ.payment, FAQ.refund, FAQ.whichTrack, FAQ.updates]
 
-function AuthorityStrip() {
+function Faq() {
   return (
-    <div className="lp-authority" aria-label="Platform credentials">
-      <div className="lp-authority__inner">
-        <div className="lp-authority__item">
-          <span className="lp-authority__icon"><IconMap /></span>
-          <div className="lp-authority__text">
-            <div className="lp-authority__label">Blueprint coverage</div>
-            <div className="lp-authority__value">Mapped to DOH 2026 blueprint — GP &amp; Specialist</div>
-          </div>
-        </div>
-        <div className="lp-authority__item">
-          <span className="lp-authority__icon"><IconRefresh /></span>
-          <div className="lp-authority__text">
-            <div className="lp-authority__label">Content currency</div>
-            <div className="lp-authority__value">New questions weekly · Updated when guidelines change</div>
-          </div>
-        </div>
-        <div className="lp-authority__item">
-          <span className="lp-authority__icon"><IconShieldCheck /></span>
-          <div className="lp-authority__text">
-            <div className="lp-authority__label">Risk-free access</div>
-            <div className="lp-authority__value">7-day full refund · No subscription · No auto-renew</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   5c. HOW IT WORKS — payment education before pricing
-   Bank transfer is unfamiliar for SaaS users. This section removes
-   the surprise by explaining the 3-step flow before they see CTAs.
-   ─────────────────────────────────────────────────────────────── */
-const IconBankTransfer = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-  </svg>
-)
-const IconMail = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <polyline points="22,4 12,13 2,4" />
-  </svg>
-)
-const IconUnlock = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="11" width="18" height="11" rx="2" />
-    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-  </svg>
-)
-const IconLock = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="11" width="18" height="11" rx="2" />
-    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </svg>
-)
-
-const HOW_STEPS = [
-  {
-    icon: <IconBankTransfer />,
-    title: 'Choose a plan & transfer payment',
-    body: 'Select your track — GP, Specialist, or All Access. You\'ll see the exact IBAN and payment reference. One local bank transfer, no card required.',
-  },
-  {
-    icon: <IconMail />,
-    title: 'Send us your payment proof',
-    body: 'Forward your transfer receipt or screenshot to our email. We verify every transfer manually — no automated billing, no surprises.',
-  },
-  {
-    icon: <IconUnlock />,
-    title: 'Access activated within 24 hours',
-    body: 'Once we confirm your transfer, your 30-day access window opens immediately. Typical activation is under a few hours on weekdays.',
-  },
-]
-
-function HowItWorks({ navigate }) {
-  return (
-    <section className="lp-how" id="how-it-works" aria-label="How payment works">
-      <div className="lp-how__inner">
-        <span className="lp-how__eyebrow">Payment process</span>
-        <h2 className="lp-how__h2">How access works</h2>
-        <p className="lp-how__sub">
-          DOHPass uses bank transfer — no subscription, no auto-renew, no stored card.
-          Here&apos;s exactly what happens when you pay.
-        </p>
-
-        <div className="lp-how__steps">
-          {HOW_STEPS.map((step, i) => (
-            <div className="lp-how__step" key={i}>
-              <div className="lp-how__num">0{i + 1}</div>
-              <div className="lp-how__icon">{step.icon}</div>
-              <div className="lp-how__title">{step.title}</div>
-              <p className="lp-how__body">{step.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <div>
-          <span className="lp-how__note">
-            <span className="lp-how__note-icon"><IconLock /></span>
-            UAE bank transfer · Secure · No card stored · 7-day refund guarantee
-          </span>
-        </div>
+    <section className="dp-section dp-section--white on-paper" aria-labelledby="faq-title">
+      <div className="dp-wrap dp-split">
+        <header className="dp-split__aside">
+          <h2 className="dp-h2" id="faq-title">Questions before you start</h2>
+          <p className="dp-lede">
+            Anything else? Email <a href="mailto:hello@dohpass.com">hello@dohpass.com</a>.
+          </p>
+        </header>
+        <Accordion items={HOME_FAQ} />
       </div>
     </section>
   )
 }
 
-/* ───────────────────────────────────────────────────────────────
-   6. PRICING TEASER — strict subset of /pricing
-   Aligned with Pricing.jsx so users see the same plan story on both
-   pages: same plan names, same recommended tier (Specialist), same
-   disabled-CTA discipline during the Lemon Squeezy migration window.
-   Bullets are a tighter 3-each subset; full feature list lives on /pricing.
-   ─────────────────────────────────────────────────────────────── */
-function liveCount(n) {
-  return n != null ? `${n.toLocaleString()}+` : '—'
-}
-
-function buildTeaserPlans(stats) {
-  return [
-    {
-      id: 'gp',
-      name: 'GP Track',
-      price: '49',
-      ctaLabel: 'Start GP Track',
-      features: [
-        `${liveCount(stats?.gp)} GP questions`,
-        'DOH GP blueprint',
-        'No subscription · No auto-renew',
-      ],
-    },
-    {
-      id: 'specialist',
-      name: 'Specialist Track',
-      price: '69',
-      recommended: true,
-      ctaLabel: 'Start Specialist',
-      features: [
-        `${liveCount(stats?.specialist)} specialist questions`,
-        'Full DOH Specialist blueprint',
-        'Detailed clinical explanations',
-      ],
-    },
-    {
-      id: 'all_access',
-      name: 'All Access',
-      price: '89',
-      ctaLabel: 'Get All Access',
-      features: [
-        'Both GP & Specialist banks',
-        'Flashcards included',
-        'All future content',
-      ],
-    },
-  ]
-}
-
-function PricingTeaser({ stats, navigate }) {
-  const plans = buildTeaserPlans(stats)
-  return (
-    <section className="lp-pricing" id="pricing">
-      <h2 className="lp-pricing__h2">Simple pricing. Real results.</h2>
-      <p className="lp-pricing__sub">One payment = 30 days access. No subscription · No auto-renew.</p>
-      <div className="lp-pricing__grid">
-        {plans.map((p) => (
-          <article
-            key={p.id}
-            className={`lp-plan${p.recommended ? ' lp-plan--rec' : ''}`}
-          >
-            {p.recommended && <span className="lp-plan__rec">Recommended</span>}
-            <h3 className="lp-plan__name">{p.name}</h3>
-            <div className="lp-plan__price">
-              <span className="lp-plan__cur">AED</span>
-              <span className="lp-plan__num">{p.price}</span>
-              <span className="lp-plan__per">/ 30 days</span>
-            </div>
-            <ul className="lp-plan__feats">
-              {p.features.map((f) => (
-                <li key={f}>
-                  <span className="lp-plan__check"><IconCheck /></span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            {/* Manual bank-transfer rail — same classes as /pricing. */}
-            <button
-              type="button"
-              className={`lp-pp-plan__cta ${p.recommended ? 'lp-pp-plan__cta--gold' : 'lp-pp-plan__cta--outline'}`}
-              onClick={() => navigate(`/checkout?plan=${p.id}`)}
-            >
-              {p.ctaLabel}
-            </button>
-            <div className="lp-pp-plan__soon">Pay by bank transfer</div>
-          </article>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        className="lp-pricing__seeAll"
-        onClick={() => navigate('/pricing')}
-      >
-        See all plan details <IconArrow size={14} />
-      </button>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   7. TESTIMONIALS — placeholder (do not fabricate)
-   ─────────────────────────────────────────────────────────────── */
-const SHOW_TESTIMONIALS = false  // flip to true once real quotes arrive
-
-function Testimonials() {
-  if (!SHOW_TESTIMONIALS) {
-    return (
-      <section className="lp-tm" id="testimonials" aria-label="Testimonials placeholder">
-        <h2 className="lp-tm__h2">What physicians are saying</h2>
-        <p className="lp-tm__pending">
-          Real testimonials from candidates currently using DOHPass — coming soon.
-        </p>
-        <div className="lp-tm__skeleton">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="lp-tm__sk">
-              <div className="lp-tm__sk-line" style={{ width: '92%' }} />
-              <div className="lp-tm__sk-line" style={{ width: '78%' }} />
-              <div className="lp-tm__sk-line" style={{ width: '64%' }} />
-              <div className="lp-tm__sk-foot">
-                <span className="lp-tm__sk-avatar" />
-                <div>
-                  <div className="lp-tm__sk-name" />
-                  <div className="lp-tm__sk-role" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
-  return null
-}
-
-/* ───────────────────────────────────────────────────────────────
-   8. FAQ
-   ─────────────────────────────────────────────────────────────── */
-const FAQS = [
-  {
-    q: 'Is DOHPass aligned with the latest DOH blueprint?',
-    a: 'Yes. Every question is mapped to the current DOH-HAAD blueprint and reviewed when the framework is updated.',
-  },
-  {
-    q: 'How often are questions updated?',
-    a: 'Existing questions are revised whenever a guideline changes or a user reports an error to hello@dohpass.com. New questions are added in batches, not on a fixed schedule.',
-  },
-  {
-    q: 'How does payment work?',
-    a: 'No subscription and no auto-renew. You pay once by bank transfer for 30 days of access. When it ends, access simply pauses \u2014 renew anytime by sending another transfer. Nothing is ever charged automatically.',
-  },
-  {
-    q: 'Is there a free trial?',
-    a: 'No free trial, but every track has free preview questions so you can see the quality first. A 7-day money-back guarantee covers your first payment \u2014 if it\u2019s not for you, we refund.',
-  },
-  {
-    q: 'GP vs Specialist track — which one?',
-    a: 'Pick the bank that matches the exam you are sitting. If you are taking both, All Access bundles them at a lower combined price.',
-  },
-]
-
-function AccordionItem({ q, a, isOpen, onToggle, idx }) {
-  const id = `lp-faq-${idx}`
-  return (
-    <div className={`lp-faq__item${isOpen ? ' is-open' : ''}`}>
-      <button
-        className="lp-faq__btn"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={`${id}-panel`}
-        id={`${id}-btn`}
-      >
-        <span>{q}</span>
-        <span className="lp-faq__chev"><IconChevron /></span>
-      </button>
-      <div
-        id={`${id}-panel`}
-        role="region"
-        aria-labelledby={`${id}-btn`}
-        className="lp-faq__panelWrap"
-      >
-        <div className="lp-faq__panel">
-          <p>{a}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FAQ() {
-  const [open, setOpen] = useState(0)
-  return (
-    <section className="lp-faq" id="faq">
-      <h2 className="lp-faq__h2">Questions, answered.</h2>
-      <div className="lp-faq__list">
-        {FAQS.map((f, i) => (
-          <AccordionItem
-            key={i}
-            q={f.q}
-            a={f.a}
-            idx={i}
-            isOpen={open === i}
-            onToggle={() => setOpen(open === i ? -1 : i)}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   9. CTA CLOSER
-   ─────────────────────────────────────────────────────────────── */
-function CTACloser({ navigate }) {
-  return (
-    <section className="lp-closer" id="cta">
-      <div className="lp-closer__glow" aria-hidden="true" />
-      <h2 className="lp-closer__h2">Ready to pass?</h2>
-      <p className="lp-closer__sub">View plans and pricing. Full refund within 7 days of payment.</p>
-      <button className="aw-btn" onClick={() => navigate('/pricing')}>
-        See Plans <IconArrow size={18} />
-      </button>
-      <p className="lp-closer__small">Join physicians preparing across the UAE.</p>
-    </section>
-  )
-}
-
-/* ───────────────────────────────────────────────────────────────
-   PAGE
-   ─────────────────────────────────────────────────────────────── */
 export default function Home() {
   const navigate = useNavigate()
-  const [stats, setStats] = useState(null)
+  const location = useLocation()
+  const counts = useQuestionCounts()
+  const total = counts ? counts.specialist + counts.gp : null
 
   useEffect(() => { track('landing_view') }, [])
 
+  // Nav links like /#specialist arrive before the section exists in the DOM.
   useEffect(() => {
-    let cancelled = false
-    fetchLandingStats().then((s) => { if (!cancelled) setStats(s) })
-    return () => { cancelled = true }
-  }, [])
+    if (!location.hash) return
+    const el = document.getElementById(location.hash.slice(1))
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }))
+  }, [location.hash])
 
-  const scrollToFeatures = useCallback(() => {
-    const el = document.getElementById('try-it')
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
+  const startFree = () => navigate('/login?mode=signup')
 
   return (
-    <div className="lp-root">
-      {/* Floating orbs (kept from existing brand, opacity dialed down) */}
-      <div className="hw-orb hw-orb--1 lp-orb-dim" />
-      <div className="hw-orb hw-orb--2 lp-orb-dim" />
-      <div className="hw-orb hw-orb--3 lp-orb-dim" />
-
+    <div className="dp-page">
       <AppNav />
-
-      <Hero navigate={navigate} scrollToFeatures={scrollToFeatures} />
-
-      <div className="lp-statswrap">
-        <StatsBar stats={stats} />
-      </div>
-
-      <section className="lp-sampledemo" id="try-it" aria-label="Try a question">
-        <div className="lp-sampledemo__inner">
-          <span className="lp-sampledemo__eyebrow">TRY IT NOW</span>
-          <h2 className="lp-sampledemo__title">Try a DOH-style question.</h2>
-          <p className="lp-sampledemo__sub">No signup. Tap an answer, see the explanation.</p>
-          <SampleQuestionDemo />
-        </div>
-      </section>
-
-      <FeaturesSection />
-
-      <CredibilityBar />
-
-      <AuthorityStrip />
-
-      <HowItWorks navigate={navigate} />
-
-      <PricingTeaser stats={stats} navigate={navigate} />
-
-      <FAQ />
-
-      <CTACloser navigate={navigate} />
-
+      <main id="main">
+        <Hero onStart={startFree} total={total} />
+        <Exams counts={counts} />
+        <Anatomy />
+        <Progress />
+        <TrustPanel />
+        <Pricing counts={counts} />
+        <Faq />
+        <Closer onStart={startFree} />
+      </main>
       <LandingFooter />
     </div>
   )

@@ -1,39 +1,45 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { supabase, ensureProfile, getProfile, hasAccess } from './lib/supabase'
 import { registerDeviceSession, startSessionPolling, stopSessionPolling } from './lib/deviceSession'
-import Header from './components/Header.jsx'
+import AppNav from './components/AppNav.jsx'
 import Footer from './components/Footer.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import ScreenGuard from './components/ScreenGuard.jsx'
 import SessionKicked from './components/SessionKicked.jsx'
 import Home from './pages/Home.jsx'
-import Dashboard from './pages/Dashboard.jsx'
+import LoginPage from './pages/AuthPage.jsx'
+// The free question pages are funnel entry points (ads, SEO pages, the
+// landing CTAs) — kept in the main bundle so a direct visit doesn't wait on
+// a second chunk before the first question can render.
 import SpecialistQuiz from './pages/SpecialistQuiz.jsx'
 import GPQuiz from './pages/GPQuiz.jsx'
-import LoginPage from './pages/AuthPage.jsx'
-import FlashcardsHome from './pages/FlashcardsHome.jsx'
-import FlashcardsTrack from './pages/FlashcardsTrack.jsx'
-import FlashcardSystem from './components/FlashcardSystem.jsx'
-import Pricing from './pages/Pricing.jsx'
-import Terms from './pages/Terms.jsx'
-import Privacy from './pages/Privacy.jsx'
-import Contact from './pages/Contact.jsx'
-import About from './pages/About.jsx'
-import Features from './pages/Features.jsx'
-import PaymentSuccess from './pages/PaymentSuccess.jsx'
-import Checkout from './pages/Checkout.jsx'
-import PaymentConfirm from './pages/PaymentConfirm.jsx'
-import Account from './pages/Account.jsx'
-import Analytics from './pages/Analytics.jsx'
-import MockExam from './pages/MockExam.jsx'
-import OncologyPage from './pages/OncologyPage.jsx'
-import ProgressPage from './pages/ProgressPage'
-import Diagnostic from './pages/Diagnostic.jsx'
-import Tutor from './pages/Tutor.jsx'
-import BlueprintGapAgent from './pages/BlueprintGapAgent.jsx'
-import QuestionWriterAgent from './pages/QuestionWriterAgent.jsx'
-import GodMode from './pages/GodMode.jsx'
+
+// Everything else is split into its own chunk, so a first-time visitor
+// downloads only what the page in front of them needs.
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+const FlashcardsHome = lazy(() => import('./pages/FlashcardsHome.jsx'))
+const FlashcardsTrack = lazy(() => import('./pages/FlashcardsTrack.jsx'))
+const FlashcardSystem = lazy(() => import('./components/FlashcardSystem.jsx'))
+const Pricing = lazy(() => import('./pages/Pricing.jsx'))
+const Terms = lazy(() => import('./pages/Terms.jsx'))
+const Privacy = lazy(() => import('./pages/Privacy.jsx'))
+const Contact = lazy(() => import('./pages/Contact.jsx'))
+const About = lazy(() => import('./pages/About.jsx'))
+const Features = lazy(() => import('./pages/Features.jsx'))
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess.jsx'))
+const Checkout = lazy(() => import('./pages/Checkout.jsx'))
+const PaymentConfirm = lazy(() => import('./pages/PaymentConfirm.jsx'))
+const Account = lazy(() => import('./pages/Account.jsx'))
+const Analytics = lazy(() => import('./pages/Analytics.jsx'))
+const MockExam = lazy(() => import('./pages/MockExam.jsx'))
+const OncologyPage = lazy(() => import('./pages/OncologyPage.jsx'))
+const ProgressPage = lazy(() => import('./pages/ProgressPage'))
+const Diagnostic = lazy(() => import('./pages/Diagnostic.jsx'))
+const Tutor = lazy(() => import('./pages/Tutor.jsx'))
+const BlueprintGapAgent = lazy(() => import('./pages/BlueprintGapAgent.jsx'))
+const QuestionWriterAgent = lazy(() => import('./pages/QuestionWriterAgent.jsx'))
+const GodMode = lazy(() => import('./pages/GodMode.jsx'))
 
 // Captured at module-load time, before Supabase's PKCE handler calls
 // history.replaceState to strip ?code= from the URL. True only on the
@@ -118,10 +124,12 @@ function isSelfChromed(pathname) {
   return SELF_CHROMED_PATHS.has(pathname) || pathname.startsWith('/god-mode')
 }
 
+/* Pages without their own chrome get the same AppNav as the rest of the
+   product (the older Header looked and behaved differently). */
 function ConditionalHeader() {
   const location = useLocation()
   if (isSelfChromed(location.pathname)) return null
-  return <Header />
+  return <AppNav />
 }
 
 /* Footer is hidden on /login, /signup, /auth, self-chromed routes, and flashcard study screens */
@@ -154,6 +162,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
     <>
       <ConditionalHeader />
       <GuardedContent>
+        <Suspense fallback={<div className="route-loading" role="status" aria-label="Loading" />}>
         <Routes>
           <Route path='/login' element={<LoginPage />} />
           <Route path='/auth' element={<Navigate to='/login' replace />} />
@@ -188,6 +197,7 @@ function AppRoutes({ user, kicked, onKickedLogin }) {
           <Route path='/god-mode/blueprint' element={<AdminRoute user={user}><BlueprintGapAgent /></AdminRoute>} />
           <Route path='/god-mode/question-writer' element={<AdminRoute user={user}><QuestionWriterAgent /></AdminRoute>} />
         </Routes>
+        </Suspense>
       </GuardedContent>
       <ConditionalFooter />
       <ConditionalBottomNav user={user} />

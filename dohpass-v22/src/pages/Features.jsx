@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { fetchQuestionCounts } from '../lib/supabase'
 import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
+import Closer from '../components/site/Closer.jsx'
 
 /* Render `${n.toLocaleString()}+` when count is loaded, em-dash otherwise. */
 function liveCount(n) {
@@ -30,7 +31,7 @@ function buildFeatures(counts) {
       id: 'blueprint',
       eyebrow: 'Blueprint mapped',
       title: 'Organised exactly per the current DOH curriculum.',
-      body: 'Topics line up with the official DOH blueprint, so progress in DOHPass translates directly to readiness on exam day. Updated whenever the framework changes.',
+      body: 'Topics follow the DOH blueprint, so your progress shows which parts of the exam you have covered. Reviewed when the framework changes.',
     },
     {
       id: 'mobile',
@@ -48,8 +49,7 @@ function buildFeatures(counts) {
       id: 'mock',
       eyebrow: 'Mock exams',
       title: 'Timed, exam-format, pass-mark scoring.',
-      body: 'Full-length mocks that mirror the real DOH paper &mdash; 100 questions, 150 minutes, 60% pass mark. Coming with the All Access plan.',
-      soon: true,
+      body: 'Full-length timed mocks in the DOH format &mdash; 100 questions in 150 minutes, scored against a 60% pass mark. Included with All Access.',
     },
     {
       id: 'flashcards',
@@ -99,9 +99,6 @@ export default function Features() {
 
   return (
     <div className="lp-root lp-feat">
-      <div className="hw-orb hw-orb--1 lp-orb-dim" />
-      <div className="hw-orb hw-orb--2 lp-orb-dim" />
-      <div className="hw-orb hw-orb--3 lp-orb-dim" />
 
       <AppNav />
 
@@ -150,22 +147,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Closer CTA — manual bank-transfer rail */}
-      <section className="lp-closer lp-feat__closer">
-        <div className="lp-closer__glow" aria-hidden="true" />
-        <h2 className="lp-closer__h2">Ready to start?</h2>
-        <p className="lp-closer__sub">
-          Pick the plan that matches your exam. Full refund within 7 days of payment.
-        </p>
-        <button
-          type="button"
-          className="lp-pp-plan__cta lp-pp-plan__cta--gold lp-pp-finale__cta"
-          onClick={() => navigate('/checkout?plan=specialist')}
-        >
-          Start Specialist
-        </button>
-        <p className="lp-pp-plan__soon lp-pp-finale__soon">Pay by bank transfer</p>
-      </section>
+      <Closer onStart={() => navigate('/login?mode=signup')} />
 
       <LandingFooter />
     </div>

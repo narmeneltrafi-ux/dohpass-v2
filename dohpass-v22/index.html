@@ -2,15 +2,46 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DOHPass — DOH Exam Prep</title>
-    <!-- Google Ads global site tag -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18224272403"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>DOHPass — Practice questions for the DOH Specialist and GP exams</title>
+    <meta name="description" content="Practice questions for the DOH Internal Medicine Specialist and GP licensing exams, each with an explanation of every option. Try sample questions free." />
+    <meta name="theme-color" content="#0F1215" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DOHPass" />
+    <meta property="og:title" content="DOHPass — Practice questions for the DOH Specialist and GP exams" />
+    <meta property="og:description" content="Single-best-answer practice questions for the DOH Specialist and GP licensing exams, explained option by option. Try sample questions free." />
+    <meta property="og:url" content="https://www.dohpass.com/" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Only the Latin face is needed for first paint; other subsets load on demand. -->
+    <link rel="preload" href="/fonts/plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Every page talks to Supabase on load; open the connection early. -->
+    <link rel="preconnect" href="https://qvzvdwvyihwwiqlhgogq.supabase.co" crossorigin />
+    <!-- Google Ads global site tag. The gtag() stub and config run immediately,
+         so page views and conversions queue in dataLayer from the first moment;
+         the library itself (the largest main-thread cost on the page) loads
+         after the page has finished loading and is idle. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'AW-18224272403');
+      (function () {
+        function loadGtag() {
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18224272403';
+          document.head.appendChild(s);
+        }
+        function whenIdle() {
+          if ('requestIdleCallback' in window) requestIdleCallback(loadGtag, { timeout: 3000 });
+          else setTimeout(loadGtag, 1500);
+        }
+        if (document.readyState === 'complete') whenIdle();
+        else window.addEventListener('load', whenIdle, { once: true });
+      })();
     </script>
   </head>
   <body>

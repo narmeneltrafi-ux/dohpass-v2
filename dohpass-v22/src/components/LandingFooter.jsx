@@ -1,61 +1,75 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import BrandMark from './BrandMark.jsx'
 
-const IconCross = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
+/* Shared footer for every marketing-side page. Every link below points at a
+   route that exists in App.jsx — no placeholders, no invented pages. */
+const COLUMNS = [
+  {
+    heading: 'Practise',
+    links: [
+      { label: 'Specialist questions', to: '/specialist' },
+      { label: 'GP questions', to: '/gp' },
+      { label: 'Create a free account', to: '/login?mode=signup' },
+    ],
+  },
+  {
+    heading: 'DOHPass',
+    links: [
+      { label: 'Pricing', to: '/pricing' },
+      { label: 'Features', to: '/features' },
+      { label: 'About', to: '/about' },
+    ],
+  },
+  {
+    heading: 'Help',
+    links: [
+      { label: 'Contact', to: '/contact' },
+      { label: 'Confirm a bank transfer', to: '/confirm-payment' },
+      { label: 'Sign in', to: '/login' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { label: 'Terms', to: '/terms' },
+      { label: 'Privacy', to: '/privacy' },
+    ],
+  },
+]
 
-/* Shared footer used on every marketing-side page. The dashboard does not
-   render a footer at all, so this component intentionally lives outside of
-   that route. All links here point at real working routes. */
 export default function LandingFooter() {
-  const navigate = useNavigate()
-
   return (
-    <footer className="lp-foot" aria-label="Site footer">
-      <div className="lp-foot__cols">
-        <div className="lp-foot__brand">
-          <div className="lp-foot__logo" onClick={() => navigate('/')}>
-            <span className="lp-foot__cross"><IconCross /></span>
-            <span className="lp-foot__name">
-              <span className="lp-foot__doh">DOH</span>
-              <span className="lp-foot__pass">Pass</span>
-            </span>
-          </div>
-          <p className="lp-foot__tag">UAE medical licensing prep, written by physicians.</p>
+    <footer className="dp-foot">
+      <div className="dp-foot__inner">
+        <div className="dp-foot__brand">
+          <Link to="/" className="dp-foot__logo" aria-label="DOHPass home">
+            <BrandMark size={26} />
+            <span className="dp-nav__word" aria-hidden="true">DOH<span>Pass</span></span>
+          </Link>
+          <p className="dp-foot__tag">
+            Practice questions for the DOH Internal Medicine Specialist and GP licensing exams.
+          </p>
+          <a className="dp-foot__mail" href="mailto:hello@dohpass.com">hello@dohpass.com</a>
         </div>
 
-        <div className="lp-foot__col">
-          <h4>Platform</h4>
-          <button onClick={() => navigate('/features')}>Features</button>
-          <button onClick={() => navigate('/pricing')}>Pricing</button>
-          <button onClick={() => navigate('/login')}>Sign In</button>
-        </div>
-
-        <div className="lp-foot__col">
-          <h4>Resources</h4>
-          {/* FAQ lives on /pricing — anchor link scrolls to it after navigation */}
-          <a href="/pricing#faq">FAQ</a>
-          <button onClick={() => navigate('/about')}>About</button>
-          <button onClick={() => navigate('/pricing')}>Get Started</button>
-        </div>
-
-        <div className="lp-foot__col">
-          <h4>Legal</h4>
-          <button onClick={() => navigate('/terms')}>Terms</button>
-          <button onClick={() => navigate('/privacy')}>Privacy</button>
-          <button onClick={() => navigate('/contact')}>Contact</button>
-        </div>
+        {COLUMNS.map((col) => (
+          <nav className="dp-foot__col" key={col.heading} aria-label={col.heading}>
+            <h2 className="dp-foot__h">{col.heading}</h2>
+            <ul>
+              {col.links.map((l) => (
+                <li key={l.label}><Link to={l.to}>{l.label}</Link></li>
+              ))}
+            </ul>
+          </nav>
+        ))}
       </div>
 
-      <div className="lp-foot__bottom">
-        <span>&copy; {new Date().getFullYear()} DOHPass. All rights reserved.</span>
-        <span className="lp-foot__status">
-          <span className="lp-foot__statusDot" />
-          All systems operational
-        </span>
+      <div className="dp-foot__legal">
+        <p>&copy; {new Date().getFullYear()} DOHPass</p>
+        <p>
+          An independent study resource. Not affiliated with or endorsed by the
+          Department of Health – Abu Dhabi.
+        </p>
       </div>
     </footer>
   )

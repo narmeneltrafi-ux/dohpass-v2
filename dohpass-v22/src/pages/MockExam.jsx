@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchQuestionIdList, fetchQuestionsByIds, saveProgress, primaryTopic } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
+import { publicSource } from '../lib/publicSource'
 
 const EXAM_QUESTIONS = 100
 const EXAM_DURATION = 9000 // 150 minutes in seconds
@@ -164,7 +165,7 @@ function ReviewPhase({ wrongEntries, track, onDone }) {
             <span className="qui-expl__pill qui-expl__pill--ok">
               Correct answer: {q.answer}
             </span>
-            {q.source && <span className="qui-expl__source">{q.source}</span>}
+            {publicSource(q.source) && <span className="qui-expl__source">{publicSource(q.source)}</span>}
           </div>
           {q.explanation && (
             <p className="qui-expl__body">{q.explanation}</p>

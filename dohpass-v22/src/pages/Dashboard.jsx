@@ -12,6 +12,7 @@ import {
 } from '../lib/supabase'
 import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
+import { takeRememberedNext } from '../lib/postAuthRedirect'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS (monochrome line, gold-tinted via currentColor)
@@ -59,13 +60,6 @@ const IconClipboard = () => (
   </svg>
 )
 /* Drill / target — crosshair */
-const IconTarget = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="10" />
-    <circle cx="12" cy="12" r="6" />
-    <circle cx="12" cy="12" r="2" />
-  </svg>
-)
 /* Lock — gated content badge */
 const IconLock = ({ size = 13 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -99,7 +93,6 @@ function deriveFirstName(profile, user) {
 
   return 'there'
 }
-
 
 /* ───────────────────────────────────────────────────────────────
    EXAM DATE BANNER — shown once until user sets their exam date
@@ -215,22 +208,51 @@ function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   READINESS BADGE — shown only when ≥ 20 attempts
+   NEXT STEP — one recommended action, from the learner's own data:
+   their weakest topics when there are enough answers to know them,
+   otherwise the bank they are working through. Brass unless the
+   renewal banner is showing (renewing keeps priority).
    ─────────────────────────────────────────────────────────────── */
-function ReadinessBadge({ accuracy, totalAnswered }) {
-  if (accuracy === null || totalAnswered === null || totalAnswered < 20) return null
-  let label, mod
-  // Describes practice accuracy only — never a pass prediction (master prompt §5D).
-  if (accuracy >= 75)      { label = 'Strong accuracy';         mod = 'green' }
-  else if (accuracy >= 65) { label = 'Solid accuracy';          mod = 'gold'  }
-  else if (accuracy >= 50) { label = 'Building accuracy';       mod = 'blue'  }
-  else                     { label = 'Focus on fundamentals';   mod = 'muted' }
+function nextStepFor({ drillData, profile, progSpecialist, progGP }) {
+  if (drillData?.topics?.length) {
+    return {
+      title: 'Drill your weakest topics',
+      topics: drillData.topics,
+      label: 'Start focus drill',
+      to: `/${drillData.track}?drill=1`,
+    }
+  }
+  const track = profile?.diagnostic_track === 'gp' || profile?.diagnostic_track === 'specialist'
+    ? profile.diagnostic_track
+    : (progGP?.answered ?? 0) > (progSpecialist?.answered ?? 0) ? 'gp' : 'specialist'
+  const bank = track === 'gp' ? 'GP' : 'Specialist'
+  return { title: `Continue the ${bank} bank`, topics: null, label: `Continue ${bank} questions`, to: `/${track}` }
+}
+
+function NextStep({ step, quiet, navigate }) {
+  if (!step) return <div className="lp-next lp-next--pending" aria-hidden="true" />
   return (
-    <div className={`lp-dash__readiness lp-dash__readiness--${mod}`} role="status" aria-label={`Practice accuracy: ${label}`}>
-      <span className="lp-dash__readiness-dot" aria-hidden="true" />
-      {label}
-      <span className="lp-dash__readiness-sep" aria-hidden="true">·</span>
-      {accuracy}% accuracy
+    <div className="lp-next" role="region" aria-label="Recommended next step">
+      <div className="lp-next__body">
+        <p className="lp-next__label">Next step</p>
+        <p className="lp-next__title">{step.title}</p>
+        {step.topics && (
+          <ul className="lp-next__topics" aria-label="Your weakest topics">
+            {step.topics.map((t) => (
+              <li key={t.topic} className="lp-drill__chip">
+                {t.topic} <span className="lp-drill__chip-pct">{t.accuracy}%</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <button
+        type="button"
+        className={`btn ${quiet ? 'btn--quiet-dark' : 'btn--primary'} lp-next__cta`}
+        onClick={() => navigate(step.to)}
+      >
+        {step.label} <IconArrow />
+      </button>
     </div>
   )
 }
@@ -267,7 +289,7 @@ function RenewalBanner({ profile, navigate }) {
     ? 'Renew by bank transfer to keep going — your progress and history stay as they are.'
     : 'Your progress is saved. Renew by bank transfer to pick up where you left off.'
   return (
-    <div className="diag-dash-banner" role="region" aria-label="Access renewal">
+    <div className="diag-dash-banner diag-dash-banner--renew" role="region" aria-label="Access renewal">
       <div className="diag-dash-banner__body">
         <strong className="diag-dash-banner__title">{title}</strong>
         <span className="diag-dash-banner__sub">{sub}</span>
@@ -336,10 +358,12 @@ function TrackCard({ Icon, eyebrow, title, desc, count, route, navigate, progres
         </div>
       )}
 
-      <button className="lp-track__cta" type="button">
+      {/* The whole card is the button; this is its visible label, not a
+          second (nested) interactive element. */}
+      <span className="lp-track__cta" aria-hidden="true">
         {due > 0 && eyebrow === 'Flashcards' ? `Review ${due} due` : hasProgress ? 'Continue' : 'Start'}
         <IconArrow />
-      </button>
+      </span>
     </article>
   )
 }
@@ -368,26 +392,6 @@ function FirstRunHero({ firstName, navigate, counts, isPaid }) {
             : 'Your first 10 questions are free. No card, no payment to start.'}
         </p>
 
-        {/* Trust block — a new visitor is deciding whether a solo-run site is
-            worth their time. Show who is behind it before asking for effort. */}
-        <div className="lp-fr__trust" aria-label="Who built DOHPass">
-          <div className="lp-fr__trust-who">
-            <span className="lp-fr__avatar" aria-hidden="true">HI</span>
-            <div>
-              <div className="lp-fr__trust-name">Built by Dr Huzaifa Ibrahim</div>
-              <div className="lp-fr__trust-creds">
-                MRCP (UK) · DOH Specialist, Internal Medicine · Practising physician in Abu Dhabi
-              </div>
-            </div>
-          </div>
-          <ul className="lp-fr__proof">
-            {totalQuestions > 0 && (
-              <li><strong>{totalQuestions.toLocaleString()}</strong> exam-style questions</li>
-            )}
-            <li>Every answer <strong>explained</strong></li>
-            <li>Mapped to the <strong>DOH blueprint</strong></li>
-          </ul>
-        </div>
       </header>
 
       <section className="lp-dash__section lp-fr__tracks" aria-labelledby="lp-fr-pick">
@@ -433,6 +437,27 @@ function FirstRunHero({ firstName, navigate, counts, isPaid }) {
           )}
         </div>
 
+        {/* Who is behind it — reassurance after the choice, not in front of it:
+            someone who just signed up has already decided to try. */}
+        <div className="lp-fr__trust" aria-label="Who built DOHPass">
+          <div className="lp-fr__trust-who">
+            <span className="lp-fr__avatar" aria-hidden="true">HI</span>
+            <div>
+              <div className="lp-fr__trust-name">Built by Dr Huzaifa Ibrahim</div>
+              <div className="lp-fr__trust-creds">
+                MRCP (UK) · DOH Specialist, Internal Medicine · Practising physician in Abu Dhabi
+              </div>
+            </div>
+          </div>
+          <ul className="lp-fr__proof">
+            {totalQuestions > 0 && (
+              <li><strong>{totalQuestions.toLocaleString()}</strong> exam-style questions</li>
+            )}
+            <li>Every answer <strong>explained</strong></li>
+            <li>Mapped to the <strong>DOH blueprint</strong></li>
+          </ul>
+        </div>
+
         <button
           type="button"
           className="lp-fr__diag-link"
@@ -462,9 +487,17 @@ export default function Dashboard() {
   const [flashcardDue, setFlashcardDue] = useState(null)
   const [todayCount, setTodayCount] = useState(null)
   const [drillData, setDrillData] = useState(null)  // { track, topics: [{topic, accuracy}] } | null
+  const [drillLoaded, setDrillLoaded] = useState(false)
   const [examDateDismissed, setExamDateDismissed] = useState(false)
 
   const DAILY_GOAL = 20
+
+  // Arriving from the email-confirmation link after choosing a plan (or
+  // previewing a track): carry on to it instead of the generic dashboard.
+  useEffect(() => {
+    const next = takeRememberedNext()
+    if (next) navigate(next, { replace: true })
+  }, [navigate])
 
   useEffect(() => {
     let cancelled = false
@@ -507,12 +540,14 @@ export default function Dashboard() {
       }
 
       // Fetch weak topics for the track the user primarily uses
-      if (!p || !hasAccess(p)) return
+      if (!p || !hasAccess(p)) { setDrillLoaded(true); return }
       const drillTrack = p.diagnostic_track
         || (stats?.specialist?.answered >= stats?.gp?.answered ? 'specialist' : 'gp')
-      fetchWeakTopics(drillTrack).then(topics => {
-        if (!cancelled && topics.length > 0) setDrillData({ track: drillTrack, topics })
-      })
+      fetchWeakTopics(drillTrack)
+        .then(topics => {
+          if (!cancelled && topics.length > 0) setDrillData({ track: drillTrack, topics })
+        })
+        .finally(() => { if (!cancelled) setDrillLoaded(true) })
     })
     return () => { cancelled = true }
   }, [])
@@ -530,24 +565,13 @@ export default function Dashboard() {
   const statsLoaded = overall !== null
   const firstVisit = profile !== null && statsLoaded && (overall?.answered ?? 0) === 0
 
-  let subhead
-  if (weekly == null) {
-    subhead = null
-  } else if (weekly === 0) {
-    const isFirstVisit = overall == null || overall.answered === 0
-    subhead = isFirstVisit
-      ? 'Pick a track below to answer your first question.'
-      : 'No questions this week — pick up where you left off.'
-  } else {
-    subhead = `${weekly.toLocaleString()} ${weekly === 1 ? 'question' : 'questions'} answered this week.`
-  }
+  const nextStep = statsLoaded && drillLoaded
+    ? nextStepFor({ drillData, profile, progSpecialist, progGP })
+    : null
+  const renewalShowing = !!renewalState(profile)
 
   return (
     <div className="lp-root lp-dash">
-      <div className="hw-orb hw-orb--1 lp-orb-dim" />
-      <div className="hw-orb hw-orb--2 lp-orb-dim" />
-      <div className="hw-orb hw-orb--3 lp-orb-dim" />
-
       <AppNav />
 
       <RenewalBanner profile={profile} navigate={navigate} />
@@ -583,30 +607,11 @@ export default function Dashboard() {
         />
       )}
 
-      {profile && !profile.diagnostic_completed_at && (
-        <div className="diag-dash-banner" role="banner" aria-label="Readiness check prompt">
-          <div className="diag-dash-banner__body">
-            <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
-            <span className="diag-dash-banner__sub">
-              Up to 20 questions · ~10 min — see where to focus first.
-            </span>
-          </div>
-          <button
-            type="button"
-            className="diag-dash-banner__cta"
-            onClick={() => navigate('/diagnostic')}
-          >
-            Start <IconArrow size={13} />
-          </button>
-        </div>
-      )}
-
       <header className="lp-dash__hero">
-        <ReadinessBadge accuracy={accuracy} totalAnswered={totalAnswered} />
         <h1 className="lp-dash__h1">
           Welcome back, <span className="lp-dash__h1-name">{firstName}</span>
         </h1>
-        {subhead && <p className="lp-dash__sub">{subhead}</p>}
+        <NextStep step={nextStep} quiet={renewalShowing} navigate={navigate} />
       </header>
 
       <div className="lp-statswrap lp-dash__statswrap">
@@ -639,6 +644,24 @@ export default function Dashboard() {
                 ? 'Goal met today!'
                 : `${DAILY_GOAL - todayCount} to go`}
           </span>
+        </div>
+      )}
+
+      {profile && !profile.diagnostic_completed_at && (
+        <div className="diag-dash-banner" role="region" aria-label="Readiness check">
+          <div className="diag-dash-banner__body">
+            <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
+            <span className="diag-dash-banner__sub">
+              Up to 20 questions · ~10 min — see where to focus first.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="diag-dash-banner__cta"
+            onClick={() => navigate('/diagnostic')}
+          >
+            Start <IconArrow size={13} />
+          </button>
         </div>
       )}
 
@@ -685,35 +708,6 @@ export default function Dashboard() {
           />
         </div>
       </section>
-
-      {drillData && (
-        <section className="lp-dash__section" aria-labelledby="lp-drill-h">
-          <h2 className="lp-dash__h2" id="lp-drill-h">Focus drill</h2>
-          <div
-            className="lp-drill"
-            onClick={() => navigate(`/${drillData.track}?drill=1`)}
-            role="button"
-            tabIndex={0}
-            aria-label={`Start weak-topic drill for ${drillData.track}`}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/${drillData.track}?drill=1`) } }}
-          >
-            <span className="lp-drill__icon"><IconTarget /></span>
-            <div className="lp-drill__body">
-              <h3 className="lp-drill__title">Drill your weak spots</h3>
-              <p className="lp-drill__subtitle">Targeted practice on your lowest-scoring topics</p>
-              <p className="lp-drill__topics">
-                {drillData.topics.map(t => (
-                  <span key={t.topic} className="lp-drill__chip">
-                    {t.topic} <span className="lp-drill__chip-pct">{t.accuracy}%</span>
-                  </span>
-                ))}
-              </p>
-            </div>
-            <span className="lp-drill__arrow"><IconArrow size={18} /></span>
-          </div>
-        </section>
-      )}
-
 
       {hasAccess(profile) && (
         <section className="lp-dash__section" aria-labelledby="lp-tutor-h">

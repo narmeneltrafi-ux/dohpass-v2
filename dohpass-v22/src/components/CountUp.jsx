@@ -10,6 +10,8 @@ export default function CountUp({ value, durationMs = 1400, suffix = '' }) {
 
   useEffect(() => {
     if (value == null) return
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce) { setDisplay(Number(value) || 0); return }
     const node = ref.current
     if (!node) return
     const obs = new IntersectionObserver((entries) => {

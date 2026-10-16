@@ -1,55 +1,39 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import BrandMark from './BrandMark.jsx'
 
-const IconCross = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
-
-const FOOTER_LINKS = [
-  { label: 'Home', path: '/' },
-  { label: 'Specialist Track', path: '/specialist' },
-  { label: 'GP Track', path: '/gp' },
-  { label: 'Flashcards', path: '/gems' },
-  { label: 'Pricing', path: '/pricing' },
+/* Compact footer for pages outside the marketing set (account, progress,
+   analytics, confirm a transfer, …). Same tokens and legal line as
+   LandingFooter, fewer links. Every link is a route that exists in App.jsx. */
+const LINKS = [
+  { label: 'Pricing', to: '/pricing' },
+  { label: 'Confirm a bank transfer', to: '/confirm-payment' },
+  { label: 'Contact', to: '/contact' },
+  { label: 'Terms', to: '/terms' },
+  { label: 'Privacy', to: '/privacy' },
 ]
 
 export default function Footer() {
-  const navigate = useNavigate()
-
   return (
-    <footer className="site-footer">
-      <div className="site-footer__inner">
-        {/* Left: Logo + tagline */}
-        <div className="site-footer__brand">
-          <div className="site-footer__logo">
-            <span className="site-footer__cross"><IconCross /></span>
-            <span className="site-footer__name">
-              <span className="site-footer__doh">DOH</span>
-              <span className="site-footer__pass">Pass</span>
-            </span>
-          </div>
-          <p className="site-footer__tagline">UAE Medical Licensing Prep</p>
-        </div>
-
-        {/* Center: Links */}
-        <nav className="site-footer__nav">
-          {FOOTER_LINKS.map(link => (
-            <button
-              key={link.path}
-              className="site-footer__link"
-              onClick={() => navigate(link.path)}
-            >
-              {link.label}
-            </button>
-          ))}
+    <footer className="dp-foot dp-foot--compact">
+      <div className="dp-foot__row">
+        <Link to="/" className="dp-foot__logo" aria-label="DOHPass home">
+          <BrandMark size={22} />
+          <span className="dp-nav__word" aria-hidden="true">DOH<span>Pass</span></span>
+        </Link>
+        <nav className="dp-foot__nav" aria-label="Footer">
+          <ul className="dp-foot__inline">
+            {LINKS.map((l) => (
+              <li key={l.to}><Link to={l.to}>{l.label}</Link></li>
+            ))}
+          </ul>
         </nav>
-
-        {/* Right: Copyright */}
-        <div className="site-footer__copy">
-          &copy; 2026 DOHPass. All rights reserved.
-        </div>
+      </div>
+      <div className="dp-foot__legal">
+        <p>&copy; {new Date().getFullYear()} DOHPass</p>
+        <p>
+          An independent study resource. Not affiliated with or endorsed by the
+          Department of Health – Abu Dhabi.
+        </p>
       </div>
     </footer>
   )

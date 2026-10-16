@@ -1,63 +1,41 @@
-import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, getProfile, hasAccess } from '../lib/supabase'
+import BrandMark from './BrandMark.jsx'
+import { authPath } from '../lib/postAuthRedirect'
 
-/* Unified auth-aware glass-capsule nav (DORMANT — not yet wired into any page).
-   Reuses the existing .lp-nav / .lp-nav--auth visual language verbatim so it
-   renders identically to the current marketing/dashboard nav on desktop, and
-   adds a hamburger + mobile drawer (Header.jsx's proven pattern) so the links
-   no longer simply vanish below the breakpoint. */
+/* Site navigation — one component for marketing pages and the signed-in
+   app. Auth-aware: visitors get exam/pricing links and a single primary
+   action ("Start free"); signed-in users get their study links, plan
+   badge and account button. Below the breakpoint the links move into a
+   drawer that traps nothing but closes on Escape, route change and
+   outside click, and returns focus to the toggle. */
 
-/* ── Inline SVG icons (copied verbatim from LandingNav / Header) ── */
-const IconCross = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
-
-const IconMenu = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <line x1="3" y1="12" x2="21" y2="12" />
-    <line x1="3" y1="18" x2="21" y2="18" />
-  </svg>
-)
-
-const IconX = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-)
-
-/* ── Canonical link sets ─────────────────────────────────────────── */
 const PUBLIC_LINKS = [
-  { label: 'Features', path: '/features' },
-  { label: 'Pricing',  path: '/pricing'  },
-  { label: 'About',    path: '/about'    },
-]
-const AUTH_LINKS = [
-  { label: 'Dashboard',  path: '/dashboard'  },
-  { label: 'Specialist', path: '/specialist' },
-  { label: 'GP',         path: '/gp'         },
-  { label: 'Flashcards', path: '/gems'       },
-  { label: 'Progress',   path: '/progress'   },
-  { label: 'Analytics',  path: '/analytics'  },
-  { label: 'Pricing',    path: '/pricing'    },
+  { label: 'Specialist', to: { pathname: '/', hash: '#specialist' }, match: '/#specialist' },
+  { label: 'GP',         to: { pathname: '/', hash: '#gp' },         match: '/#gp' },
+  { label: 'Pricing',    to: '/pricing', match: '/pricing' },
+  { label: 'About',      to: '/about',   match: '/about' },
 ]
 
-/* ── Helpers (copied verbatim from LandingNav.jsx) ───────────────── */
+const AUTH_LINKS = [
+  { label: 'Dashboard',  to: '/dashboard',  match: '/dashboard' },
+  { label: 'Specialist', to: '/specialist', match: '/specialist' },
+  { label: 'GP',         to: '/gp',         match: '/gp' },
+  { label: 'Flashcards', to: '/gems',       match: '/gems' },
+  { label: 'Progress',   to: '/progress',   match: '/progress' },
+  { label: 'Analytics',  to: '/analytics',  match: '/analytics' },
+  { label: 'Pricing',    to: '/pricing',    match: '/pricing' },
+]
+
 function planBadge(profile) {
   if (!profile) return null
   const { plan, is_paid } = profile
-  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist'))
-    return 'All Access'
+  if (plan === 'all_access' || (is_paid && plan !== 'gp' && plan !== 'specialist')) return 'All Access'
   if (plan === 'specialist') return 'Specialist'
   if (plan === 'gp') return 'GP'
   return 'Free'
 }
-const PAID_BADGES = new Set(['All Access', 'Specialist', 'GP'])
 
 function deriveInitials(profile, user) {
   const src = profile?.full_name?.trim() || user?.email || ''
@@ -69,12 +47,42 @@ function deriveInitials(profile, user) {
   return src.slice(0, 2).toUpperCase()
 }
 
+const IconMenu = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <line x1="4" y1="7" x2="20" y2="7" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="17" x2="20" y2="17" />
+  </svg>
+)
+const IconClose = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <line x1="6" y1="6" x2="18" y2="18" />
+    <line x1="18" y1="6" x2="6" y2="18" />
+  </svg>
+)
+
+// Works on every page: jumps to #main when a page provides it, otherwise to
+// the page's first <main> or <h1>.
+function skipToContent(e) {
+  const target = document.getElementById('main') || document.querySelector('main, h1')
+  if (!target) return
+  e.preventDefault()
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+  target.focus()
+  target.scrollIntoView({ block: 'start' })
+}
+
 export default function AppNav() {
   const navigate = useNavigate()
   const location = useLocation()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [open, setOpen] = useState(false)
+  // While the landing hero's own "Start free" is on screen, the nav copy of
+  // it steps back to an outline so the first screen has one brass action.
+  const [heroCtaVisible, setHeroCtaVisible] = useState(false)
+  const toggleRef = useRef(null)
+  const drawerRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
@@ -89,121 +97,152 @@ export default function AppNav() {
     return () => { cancelled = true; listener?.subscription?.unsubscribe?.() }
   }, [])
 
-  // Close mobile drawer on route change
-  useEffect(() => { setMobileOpen(false) }, [location.pathname])
+  useEffect(() => {
+    setHeroCtaVisible(false)
+    const el = document.querySelector('[data-hero-cta]')
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [location.pathname])
+
+  // Close the drawer whenever the route (or hash) changes.
+  useEffect(() => { setOpen(false) }, [location.pathname, location.hash])
+
+  // Escape + outside click close the drawer; focus returns to the toggle.
+  useEffect(() => {
+    if (!open) return
+    function onKey(e) {
+      if (e.key === 'Escape') { setOpen(false); toggleRef.current?.focus() }
+    }
+    function onClick(e) {
+      if (drawerRef.current?.contains(e.target) || toggleRef.current?.contains(e.target)) return
+      setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onClick)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onClick)
+    }
+  }, [open])
 
   const isAuthed = !!user
   const badge = hasAccess(profile) ? planBadge(profile) : null
-  const initials = deriveInitials(profile, user)
-  const isPaid = PAID_BADGES.has(badge)
-  // Paid users get a Tutor entry; admins additionally get a God Mode entry
-  // (gated on profiles.is_admin, so it stays invisible to everyone else).
+  const isPaid = badge === 'All Access' || badge === 'Specialist' || badge === 'GP'
   const links = isAuthed
     ? [
         ...AUTH_LINKS,
-        ...(isPaid ? [{ label: 'Tutor', path: '/tutor' }] : []),
-        ...(profile?.is_admin ? [{ label: 'Mission Control', path: '/god-mode' }] : []),
+        ...(isPaid ? [{ label: 'Tutor', to: '/tutor', match: '/tutor' }] : []),
+        ...(profile?.is_admin ? [{ label: 'Mission Control', to: '/god-mode', match: '/god-mode' }] : []),
       ]
     : PUBLIC_LINKS
 
-  return (
-    <>
-      <nav className={`lp-nav${isAuthed ? ' lp-nav--auth' : ''}`} aria-label="Primary">
-        <div className="lp-nav__brand" onClick={() => navigate(isAuthed ? '/dashboard' : '/')}>
-          <span className="lp-nav__cross"><IconCross /></span>
-          <span className="lp-nav__name">
-            <span className="lp-nav__doh">DOH</span>
-            <span className="lp-nav__pass">Pass</span>
-          </span>
-        </div>
+  const here = location.pathname + (location.hash || '')
+  // On the sign-in page itself, "Sign in" / "Start free" would point at the
+  // form the visitor is already looking at.
+  const onAuthPage = location.pathname === '/login'
+  // Pages whose main action is already sign-up/sign-in or payment: a nav
+  // "Start free" would compete with it.
+  const pageOwnsAction = location.pathname === '/checkout' || location.pathname === '/confirm-payment'
+  // Signing in from checkout returns to the plan the visitor chose.
+  const signInTo = location.pathname === '/checkout'
+    ? authPath({ next: location.pathname + location.search })
+    : '/login'
+  const isActive = (l) => (l.match.includes('#') ? here === l.match : location.pathname === l.match)
 
-        <div className="lp-nav__links">
+  return (
+    <header className={`dp-nav${isAuthed ? ' dp-nav--app' : ''}`}>
+      <a className="skip-link" href="#main" onClick={skipToContent}>Skip to content</a>
+      <div className="dp-nav__inner">
+        <Link className="dp-nav__brand" to={isAuthed ? '/dashboard' : '/'} aria-label="DOHPass home">
+          <BrandMark />
+          <span className="dp-nav__word" aria-hidden="true">DOH<span>Pass</span></span>
+        </Link>
+
+        <nav className="dp-nav__links" aria-label="Primary">
           {links.map((l) => (
-            <button
-              key={l.path}
-              className={`lp-nav__link${location.pathname === l.path ? ' lp-nav__link--active' : ''}`}
-              onClick={() => navigate(l.path)}
+            <Link
+              key={l.label}
+              to={l.to}
+              className={`dp-nav__link${isActive(l) ? ' is-active' : ''}`}
+              aria-current={isActive(l) ? 'page' : undefined}
             >
               {l.label}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
 
-        <div className="lp-nav__right">
+        <div className="dp-nav__actions">
           {isAuthed ? (
             <>
               {badge && (
-                <button
-                  type="button"
-                  className={`lp-nav__planBadge${isPaid ? ' lp-nav__planBadge--paid' : ''}`}
-                  onClick={() => navigate('/account')}
-                  title={`${badge} plan — open account`}
-                  aria-label={`${badge} plan, open account`}
+                <Link
+                  to="/account"
+                  className={`dp-nav__plan${isPaid ? ' is-paid' : ''}`}
+                  aria-label={`${badge} plan — open account`}
                 >
                   {badge}
+                </Link>
+              )}
+              <Link to="/account" className="dp-nav__avatar" aria-label="Account">
+                {deriveInitials(profile, user)}
+              </Link>
+            </>
+          ) : onAuthPage ? null : (
+            <>
+              <Link to={signInTo} className="dp-nav__signin">Sign in</Link>
+              {!pageOwnsAction && (
+                <button
+                  type="button"
+                  className={`btn btn--primary btn--sm dp-nav__cta${heroCtaVisible ? ' is-quiet' : ''}`}
+                  onClick={() => navigate('/login?mode=signup')}
+                >
+                  Start free
                 </button>
               )}
-              <button
-                type="button"
-                className="lp-nav__avatar"
-                onClick={() => navigate('/account')}
-                aria-label="Open account"
-                title="Account"
-              >
-                {initials}
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="lp-nav__signin" onClick={() => navigate('/login')}>Sign In</button>
-              <button className="lp-nav__cta" onClick={() => navigate('/pricing')}>
-                View Plans
-              </button>
             </>
           )}
-
-          {/* Mobile hamburger — hidden on desktop via CSS */}
           <button
-            className="lp-nav__hamburger"
-            onClick={() => setMobileOpen(o => !o)}
-            aria-label="Toggle menu"
+            ref={toggleRef}
+            type="button"
+            className="dp-nav__toggle"
+            aria-expanded={open}
+            aria-controls="dp-nav-drawer"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            onClick={() => setOpen((o) => !o)}
           >
-            {mobileOpen ? <IconX /> : <IconMenu />}
+            {open ? <IconClose /> : <IconMenu />}
           </button>
         </div>
-      </nav>
-
-      {/* Mobile drawer — single flat column, no nested containers */}
-      <div className={`lp-nav__mobile${mobileOpen ? ' lp-nav__mobile--open' : ''}`}>
-        {links.map((l) => (
-          <button
-            key={l.path}
-            className={`lp-nav__mobile-link${location.pathname === l.path ? ' lp-nav__mobile-link--active' : ''}`}
-            onClick={() => navigate(l.path)}
-          >
-            {l.label}
-          </button>
-        ))}
-        <div className="lp-nav__mobile-divider" />
-        {isAuthed ? (
-          <button
-            className={`lp-nav__mobile-link${location.pathname === '/account' ? ' lp-nav__mobile-link--active' : ''}`}
-            onClick={() => navigate('/account')}
-          >
-            Account
-            {badge && <span className="lp-nav__mobile-badge">{badge}</span>}
-          </button>
-        ) : (
-          <>
-            <button className="lp-nav__mobile-link" onClick={() => navigate('/login')}>
-              Sign In
-            </button>
-            <button className="lp-nav__mobile-cta" onClick={() => navigate('/pricing')}>
-              View Plans
-            </button>
-          </>
-        )}
       </div>
-    </>
+
+      <div
+        id="dp-nav-drawer"
+        ref={drawerRef}
+        className={`dp-nav__drawer${open ? ' is-open' : ''}`}
+        hidden={!open}
+      >
+        <nav className="dp-nav__drawer-nav" aria-label="Menu">
+          {links.map((l) => (
+            <Link
+              key={l.label}
+              to={l.to}
+              className={`dp-nav__drawer-link${isActive(l) ? ' is-active' : ''}`}
+              aria-current={isActive(l) ? 'page' : undefined}
+            >
+              {l.label}
+            </Link>
+          ))}
+          {isAuthed ? (
+            <Link to="/account" className="dp-nav__drawer-link">
+              Account{badge && <span className="dp-nav__drawer-badge">{badge}</span>}
+            </Link>
+          ) : (
+            <Link to={signInTo} className="dp-nav__drawer-link">Sign in</Link>
+          )}
+        </nav>
+      </div>
+    </header>
   )
 }

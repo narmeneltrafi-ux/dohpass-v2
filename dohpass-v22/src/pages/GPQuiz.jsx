@@ -18,6 +18,7 @@ import {
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
+import QuizGate from '../components/QuizGate.jsx'
 import ResultsScreen from '../components/ResultsScreen'
 import { BookmarkButton } from '../components/BookmarkButton'
 import { useBookmarks } from '../hooks/useBookmarks'
@@ -41,22 +42,6 @@ function incrementAnonCount() {
   const next = readAnonCount() + 1
   try { localStorage.setItem(ANON_KEY, String(next)) } catch { /* private mode */ }
   return next
-}
-
-function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
-  const navigate = useNavigate()
-  return (
-    <div className="paywall-wrap">
-      <div className="paywall-card">
-        <div className="paywall-icon">🔒</div>
-        <h2 className="paywall-title">{title}</h2>
-        <p className="paywall-body">{body}</p>
-        <button className="btn-primary blue paywall-cta" onClick={() => navigate(ctaPath)}>
-          {ctaLabel}
-        </button>
-      </div>
-    </div>
-  )
 }
 
 export default function GPQuiz() {
@@ -301,57 +286,18 @@ export default function GPQuiz() {
   }
 
   if (wrongPlan) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="Wrong Plan"
-          body="This track requires the GP plan or All Access."
-          ctaLabel="Upgrade Plan"
-          ctaPath="/checkout?plan=gp"
-        />
-      </div>
-    )
+    return <QuizGate variant="wrong-plan" track="gp" />
   }
 
   if (trialExhausted) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="Trial used up"
-          body="You've used all 10 free trial questions. Upgrade to continue practicing."
-          ctaLabel="Upgrade to Unlimited"
-          ctaPath="/checkout?plan=gp"
-        />
-      </div>
-    )
+    return <QuizGate variant="trial-used" track="gp" />
   }
 
   // Anonymous preview cap. Gated on !submitted so the user can finish viewing
   // feedback for the question that pushed them to the limit before the
   // paywall takes over.
   if (anonExhausted && !submitted) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="Preview limit reached"
-          body="Create a free account to unlock 10 questions — no payment needed"
-          ctaLabel="Sign up free"
-          ctaPath="/login"
-        />
-      </div>
-    )
+    return <QuizGate variant="preview-limit" track="gp" />
   }
 
   if (loading) {
@@ -370,20 +316,7 @@ export default function GPQuiz() {
   }
   if (done) {
     if (isAnon) {
-      return (
-        <div className="quiz-page" style={{ paddingTop: '62px' }}>
-          <div className="quiz-header">
-            <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-            <div className="quiz-title blue">General Practitioner</div>
-          </div>
-          <PaywallGate
-            title="Preview complete"
-            body="Create a free account to unlock 10 questions — no payment needed"
-            ctaLabel="Sign up free"
-            ctaPath="/login"
-          />
-        </div>
-      )
+      return <QuizGate variant="preview-done" track="gp" />
     }
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>

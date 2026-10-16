@@ -41,7 +41,7 @@ const PAGES = [
       'Practise DOH, DHA and MOH internal medicine specialist (Prometric) exam questions written by an MRCP doctor who passed the exam. Free sample questions with full explanations.',
     h1: 'DOH, DHA & MOH Internal Medicine Specialist Exam Questions',
     intro:
-      'Practice questions for the UAE internal medicine specialist licensing exams (DOH, DHA and MOH Prometric), each with the full clinical reasoning behind the answer. Authored by an MRCP-qualified doctor who has sat the exam.',
+      'Practice questions for the UAE internal medicine specialist licensing exams (DOH, DHA and MOH Prometric), each with the full clinical reasoning behind the answer. Built by an MRCP-qualified doctor who has sat the exam.',
   },
   {
     slug: 'gp-exam-questions',

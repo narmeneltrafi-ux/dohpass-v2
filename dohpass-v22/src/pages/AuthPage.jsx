@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { track, getFirstTouch, getAnonId } from '../lib/attribution'
+import { safeNext, rememberNext, takeRememberedNext } from '../lib/postAuthRedirect'
+import BrandMark from '../components/BrandMark.jsx'
 
 // Where Supabase sends users after they click the email-confirmation link.
 // This URL MUST be present in the Supabase dashboard redirect allowlist
@@ -14,29 +16,13 @@ const IconCheckSmall = () => (
   </svg>
 )
 
-const IconCross = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="9" y="2" width="6" height="20" rx="2" />
-    <rect x="2" y="9" width="20" height="6" rx="2" />
-  </svg>
-)
-
-const IconPulse = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-  </svg>
-)
-
-const IconArrow = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-)
-
 export default function AuthPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [mode, setMode] = useState(params.get('mode') === 'signup' ? 'signup' : 'login')
+  // Where to go once signed in (a chosen plan's checkout, or the track being
+  // previewed). Allowlisted in postAuthRedirect, so it can't be an open redirect.
+  const next = safeNext(params.get('next'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -51,7 +37,9 @@ export default function AuthPage() {
   useEffect(() => { if (mode === 'signup') track('signup_view') }, [mode])
   const [resetSent, setResetSent] = useState(false)
 
-  async function handleSubmit() {
+  async function handleSubmit(e) {
+    e?.preventDefault?.()
+    if (loading) return
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -59,8 +47,14 @@ export default function AuthPage() {
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
-      else navigate('/')
+      else {
+        // Always consume a remembered intent so it can't fire later by surprise.
+        const remembered = takeRememberedNext()
+        navigate(next || remembered || '/')
+      }
     } else {
+      // Survives the email-confirmation round trip (the link opens /dashboard).
+      rememberNext(next)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -72,7 +66,7 @@ export default function AuthPage() {
       })
       if (!error) track('signup_submitted', { confirm_required: !data?.session })
       if (error) setError(error.message)
-      else if (data.session) navigate('/dashboard')  // new account → first-run hero (pick exam, 10 free Qs)
+      else if (data.session) navigate(takeRememberedNext() || '/dashboard')  // new account → intent, else first-run hero
       else setAwaitingConfirm(true)                  // confirmation required → show confirm screen
     }
     setLoading(false)
@@ -100,10 +94,6 @@ export default function AuthPage() {
     if (nextMode) setMode(nextMode)
   }
 
-  function handleKey(e) {
-    if (e.key === 'Enter') handleSubmit()
-  }
-
   async function handleReset() {
     if (!email) { setError('Enter your email address above, then tap Forgot password.'); return }
     setLoading(true)
@@ -116,29 +106,14 @@ export default function AuthPage() {
 
   return (
     <div className="aw-page">
-      {/* Floating orbs — same as homepage */}
-      <div className="hw-orb hw-orb--1" />
-      <div className="hw-orb hw-orb--2" />
-      <div className="hw-orb hw-orb--3" />
-
-      <div className="aw-card">
-        {/* Gold top-border accent */}
-        <div className="aw-top-line" />
-
-        {/* Brand */}
-        <div className="aw-brand">
-          <div className="aw-brand-icon"><IconCross /></div>
-          <span className="aw-brand-name">DOH<span>Pass</span></span>
-        </div>
+      <main className="aw-card" id="main">
+        <Link to="/" className="aw-brand" aria-label="DOHPass home">
+          <BrandMark size={28} />
+          <span className="aw-brand-name" aria-hidden="true">DOH<span>Pass</span></span>
+        </Link>
 
         {awaitingConfirm ? (
           <>
-            {/* Eyebrow pill */}
-            <div className="aw-eyebrow">
-              <IconPulse />
-              Almost there
-            </div>
-
             <h1 className="aw-heading">Confirm your email</h1>
             <p className="aw-sub">
               We sent a confirmation link to <strong>{email}</strong>.
@@ -153,60 +128,51 @@ export default function AuthPage() {
               <li>You'll land back here, signed in and ready to go.</li>
             </ol>
 
-            {error && <div className="auth-error">{error}</div>}
-            {resent && <div className="auth-success">Confirmation email resent ✓</div>}
+            {error && <div className="auth-error" role="alert">{error}</div>}
+            {resent && <div className="auth-success" role="status">Confirmation email sent again.</div>}
 
-            <button className="aw-btn" onClick={handleResend} disabled={resending}>
+            <button type="button" className="aw-btn" onClick={handleResend} disabled={resending}>
               {resending
                 ? <span className="aw-btn-loading">Sending…</span>
-                : <>
-                    <span>Resend confirmation email</span>
-                    <span className="aw-btn-icon"><IconArrow /></span>
-                  </>
+                : <span>Send the confirmation email again</span>
               }
             </button>
 
             <div className="aw-toggle">
               Wrong address?{' '}
-              <span className="aw-toggle-link" onClick={() => backToForm('signup')}>
+              <button type="button" className="aw-toggle-link" onClick={() => backToForm('signup')}>
                 Use a different email
-              </span>
+              </button>
             </div>
 
             <div className="aw-toggle">
               Already confirmed?{' '}
-              <span className="aw-toggle-link" onClick={() => backToForm('login')}>
-                Sign In
-              </span>
+              <button type="button" className="aw-toggle-link" onClick={() => backToForm('login')}>
+                Sign in
+              </button>
             </div>
           </>
         ) : (
         <>
-        {/* Eyebrow pill */}
-        <div className="aw-eyebrow">
-          <IconPulse />
-          UAE Medical Licensing
-        </div>
-
         {/* Heading */}
         <h1 className="aw-heading">
-          {mode === 'login' ? 'Welcome back' : 'Get started'}
+          {mode === 'login' ? 'Sign in to DOHPass' : 'Create your free account'}
         </h1>
         <p className="aw-sub">
           {mode === 'login'
-            ? 'Sign in to access your question bank'
-            : 'Create your account to begin practising'}
+            ? 'Pick up where you left off.'
+            : '10 practice questions with full explanations. No payment details needed.'}
         </p>
 
         {mode === 'signup' && (
           <div className="aw-trust" role="list" aria-label="What you get with DOHPass">
             <div className="aw-trust__item" role="listitem">
               <span className="aw-trust__icon"><IconCheckSmall /></span>
-              DOH-specific questions — not USMLE or MRCP adapted
+              Questions for the DOH Specialist and GP exams
             </div>
             <div className="aw-trust__item" role="listitem">
               <span className="aw-trust__icon"><IconCheckSmall /></span>
-              Free preview questions — no payment to browse
+              Every option explained, with references
             </div>
             <div className="aw-trust__item" role="listitem">
               <span className="aw-trust__icon"><IconCheckSmall /></span>
@@ -218,32 +184,41 @@ export default function AuthPage() {
         {/* Divider */}
         <div className="aw-divider" />
 
-        {/* Inputs */}
+        <form onSubmit={handleSubmit}>
         <div className="aw-fields">
           <div className="aw-field">
-            <label className="aw-label">Email address</label>
+            <label className="aw-label" htmlFor="auth-email">Email address</label>
             <input
+              id="auth-email"
               type="email"
               className="aw-input"
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              onKeyDown={handleKey}
               autoComplete="email"
+              inputMode="email"
+              required
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'auth-error' : undefined}
             />
           </div>
 
           <div className="aw-field">
-            <label className="aw-label">Password</label>
+            <label className="aw-label" htmlFor="auth-password">Password</label>
             <input
+              id="auth-password"
               type="password"
               className="aw-input"
-              placeholder={mode === 'login' ? '••••••••' : 'Min. 6 characters'}
+              placeholder={mode === 'login' ? '' : 'At least 6 characters'}
               value={password}
               onChange={e => setPassword(e.target.value)}
-              onKeyDown={handleKey}
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              required
+              minLength={mode === 'signup' ? 6 : undefined}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'auth-error' : undefined}
             />
+            {mode === 'signup' && <span className="aw-hint">At least 6 characters.</span>}
           </div>
         </div>
 
@@ -253,47 +228,40 @@ export default function AuthPage() {
           </button>
         )}
         {resetSent && (
-          <div className="auth-success">Reset link sent — check your email.</div>
+          <div className="auth-success" role="status">Reset link sent. Check your email.</div>
         )}
 
-        {error && <div className="auth-error">{error}</div>}
-        {message && <div className="auth-success">{message}</div>}
+        {error && <div className="auth-error" id="auth-error" role="alert">{error}</div>}
+        {message && <div className="auth-success" role="status">{message}</div>}
 
-        <button className="aw-btn" onClick={handleSubmit} disabled={loading}>
+        <button type="submit" className="aw-btn" disabled={loading} aria-busy={loading}>
           {loading
-            ? <span className="aw-btn-loading">Please wait…</span>
-            : <>
-                <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
-                <span className="aw-btn-icon"><IconArrow /></span>
-              </>
+            ? <><span className="btn__spinner" aria-hidden="true" /><span className="aw-btn-loading">{mode === 'login' ? 'Signing in…' : 'Creating your account…'}</span></>
+            : <span>{mode === 'login' ? 'Sign in' : 'Create account'}</span>
           }
         </button>
+        </form>
 
         <div className="aw-toggle">
           {mode === 'login' ? (
             <>No account?{' '}
-              <span className="aw-toggle-link" onClick={() => { setMode('signup'); setError(null); setMessage(null) }}>
-                Sign Up
-              </span>
+              <button type="button" className="aw-toggle-link" onClick={() => { setMode('signup'); setError(null); setMessage(null) }}>
+                Create one free
+              </button>
             </>
           ) : (
             <>Already registered?{' '}
-              <span className="aw-toggle-link" onClick={() => { setMode('login'); setError(null); setMessage(null) }}>
-                Sign In
-              </span>
+              <button type="button" className="aw-toggle-link" onClick={() => { setMode('login'); setError(null); setMessage(null) }}>
+                Sign in
+              </button>
             </>
           )}
         </div>
 
-        <div className="aw-plans-link" onClick={() => navigate('/pricing')}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-          View Plans
-        </div>
+        <Link className="aw-plans-link" to="/pricing">See plans and pricing</Link>
         </>
         )}
-      </div>
+      </main>
     </div>
   )
 }

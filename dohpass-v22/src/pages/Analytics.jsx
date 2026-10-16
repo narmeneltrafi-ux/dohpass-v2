@@ -9,54 +9,10 @@ const IconCross = () => (
   </svg>
 )
 
-// DOH blueprint weights per track (topic → fractional weight, sums to 1).
-// Sources: DOH exam content specifications and question-bank frequency analysis.
-const BLUEPRINT = {
-  specialist: {
-    'Cardiology': 0.18, 'Endocrinology': 0.12, 'Respiratory Medicine': 0.12,
-    'Nephrology': 0.10, 'Gastroenterology': 0.10, 'Rheumatology': 0.08,
-    'Neurology': 0.08, 'Haematology': 0.08, 'Infectious Disease': 0.08,
-    'Dermatology': 0.06,
-  },
-  gp: {
-    'Family Medicine': 0.18, 'Psychiatry': 0.12, 'Paediatrics': 0.12,
-    'Obstetrics & Gynaecology': 0.10, 'Community Medicine': 0.09,
-    'Dermatology': 0.08, 'ENT': 0.08, 'Ophthalmology': 0.07,
-    'Orthopaedics': 0.07, 'General Medicine': 0.09,
-  },
-}
-
-// Bayesian-smoothed, blueprint-weighted pass prediction with sigmoid centred at
-// the 60% exam pass mark. Returns 0-100.
-function computePassProb(topicStats, track) {
-  const weights = BLUEPRINT[track] || {}
-  // Bayesian prior: 5 correct out of 10 (= 50% baseline before any evidence)
-  const PRIOR_CORRECT = 5
-  const PRIOR_TOTAL   = 10
-
-  let weightedSum = 0
-  let weightTotal  = 0
-
-  for (const [topic, w] of Object.entries(weights)) {
-    const stat = topicStats.find(t => t.topic === topic)
-    const correct = (stat?.correct ?? 0) + PRIOR_CORRECT
-    const total   = (stat?.total   ?? 0) + PRIOR_TOTAL
-    weightedSum  += w * (correct / total)
-    weightTotal  += w
-  }
-
-  // Any residual blueprint weight goes to topics not in our hardcoded list.
-  // Fall back to prior for those.
-  if (weightTotal < 1) {
-    weightedSum += (1 - weightTotal) * (PRIOR_CORRECT / PRIOR_TOTAL)
-  }
-
-  // Sigmoid centred at the 60% pass mark; steepness = 8 so ±10pp of raw accuracy
-  // maps to ±57pp of pass probability — appropriately sensitive around the threshold.
-  const centered = (weightedSum - 0.60) * 8
-  const sigmoid  = 1 / (1 + Math.exp(-centered))
-  return Math.round(sigmoid * 100)
-}
+// Topic-level minimum before a topic is called "weak" or "covered".
+// Fewer answers than this is too little evidence to judge (master prompt §5B).
+const MIN_TOPIC_ANSWERS = 5
+const COVERED_TOPIC_ANSWERS = 10
 
 function planBadge(profile) {
   if (!profile) return null
@@ -68,24 +24,20 @@ function planBadge(profile) {
   return { label: 'Free', cls: 'plan-badge--free' }
 }
 
-function PassProbSparkline({ data }) {
+function AccuracySparkline({ data }) {
   const W = 400, H = 80, PAD = 10
   const toX = (i) => PAD + (i / Math.max(1, data.length - 1)) * (W - PAD * 2)
   const toY = (p) => H - PAD - (p / 100) * (H - PAD * 2)
-  const passY = toY(60)
-  const pathD = data.map((pt, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(pt.prob)}`).join(' ')
-  const last  = data[data.length - 1].prob
-  const color = last >= 70 ? 'var(--green)' : last >= 60 ? 'var(--gold)' : 'var(--red)'
+  const pathD = data.map((pt, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(pt.pct)}`).join(' ')
+  const last  = data[data.length - 1].pct
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="an-sparkline" aria-label="Pass probability over time">
-      <line x1={PAD} y1={passY} x2={W - PAD} y2={passY}
-        stroke="var(--muted)" strokeWidth="1" strokeDasharray="4 3" opacity="0.5" />
-      <text x={W - PAD + 2} y={passY + 3} fontSize="9" fill="var(--muted)">60%</text>
-      <path d={pathD} fill="none" stroke={color} strokeWidth="2"
+    <svg viewBox={`0 0 ${W} ${H}`} className="an-sparkline" role="img"
+      aria-label={`Accuracy per block of 10 questions; latest block ${last}%`}>
+      <path d={pathD} fill="none" stroke="var(--gold)" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={toX(data.length - 1)} cy={toY(last)} r="3.5" fill={color} />
+      <circle cx={toX(data.length - 1)} cy={toY(last)} r="3.5" fill="var(--gold)" />
       <text x={toX(data.length - 1)} y={toY(last) - 7} fontSize="9"
-        fill={color} textAnchor="middle">{last}%</text>
+        fill="var(--gold)" textAnchor="middle">{last}%</text>
     </svg>
   )
 }
@@ -162,7 +114,9 @@ export default function Analytics() {
       .sort((a, b) => a.accuracy - b.accuracy)
   }, [progress, qMap])
 
-  const weakTopics = topicStats.slice(0, 5)
+  const weakTopics = topicStats.filter(t => t.total >= MIN_TOPIC_ANSWERS).slice(0, 5)
+  const thinTopics = topicStats.filter(t => t.total < MIN_TOPIC_ANSWERS).length
+  const coveredTopics = topicStats.filter(t => t.total >= COVERED_TOPIC_ANSWERS && t.topic !== 'Unknown').length
 
   // Daily activity (last 14 days)
   const dailyData = useMemo(() => {
@@ -187,27 +141,19 @@ export default function Analytics() {
 
   const maxDaily = Math.max(1, ...dailyData.map(d => d.correct + d.wrong))
 
-  const passProb  = topicStats.length > 0 ? computePassProb(topicStats, activeTrack) : null
-
-  // Pass probability at every 10-question milestone (progress is ordered by created_at
-  // since user_progress.created_at captures first-attempt time)
-  const passProbHistory = useMemo(() => {
+  // Accuracy in consecutive blocks of 10 questions, in answer order.
+  // Raw numbers only — no model, no weights, no pass prediction.
+  const blockHistory = useMemo(() => {
     if (progress.length < 20) return []
     const sorted = [...progress].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
     const points = []
-    for (let i = 10; i <= sorted.length; i += 10) {
-      const slice = sorted.slice(0, i)
-      const topicMap = {}
-      for (const row of slice) {
-        const topic = qMap.get(row.question_id) || 'Unknown'
-        if (!topicMap[topic]) topicMap[topic] = { topic, correct: 0, total: 0 }
-        topicMap[topic].total++
-        if (row.is_correct) topicMap[topic].correct++
-      }
-      points.push({ n: i, prob: computePassProb(Object.values(topicMap), activeTrack) })
+    for (let i = 0; i + 10 <= sorted.length; i += 10) {
+      const block = sorted.slice(i, i + 10)
+      const correct = block.filter(r => r.is_correct).length
+      points.push({ n: i + 10, pct: correct * 10 })
     }
     return points
-  }, [progress, qMap, activeTrack])
+  }, [progress])
 
   const badge     = planBadge(profile)
   const accentVar = activeTrack === 'specialist' ? 'gold' : 'blue'
@@ -269,10 +215,8 @@ export default function Analytics() {
                 <span className="an-stat-label">Overall Accuracy</span>
               </div>
               <div className="an-stat-card">
-                <span className="an-stat-big" style={{ color: passProb !== null ? accuracyColor(passProb) : 'inherit' }}>
-                  {passProb !== null ? `${passProb}%` : '—'}
-                </span>
-                <span className="an-stat-label">Est. Pass Probability</span>
+                <span className="an-stat-big">{coveredTopics}</span>
+                <span className="an-stat-label">Topics with {COVERED_TOPIC_ANSWERS}+ answers</span>
               </div>
               <div className="an-stat-card">
                 <span className="an-stat-big">{stats.total}</span>
@@ -280,13 +224,13 @@ export default function Analytics() {
               </div>
             </div>
 
-            {/* Pass probability trend */}
-            {passProbHistory.length >= 2 && (
+            {/* Accuracy trend (raw, per 10-question block) */}
+            {blockHistory.length >= 2 && (
               <div className="an-card">
-                <h3 className="an-card-title">Pass Probability Trend</h3>
-                <p className="an-card-sub">Estimated pass likelihood after every 10 questions answered</p>
+                <h3 className="an-card-title">Accuracy Trend</h3>
+                <p className="an-card-sub">Your accuracy in each block of 10 questions, in the order you answered them. This tracks practice, not a prediction of your exam result.</p>
                 <div className="an-sparkline-wrap">
-                  <PassProbSparkline data={passProbHistory} />
+                  <AccuracySparkline data={blockHistory} />
                 </div>
               </div>
             )}
@@ -327,6 +271,7 @@ export default function Analytics() {
             {weakTopics.length > 0 && (
               <div className="an-card">
                 <h3 className="an-card-title">Weak Topics</h3>
+                <p className="an-card-sub">Lowest accuracy among topics with at least {MIN_TOPIC_ANSWERS} answers.{thinTopics > 0 ? ` ${thinTopics} more topic${thinTopics === 1 ? '' : 's'} need more answers before they can be judged.` : ''}</p>
                 <div className="an-topic-list">
                   {weakTopics.map(t => (
                     <div key={t.topic} className="an-topic-row an-topic-row--weak">

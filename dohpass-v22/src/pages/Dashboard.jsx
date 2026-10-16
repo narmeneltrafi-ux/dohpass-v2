@@ -220,16 +220,61 @@ function DashStatsBar({ weekly, totalAnswered, accuracy, streak }) {
 function ReadinessBadge({ accuracy, totalAnswered }) {
   if (accuracy === null || totalAnswered === null || totalAnswered < 20) return null
   let label, mod
-  if (accuracy >= 75)      { label = 'On track to pass';        mod = 'green' }
-  else if (accuracy >= 65) { label = 'Approaching pass mark';   mod = 'gold'  }
-  else if (accuracy >= 50) { label = 'Building readiness';      mod = 'blue'  }
+  // Describes practice accuracy only — never a pass prediction (master prompt §5D).
+  if (accuracy >= 75)      { label = 'Strong accuracy';         mod = 'green' }
+  else if (accuracy >= 65) { label = 'Solid accuracy';          mod = 'gold'  }
+  else if (accuracy >= 50) { label = 'Building accuracy';       mod = 'blue'  }
   else                     { label = 'Focus on fundamentals';   mod = 'muted' }
   return (
-    <div className={`lp-dash__readiness lp-dash__readiness--${mod}`} role="status" aria-label={`Exam readiness: ${label}`}>
+    <div className={`lp-dash__readiness lp-dash__readiness--${mod}`} role="status" aria-label={`Practice accuracy: ${label}`}>
       <span className="lp-dash__readiness-dot" aria-hidden="true" />
       {label}
       <span className="lp-dash__readiness-sep" aria-hidden="true">·</span>
       {accuracy}% accuracy
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   RENEWAL BANNER — manual bank-transfer access has no auto-renew, so this
+   is the renewal prompt. Shows in the last 7 days of access and for 14 days
+   after it lapses. Dates are real (access_expires_at); no fake urgency.
+   ─────────────────────────────────────────────────────────────── */
+const RENEW_WARN_DAYS = 7
+const RENEW_LAPSED_DAYS = 14
+
+function renewalState(profile) {
+  if (!profile?.access_expires_at) return null
+  const end = new Date(profile.access_expires_at)
+  if (Number.isNaN(end.getTime())) return null
+  const msLeft = end.getTime() - Date.now()
+  const daysLeft = Math.ceil(msLeft / 86400000)
+  if (msLeft > 0 && daysLeft <= RENEW_WARN_DAYS) return { kind: 'ending', daysLeft, end }
+  if (msLeft <= 0 && -msLeft <= RENEW_LAPSED_DAYS * 86400000) return { kind: 'lapsed', end }
+  return null
+}
+
+function RenewalBanner({ profile, navigate }) {
+  const st = renewalState(profile)
+  if (!st) return null
+  const plan = ['gp', 'specialist', 'all_access'].includes(profile?.plan) ? profile.plan : null
+  const target = plan ? `/checkout?plan=${plan}` : '/pricing'
+  const dateLabel = st.end.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  const title = st.kind === 'ending'
+    ? (st.daysLeft <= 1 ? `Your access ends on ${dateLabel}` : `Your access ends in ${st.daysLeft} days (${dateLabel})`)
+    : `Your access ended on ${dateLabel}`
+  const sub = st.kind === 'ending'
+    ? 'Renew by bank transfer to keep going — your progress and history stay as they are.'
+    : 'Your progress is saved. Renew by bank transfer to pick up where you left off.'
+  return (
+    <div className="diag-dash-banner" role="region" aria-label="Access renewal">
+      <div className="diag-dash-banner__body">
+        <strong className="diag-dash-banner__title">{title}</strong>
+        <span className="diag-dash-banner__sub">{sub}</span>
+      </div>
+      <button type="button" className="diag-dash-banner__cta" onClick={() => navigate(target)}>
+        Renew <IconArrow size={13} />
+      </button>
     </div>
   )
 }
@@ -505,6 +550,8 @@ export default function Dashboard() {
 
       <AppNav />
 
+      <RenewalBanner profile={profile} navigate={navigate} />
+
       {firstVisit ? (
         <FirstRunHero
           firstName={firstName}
@@ -541,7 +588,7 @@ export default function Dashboard() {
           <div className="diag-dash-banner__body">
             <strong className="diag-dash-banner__title">Discover your exam gaps</strong>
             <span className="diag-dash-banner__sub">
-              20 questions · 10 topics · ~10 min — see exactly where to focus.
+              Up to 20 questions · ~10 min — see where to focus first.
             </span>
           </div>
           <button
@@ -595,7 +642,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!hasAccess(profile) && profile !== null && (
+      {!hasAccess(profile) && profile !== null && renewalState(profile)?.kind !== 'lapsed' && (
         <UpgradePrompt navigate={navigate} />
       )}
 

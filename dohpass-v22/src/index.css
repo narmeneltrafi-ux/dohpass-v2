@@ -8813,7 +8813,7 @@ a.lp-contact__value:hover { color: var(--gold); }
   .exam-countdown__right { align-items: baseline; }
 }
 
-/* ── Analytics — pass probability sparkline ─────────────────── */
+/* ── Analytics — accuracy sparkline ─────────────────────────── */
 .an-card-sub {
   font-size: 0.78rem;
   color: var(--text-muted);

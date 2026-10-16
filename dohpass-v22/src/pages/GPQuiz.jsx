@@ -25,6 +25,7 @@ import { useBookmarks } from '../hooks/useBookmarks'
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
+// Both mirrored by the early preview request in index.html; change them together.
 const ANON_KEY = 'dohpass_anon_trial'
 const ANON_LIMIT = 3
 const PREFETCH_WINDOW = 10
@@ -96,15 +97,15 @@ export default function GPQuiz() {
         return
       }
       setIsAnon(false)
-      const p = await getProfile()
+      // Profile and trial status don't depend on each other, so ask for both
+      // at once: a free user no longer waits for two round trips in a row.
+      // A paid user's status is simply ignored.
+      const [p, status] = await Promise.all([getProfile(), fetchTrialStatus()])
       if (cancelled) return
       const paid = hasAccess(p)
       setIsPaid(paid)
       setPlan(p?.plan ?? 'free')
-      if (!paid) {
-        const status = await fetchTrialStatus()
-        if (!cancelled) setTrialStatus(status)
-      }
+      if (!paid) setTrialStatus(status)
     })()
     return () => { cancelled = true }
   }, [])

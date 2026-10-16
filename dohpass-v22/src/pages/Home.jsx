@@ -64,7 +64,7 @@ function Hero({ navigate, scrollToFeatures }) {
 
         <div className="lp-hero__ctas">
           <button className="aw-btn" onClick={scrollToFeatures}>
-            See a real DOH question <IconArrow />
+            Try a sample question <IconArrow />
           </button>
           <button className="lp-ghost" onClick={() => navigate('/login?mode=signup')}>
             Start Free <IconArrow />
@@ -130,8 +130,8 @@ const FEATURES = [
   {
     id: 'explanations',
     eyebrow: 'In-depth explanations',
-    title: 'Every answer comes with a guideline-cited rationale.',
-    body: 'Why the right answer is right, why each distractor is wrong, and which guideline it traces back to.',
+    title: 'Every answer explained, step by step.',
+    body: 'Why the right answer is right, why the distractors are wrong, and — for most questions — the named guideline it traces back to.',
     Mock: MockExplanation,
   },
   {
@@ -764,7 +764,7 @@ export default function Home() {
       <section className="lp-sampledemo" id="try-it" aria-label="Try a question">
         <div className="lp-sampledemo__inner">
           <span className="lp-sampledemo__eyebrow">TRY IT NOW</span>
-          <h2 className="lp-sampledemo__title">Answer a real DOH question.</h2>
+          <h2 className="lp-sampledemo__title">Try a DOH-style question.</h2>
           <p className="lp-sampledemo__sub">No signup. Tap an answer, see the explanation.</p>
           <SampleQuestionDemo />
         </div>

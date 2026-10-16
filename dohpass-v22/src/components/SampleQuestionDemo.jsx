@@ -42,7 +42,7 @@ const DEMO_QUESTIONS = [
     system: 'Endocrinology',
     topic: 'Diabetic ketoacidosis',
     difficulty: 'Moderate',
-    stem: 'A 24-year-old woman with type 1 diabetes presents with vomiting and abdominal pain. She is drowsy. Capillary glucose 28 mmol/L, venous pH 7.18, bicarbonate 11 mmol/L, ketones 5.2 mmol/L. Potassium is 5.4 mmol/L.',
+    stem: 'A 24-year-old woman with type 1 diabetes presents with vomiting and abdominal pain. She is drowsy. Capillary glucose 28 mmol/L, venous pH 7.18, bicarbonate 11 mmol/L, ketones 5.2 mmol/L. Potassium is 3.9 mmol/L.',
     leadIn: 'What is the most appropriate initial management step?',
     options: [
       { key: 'A', text: 'Start fixed-rate IV insulin immediately' },
@@ -56,9 +56,9 @@ const DEMO_QUESTIONS = [
     explanation: {
       correct: 'Fluid resuscitation with 0.9% sodium chloride is the first step in DKA — patients are profoundly volume-depleted, and rehydration begins before or alongside insulin.',
       distractors: {
-        A: 'Fixed-rate insulin follows fluids; starting insulin first risks dangerous hypokalaemia and worsens hypovolaemia.',
+        A: 'Fixed-rate insulin follows fluids. With K already only 3.9, starting insulin first drives potassium into cells and risks dangerous hypokalaemia, while worsening hypovolaemia.',
         B: 'Bicarbonate is not routinely given and is reserved for extreme acidosis only.',
-        D: 'Potassium never comes before fluid. At 3.5–5.5 mmol/L (as here), JBDS adds 40 mmol/L KCl to the fluid once infusion is running and urine output is confirmed; above 5.5, none is added.',
+        D: 'Potassium 3.9 is in range — it is not replaced ahead of fluid. Per JBDS, 40 mmol/L KCl is added to the fluid once the infusion is running and urine output is confirmed; it becomes urgent only if K falls below 3.5.',
         E: 'A STAT insulin bolus is not part of the JBDS protocol — a weight-based fixed-rate IV insulin infusion is standard.',
       },
       learning: 'Fluids first in DKA. Insulin and potassium are titrated against the fluid resuscitation, not ahead of it.',

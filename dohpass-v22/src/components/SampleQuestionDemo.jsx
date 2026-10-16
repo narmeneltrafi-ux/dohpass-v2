@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchQuestionCounts } from '../lib/supabase';
 
 // ─────────────────────────────────────────────────────────────
 // Curated 5-question demo. Hardcoded by design — zero DB calls,
@@ -41,7 +42,7 @@ const DEMO_QUESTIONS = [
     system: 'Endocrinology',
     topic: 'Diabetic ketoacidosis',
     difficulty: 'Moderate',
-    stem: 'A 24-year-old woman with type 1 diabetes presents with vomiting and abdominal pain. She is drowsy. Capillary glucose 28 mmol/L, venous pH 7.18, bicarbonate 11 mmol/L, ketones 5.2 mmol/L. Potassium is 5.4 mmol/L.',
+    stem: 'A 24-year-old woman with type 1 diabetes presents with vomiting and abdominal pain. She is drowsy. Capillary glucose 28 mmol/L, venous pH 7.18, bicarbonate 11 mmol/L, ketones 5.2 mmol/L. Potassium is 3.9 mmol/L.',
     leadIn: 'What is the most appropriate initial management step?',
     options: [
       { key: 'A', text: 'Start fixed-rate IV insulin immediately' },
@@ -55,10 +56,10 @@ const DEMO_QUESTIONS = [
     explanation: {
       correct: 'Fluid resuscitation with 0.9% sodium chloride is the first step in DKA — patients are profoundly volume-depleted, and rehydration begins before or alongside insulin.',
       distractors: {
-        A: 'Fixed-rate insulin follows fluids; starting insulin first risks dangerous hypokalaemia and worsens hypovolaemia.',
+        A: 'Fixed-rate insulin follows fluids. With K already only 3.9, starting insulin first drives potassium into cells and risks dangerous hypokalaemia, while worsening hypovolaemia.',
         B: 'Bicarbonate is not routinely given and is reserved for extreme acidosis only.',
-        D: 'Potassium is currently high-normal — replacement is added once it falls below 5.5 with insulin.',
-        E: 'Bolus insulin is not used in modern DKA protocols — fixed-rate infusion is standard.',
+        D: 'Potassium 3.9 is in range — it is not replaced ahead of fluid. Per JBDS, 40 mmol/L KCl is added to the fluid once the infusion is running and urine output is confirmed; it becomes urgent only if K falls below 3.5.',
+        E: 'A STAT insulin bolus is not part of the JBDS protocol — a weight-based fixed-rate IV insulin infusion is standard.',
       },
       learning: 'Fluids first in DKA. Insulin and potassium are titrated against the fluid resuscitation, not ahead of it.',
     },
@@ -105,7 +106,7 @@ const DEMO_QUESTIONS = [
       { key: 'E', text: 'Give paracetamol and reassess if fever persists' },
     ],
     correct: 'B',
-    citation: 'NICE NG / IDSA Neutropenic Sepsis',
+    citation: 'NICE CG151 / IDSA Febrile Neutropenia',
     explanation: {
       correct: 'Neutropenic sepsis is a medical emergency. Empirical broad-spectrum IV antibiotics (e.g. piperacillin–tazobactam) must be started within ONE hour — the "looks well" appearance is dangerously reassuring in a neutropenic patient.',
       distractors: {
@@ -134,20 +135,19 @@ const DEMO_QUESTIONS = [
     correct: 'C',
     citation: 'ESC AF Guidelines 2024 / NICE',
     explanation: {
-      correct: 'Her CHA₂DS₂-VASc score is ≥3 (age, hypertension, diabetes, female sex). A DOAC is first-line for stroke prevention in non-valvular AF with an elevated score and no contraindication.',
+      correct: 'Her CHA₂DS₂-VA score is 3 (age 65–74, hypertension, diabetes; ESC 2024 no longer counts female sex — CHA₂DS₂-VASc would be 4). A DOAC is first-line for stroke prevention in non-valvular AF at this risk with no contraindication.',
       distractors: {
         A: 'Aspirin is no longer recommended for stroke prevention in AF — it is inferior and not safer.',
         B: 'Withholding anticoagulation in a high-risk patient leaves her exposed to preventable stroke.',
         D: 'Clopidogrel monotherapy is not adequate stroke prevention in AF.',
         E: 'Dual antiplatelet therapy carries bleeding risk without matching DOAC efficacy in AF.',
       },
-      learning: 'Non-valvular AF with elevated CHA₂DS₂-VASc: DOAC first-line. Antiplatelets are not a substitute.',
+      learning: 'Non-valvular AF with CHA₂DS₂-VA ≥2: DOAC first-line. Antiplatelets are not a substitute.',
     },
   },
 ];
 
 const FREE_LIMIT = 5;
-const TOTAL_BANK = 2995;
 
 export default function SampleQuestionDemo() {
   const navigate = useNavigate();
@@ -157,6 +157,16 @@ export default function SampleQuestionDemo() {
   const [streak, setStreak] = useState(0);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [hitWall, setHitWall] = useState(false);
+  const [bankSize, setBankSize] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchQuestionCounts().then((c) => {
+      const total = (c?.specialist || 0) + (c?.gp || 0);
+      if (!cancelled && total > 0) setBankSize(total);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const q = DEMO_QUESTIONS[index];
   const isCorrect = selected === q.correct;
@@ -185,7 +195,6 @@ export default function SampleQuestionDemo() {
   };
 
   if (hitWall) {
-    const remaining = TOTAL_BANK - answeredCount;
     return (
       <div className="sqd-wrap">
         <div className="sqd-wall">
@@ -193,13 +202,15 @@ export default function SampleQuestionDemo() {
             {streak >= 3 ? `🔥 ${streak} in a row` : `You answered ${answeredCount} questions`}
           </div>
           <h3 className="sqd-wall__title">
-            That was {answeredCount} of {TOTAL_BANK.toLocaleString()}.
+            {bankSize
+              ? `That was ${answeredCount} of ${bankSize.toLocaleString()}.`
+              : `That was ${answeredCount} sample questions.`}
           </h3>
           <p className="sqd-wall__sub">
-            {remaining.toLocaleString()} more DOH-style questions are waiting —
-            every one with a guideline-cited explanation like the ones you just saw.
+            The full bank is written in the same format — a full explanation for
+            every answer, and the guideline behind it where one applies.
           </p>
-          <button className="aw-btn sqd-wall__cta" onClick={() => navigate('/login')}>
+          <button className="aw-btn sqd-wall__cta" onClick={() => navigate('/login?mode=signup')}>
             Create your free account →
           </button>
           <p className="sqd-wall__trust">Free to start · 10 more questions on signup</p>

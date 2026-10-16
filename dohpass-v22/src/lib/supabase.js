@@ -724,7 +724,22 @@ export async function fetchTrialQuestions(track) {
 
 // Anonymous (unauthenticated) preview. Server caps p_limit at 5; the 3-question
 // preview cap is enforced client-side via localStorage in the quiz pages.
+//
+// A visitor who lands directly on /specialist or /gp: index.html has already
+// asked for these questions while the app was downloading (window.__dpPreview).
+// That response is used once, and only if it is exactly what this call wants;
+// otherwise, or if it failed, the ordinary RPC below.
+function takePrefetchedPreview(track, limit) {
+  const pre = typeof window !== 'undefined' ? window.__dpPreview : null
+  if (!pre) return null
+  window.__dpPreview = null
+  return pre.track === track && pre.limit === limit ? pre.promise : null
+}
+
 export async function fetchPreviewQuestions(track, limit = 3) {
+  const prefetched = takePrefetchedPreview(track, limit)
+  const early = prefetched ? await prefetched : null
+  if (Array.isArray(early)) return early
   const { data, error } = await supabase.rpc('get_preview_questions', {
     p_track: track,
     p_limit: limit,

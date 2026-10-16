@@ -19,6 +19,37 @@
     <link rel="preload" href="/fonts/plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Every page talks to Supabase on load; open the connection early. -->
     <link rel="preconnect" href="https://qvzvdwvyihwwiqlhgogq.supabase.co" crossorigin />
+    <!-- A visitor who isn't signed in and lands on /specialist or /gp waits for
+         the free preview questions before anything useful shows. Ask for them
+         now, while the app's JavaScript is still downloading, instead of after
+         it has run. The quiz page takes the response from window.__dpPreview
+         (fetchPreviewQuestions in src/lib/supabase.js) and makes its own
+         request if this one is missing or failed. A plain GET with the public
+         key in the query string carries no custom headers, so the browser
+         sends it without a CORS preflight. Signed-in visitors are skipped:
+         they get the trial or the full bank. The 3 and 'dohpass_anon_trial'
+         mirror ANON_LIMIT and ANON_KEY in the quiz pages. -->
+    <script>
+      (function () {
+        try {
+          var m = location.pathname.match(/^\/(specialist|gp)\/?$/);
+          var base = '%VITE_SUPABASE_URL%'.replace(/\/+$/, '');
+          if (!m || base.indexOf('https://') !== 0) return;
+          if (localStorage.getItem('sb-' + new URL(base).hostname.split('.')[0] + '-auth-token')) return;
+          var used = parseInt(localStorage.getItem('dohpass_anon_trial') || '0', 10);
+          var limit = 3 - (used > 0 ? used : 0);
+          if (limit <= 0) return;
+          window.__dpPreview = {
+            track: m[1],
+            limit: limit,
+            promise: fetch(base + '/rest/v1/rpc/get_preview_questions?p_track=' + m[1] +
+                '&p_limit=' + limit + '&apikey=' + encodeURIComponent('%VITE_SUPABASE_ANON_KEY%'))
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .catch(function () { return null; })
+          };
+        } catch (e) { /* storage blocked or an old browser: the page fetches as usual */ }
+      })();
+    </script>
     <!-- Google Ads global site tag. The gtag() stub and config run immediately,
          so page views and conversions queue in dataLayer from the first moment;
          the library itself (the largest main-thread cost on the page) loads

@@ -7,6 +7,7 @@ import {
   fetchQuestionCounts,
 } from '../lib/supabase'
 import AppNav from '../components/AppNav.jsx'
+import { track } from '../lib/attribution'
 import LandingFooter from '../components/LandingFooter.jsx'
 
 /* ───────────────────────────────────────────────────────────────
@@ -430,6 +431,8 @@ export default function Pricing() {
   function goToCheckout(planId) {
     navigate(`/checkout?plan=${planId}`)
   }
+
+  useEffect(() => { track('pricing_view') }, [])
 
   useEffect(() => {
     let cancelled = false

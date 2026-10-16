@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { track, getFirstTouch, getAnonId } from '../lib/attribution'
 
 // Where Supabase sends users after they click the email-confirmation link.
 // This URL MUST be present in the Supabase dashboard redirect allowlist
@@ -46,6 +47,8 @@ export default function AuthPage() {
   const [awaitingConfirm, setAwaitingConfirm] = useState(false)
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
+
+  useEffect(() => { if (mode === 'signup') track('signup_view') }, [mode])
   const [resetSent, setResetSent] = useState(false)
 
   async function handleSubmit() {
@@ -61,8 +64,13 @@ export default function AuthPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: EMAIL_REDIRECT_URL },
+        options: {
+          emailRedirectTo: EMAIL_REDIRECT_URL,
+          // First-touch attribution travels with the account (auth user_metadata).
+          data: { first_touch: getFirstTouch(), anon_id: getAnonId() },
+        },
       })
+      if (!error) track('signup_submitted', { confirm_required: !data?.session })
       if (error) setError(error.message)
       else if (data.session) navigate('/dashboard')  // new account → first-run hero (pick exam, 10 free Qs)
       else setAwaitingConfirm(true)                  // confirmation required → show confirm screen

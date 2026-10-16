@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchQuestionCounts } from '../lib/supabase';
+import { track } from '../lib/attribution';
 
 // ─────────────────────────────────────────────────────────────
 // Curated 5-question demo. Hardcoded by design — zero DB calls,
@@ -168,6 +169,10 @@ export default function SampleQuestionDemo() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (hitWall) track('demo_complete', { answered: answeredCount });
+  }, [hitWall]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const q = DEMO_QUESTIONS[index];
   const isCorrect = selected === q.correct;
 
@@ -177,6 +182,7 @@ export default function SampleQuestionDemo() {
     setRevealed(true);
     const correct = key === q.correct;
     setStreak((s) => (correct ? s + 1 : 0));
+    if (answeredCount === 0) track('demo_first_answer', { q: q.id });
     setAnsweredCount((c) => c + 1);
   };
 

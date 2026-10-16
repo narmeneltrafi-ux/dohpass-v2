@@ -5,6 +5,7 @@ import CountUp from '../components/CountUp.jsx'
 import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 import SampleQuestionDemo from '../components/SampleQuestionDemo.jsx'
+import { track } from '../lib/attribution'
 
 /* ───────────────────────────────────────────────────────────────
    ICONS
@@ -734,6 +735,8 @@ function CTACloser({ navigate }) {
 export default function Home() {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
+
+  useEffect(() => { track('landing_view') }, [])
 
   useEffect(() => {
     let cancelled = false

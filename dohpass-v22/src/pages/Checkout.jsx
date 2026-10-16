@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase, createManualOrder, generatePaymentReference } from '../lib/supabase'
 import { getPlan, BANK_DETAILS, SUPPORT_EMAIL, ACTIVATION_WINDOW } from '../lib/paymentConfig'
 import { buildPlans } from '../lib/siteContent'
+import { authPath } from '../lib/postAuthRedirect'
+import { PaymentSteps } from '../components/site/PlanGrid.jsx'
 import useQuestionCounts from '../hooks/useQuestionCounts'
 import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
@@ -137,22 +139,36 @@ export default function Checkout() {
     )
   }
 
-  /* ── Not signed in — gate into auth, preserving intent ───── */
+  /* ── Not signed in — gate into auth, keeping the chosen plan ─
+     Both routes carry ?next= back to this checkout (allowlisted in
+     postAuthRedirect), so choosing a plan isn't lost to the sign-in detour. */
   if (user === null) {
+    const next = `/checkout?plan=${plan.id}`
     return (
       <Shell>
-        <div className="dp-wrap dp-checkout__narrow">
-          <h1 className="dp-checkout__title">Sign in to buy {plan.name}</h1>
-          <p className="dp-checkout__sub">
-            {plan.name} is AED {plan.amount} for 30 days. Access is added to your account, so sign in
-            or create a free account first.
-          </p>
-          <div className="dp-checkout__actions">
-            <button type="button" className="btn btn--primary btn--lg" onClick={() => navigate('/login')}>
-              Sign in or create account
-            </button>
-            <Link className="dp-checkout__link" to="/pricing">Back to pricing</Link>
+        <div className="dp-wrap dp-checkout__grid dp-checkout__grid--intro">
+          <div className="dp-checkout__main">
+            <h1 className="dp-checkout__title">Buy {plan.name}</h1>
+            <p className="dp-checkout__sub">
+              AED {plan.amount} for 30 days. Access is added to your DOHPass account, so sign in or
+              create a free account first, then pay by bank transfer.
+            </p>
+            <div className="dp-checkout__actions">
+              <button
+                type="button"
+                className="btn btn--primary btn--lg"
+                onClick={() => navigate(authPath({ next, signup: true }))}
+              >
+                Create a free account
+              </button>
+              <Link className="dp-checkout__link" to={authPath({ next })}>I have an account — sign in</Link>
+            </div>
+            <section className="dp-checkout__preview" aria-labelledby="next-steps-title">
+              <h2 className="dp-checkout__h2" id="next-steps-title">How paying works</h2>
+              <PaymentSteps headingLevel={3} />
+            </section>
           </div>
+          <OrderSummary plan={plan} features={features} />
         </div>
       </Shell>
     )

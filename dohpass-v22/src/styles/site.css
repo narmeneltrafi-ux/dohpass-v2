@@ -104,6 +104,10 @@
   border-radius: 6px;
 }
 .dp-nav__signin:hover { color: var(--fog-50); text-decoration: underline; text-underline-offset: 4px; }
+/* Nav "Start free" while the hero's own button is visible: same action, so it
+   steps back rather than doubling the brass on the first screen. */
+.dp-nav__cta.is-quiet { background: transparent; color: var(--fog-50); border-color: var(--ink-500); }
+.dp-nav__cta.is-quiet:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); border-color: var(--fog-400); }
 
 .dp-nav__plan {
   padding: 4px 10px;
@@ -613,13 +617,14 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  columns: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: var(--sp-6);
   color: var(--slate-700);
   font-size: var(--fs-16);
   line-height: 1.9;
 }
-.dp-exam__systems li { break-inside: avoid; }
+.dp-exam__systems li { line-height: 1.4; padding: 5px 0; }
 .dp-exam__more { color: var(--slate-600); }
 .dp-exam__cta {
   display: flex;
@@ -937,6 +942,22 @@
 }
 .dp-foot__legal p { margin: 0; }
 
+/* Compact variant (app pages, confirm a transfer) */
+.dp-foot__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-8);
+  max-width: calc(var(--w-content) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: var(--sp-8) var(--gutter) var(--sp-5);
+}
+.dp-foot__inline { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0 var(--sp-5); }
+.dp-foot__inline a { display: inline-flex; align-items: center; min-height: 36px; color: var(--fog-300); text-decoration: none; }
+.dp-foot__inline a:hover { color: var(--fog-50); text-decoration: underline; text-underline-offset: 3px; }
+.dp-foot--compact .dp-foot__legal { padding-top: var(--sp-5); padding-bottom: var(--sp-8); }
+
 /* ── Inner-page header (pricing, etc.) ────────────────────────── */
 .dp-pagehead {
   padding: calc(var(--nav-h) + clamp(2.5rem, 1.5rem + 4vw, 4.5rem)) 0 clamp(2.5rem, 1.5rem + 3vw, 3.5rem);
@@ -954,6 +975,21 @@
 }
 .dp-pagehead__sub { margin: var(--sp-4) 0 0; max-width: 58ch; color: var(--fog-300); font-size: var(--fs-18); line-height: 1.6; }
 .dp-section--tight { padding-top: clamp(2.5rem, 1.5rem + 3vw, 4rem); }
+
+/* ── Long-form prose (about, policies) ────────────────────────── */
+.dp-prose { max-width: var(--w-prose); color: var(--slate-700); }
+.dp-prose h2 {
+  margin: var(--sp-12) 0 var(--sp-3);
+  color: var(--slate-900);
+  font-size: var(--fs-24);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.dp-prose h2:first-child { margin-top: 0; }
+.dp-prose p { margin: 0 0 var(--sp-4); font-size: var(--fs-18); line-height: 1.7; }
+.dp-prose p:last-child { margin-bottom: 0; }
 
 /* ── Comparison table ─────────────────────────────────────────── */
 .dp-cmp {
@@ -974,13 +1010,25 @@
 .dp-cmp__price th, .dp-cmp__price td { font-weight: 600; color: var(--slate-900); background: var(--paper-50); }
 .dp-cmp__table th:first-child { position: sticky; left: 0; background: var(--paper-0); z-index: 1; }
 .dp-cmp__table thead th:first-child, .dp-cmp__price th:first-child { background: var(--paper-50); }
+/* Phones: the whole comparison fits the screen — no sideways scrolling
+   to see the third plan. Values are short (counts, ticks, prices); the
+   "Question bank" row only repeats the column headings, so it drops out. */
 @media (max-width: 639px) {
-  .dp-cmp__table th, .dp-cmp__table td { padding: var(--sp-3) var(--sp-3); font-size: var(--fs-14); }
+  .dp-cmp { overflow-x: visible; }
+  .dp-cmp__table { min-width: 0; table-layout: fixed; }
+  .dp-cmp__table th, .dp-cmp__table td { padding: var(--sp-3) 4px; font-size: var(--fs-14); line-height: 1.35; }
+  .dp-cmp__table th:first-child { position: static; width: 31%; padding-left: var(--sp-3); }
+  .dp-cmp__table thead th { font-size: var(--fs-12); vertical-align: bottom; }
+  .dp-cmp__table thead th:not(:first-child), .dp-cmp__table td { text-align: center; }
+  .dp-cmp__row--repeat { display: none; }
 }
 
 /* ── Checkout ─────────────────────────────────────────────────── */
 .dp-checkout {
-  min-height: 70vh;
+  /* Full viewport while auth resolves, so the footer can't sit on screen
+     during "Loading…" and then jump when the page fills in (CLS). */
+  min-height: 100vh;
+  min-height: 100svh;
   padding: calc(var(--nav-h) + clamp(2rem, 1rem + 3vw, 3.5rem)) 0 var(--section-y);
   background: var(--paper-50);
   color: var(--slate-900);
@@ -1003,6 +1051,10 @@
 .dp-checkout__loading { margin: 0; color: var(--slate-600); }
 .dp-checkout__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3) var(--sp-6); margin-top: var(--sp-6); }
 .dp-checkout__link { color: var(--slate-900); font-weight: 500; text-underline-offset: 4px; }
+/* Signed-out checkout: what happens after sign-in, read as one sequence */
+.dp-checkout__preview { margin-top: var(--sp-10); padding-top: var(--sp-8); border-top: 1px solid var(--line-200); }
+.dp-checkout__h2 { margin: 0 0 var(--sp-5); font-size: var(--fs-18); font-weight: 600; color: var(--slate-900); }
+.dp-checkout__preview .dp-steps { grid-template-columns: 1fr; gap: var(--sp-5); max-width: 40rem; }
 .dp-checkout__done-icon {
   display: inline-grid; place-items: center;
   width: 44px; height: 44px; margin: 0 0 var(--sp-4);
@@ -1128,7 +1180,11 @@
 .dp-order__list svg { margin-top: 3px; }
 .dp-order__terms { margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--line-200); color: var(--slate-600); }
 .dp-order__change { display: inline-block; margin-top: var(--sp-5); color: var(--slate-900); font-weight: 600; font-size: var(--fs-14); text-underline-offset: 3px; }
-@media (max-width: 1023px) { .dp-order { order: -1; } }
+@media (max-width: 1023px) {
+  .dp-order { order: -1; }
+  /* Signed out: the action comes first on phones; the summary follows. */
+  .dp-checkout__grid--intro .dp-order { order: 0; }
+}
 
 .dp-checklist { list-style: none; margin: var(--sp-8) 0 0; padding: 0; counter-reset: dpstep; border-top: 1px solid var(--line-300); }
 .dp-checklist li {
@@ -1304,3 +1360,6 @@
 .paywall-title { font-size: var(--fs-21); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
 .paywall-body { color: var(--fog-300); font-size: var(--fs-16); line-height: 1.6; max-width: 34ch; }
 .paywall-cta { border-radius: var(--r-sm); min-height: 48px; font-weight: 600; }
+
+/* ── Features (legacy lp-feat page): brass off the labels ─────── */
+.lp-feat .lp-feature__eyebrow { color: var(--slate-600); text-transform: none; letter-spacing: 0; font-size: var(--fs-14); font-weight: 600; }

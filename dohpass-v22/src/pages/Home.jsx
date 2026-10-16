@@ -4,6 +4,8 @@ import AppNav from '../components/AppNav.jsx'
 import LandingFooter from '../components/LandingFooter.jsx'
 import SampleQuestionDemo, { ANATOMY_QUESTION } from '../components/SampleQuestionDemo.jsx'
 import Accordion from '../components/site/Accordion.jsx'
+import TrustPanel from '../components/site/TrustPanel.jsx'
+import Closer from '../components/site/Closer.jsx'
 import { PlanGrid, PlanTerms, PaymentSteps } from '../components/site/PlanGrid.jsx'
 import useQuestionCounts from '../hooks/useQuestionCounts'
 import { FAQ, SPECIALIST_SYSTEMS, GP_SYSTEMS, fmt } from '../lib/siteContent'
@@ -36,7 +38,7 @@ function Hero({ onStart, total }) {
             behind it where one applies.
           </p>
           <div className="dp-hero__actions">
-            <button type="button" className="btn btn--primary btn--lg" onClick={onStart}>
+            <button type="button" className="btn btn--primary btn--lg" onClick={onStart} data-hero-cta>
               Start free
             </button>
             <a className="dp-hero__try" href="#sample">Try a sample question</a>
@@ -61,14 +63,12 @@ function Hero({ onStart, total }) {
   )
 }
 
-function ExamPanel({ id, title, count, systems, to, cta }) {
+function ExamPanel({ id, title, count, desc, systems, to, cta }) {
   return (
     <article className="dp-exam" id={id} aria-labelledby={`${id}-title`}>
       <h3 className="dp-exam__title" id={`${id}-title`}>{title}</h3>
       <p className="dp-exam__count"><Count value={count} /> questions</p>
-      <p className="dp-exam__desc">
-        Clinical vignettes in the Pearson VUE style. One best answer from four or five options.
-      </p>
+      <p className="dp-exam__desc">{desc}</p>
       <h4 className="dp-exam__label">Systems with the most questions</h4>
       <ul className="dp-exam__systems">
         {systems.slice(0, 9).map((s) => <li key={s}>{s}</li>)}
@@ -98,6 +98,7 @@ function Exams({ counts }) {
             id="specialist"
             title="Internal Medicine Specialist"
             count={fmt(counts?.specialist)}
+            desc="Internal medicine at specialist level, from gastroenterology and neurology to oncology and geriatrics."
             systems={SPECIALIST_SYSTEMS}
             to="/specialist"
             cta="Try Specialist questions"
@@ -106,6 +107,7 @@ function Exams({ counts }) {
             id="gp"
             title="General Practitioner"
             count={fmt(counts?.gp)}
+            desc="Primary care across adult medicine, women’s health, paediatrics, mental health and prevention."
             systems={GP_SYSTEMS}
             to="/gp"
             cta="Try GP questions"
@@ -189,7 +191,7 @@ function Progress() {
             <div><dt>Accuracy by topic</dt><dd>Weak systems surface on their own as you practise.</dd></div>
             <div><dt>Focus drill</dt><dd>A session built from your lowest-scoring topics.</dd></div>
             <div><dt>Spaced review</dt><dd>Flashcards come back just before you are likely to forget them.</dd></div>
-            <div><dt>Exam countdown</dt><dd>Set your exam date and a daily question goal to pace yourself.</dd></div>
+            <div><dt>Exam countdown</dt><dd>Set your exam date and see how many questions a day will finish the bank.</dd></div>
           </dl>
         </header>
 
@@ -213,61 +215,6 @@ function Progress() {
             Weakest topic: <strong>Nephrology</strong>. It leads your next focus drill.
           </p>
         </figure>
-      </div>
-    </section>
-  )
-}
-
-function Authors() {
-  return (
-    <section className="dp-section dp-section--dark" aria-labelledby="authors-title">
-      <div className="dp-wrap dp-split">
-        <div className="dp-split__aside">
-          <h2 className="dp-h2" id="authors-title">Who is behind DOHPass</h2>
-          <div className="dp-person">
-            <span className="dp-person__mono" aria-hidden="true">DI</span>
-            <div>
-              <p className="dp-person__name">Dr. Ibrahim</p>
-              <p className="dp-person__role">Internal Medicine Specialist, DOH-licensed</p>
-            </div>
-          </div>
-          <ul className="dp-person__creds">
-            <li>Passed the DOH Internal Medicine Specialist exam</li>
-            <li>MRCP (UK)</li>
-            <li>Oncology and Palliative Care, Tawam Hospital, Al Ain</li>
-          </ul>
-          <blockquote className="dp-quote">
-            <p>
-              “Built from the questions I wished I’d had during my own DOH prep. Every other
-              resource was USMLE or MRCP adapted. This is purpose-built.”
-            </p>
-          </blockquote>
-        </div>
-
-        <div>
-          <h3 className="dp-ledger__title">How the bank is maintained</h3>
-          <dl className="dp-ledger">
-            <div>
-              <dt>Built to the DOH format</dt>
-              <dd>Clinical vignettes with one best answer from four or five options.</dd>
-            </div>
-            <div>
-              <dt>Reviewed before publishing</dt>
-              <dd>New questions stay unpublished until they pass review.</dd>
-            </div>
-            <div>
-              <dt>Explained option by option</dt>
-              <dd>Explanations cover the correct answer and the distractors, with the guideline they rest on where one applies.</dd>
-            </div>
-            <div>
-              <dt>Corrected when reported</dt>
-              <dd>
-                Email <a href="mailto:hello@dohpass.com">hello@dohpass.com</a> about an error. It is
-                checked against the current guideline and fixed in the live bank.
-              </dd>
-            </div>
-          </dl>
-        </div>
       </div>
     </section>
   )
@@ -317,23 +264,6 @@ function Faq() {
   )
 }
 
-function Closer({ onStart }) {
-  return (
-    <section className="dp-closer" aria-labelledby="closer-title">
-      <div className="dp-wrap dp-closer__inner">
-        <div>
-          <h2 className="dp-closer__title" id="closer-title">Start with 10 free questions</h2>
-          <p className="dp-closer__sub">Full explanations included. No payment details needed.</p>
-        </div>
-        <div className="dp-closer__actions">
-          <button type="button" className="btn btn--primary btn--lg" onClick={onStart}>Start free</button>
-          <Link className="dp-closer__link" to="/pricing">See pricing</Link>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export default function Home() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -359,7 +289,7 @@ export default function Home() {
         <Exams counts={counts} />
         <Anatomy />
         <Progress />
-        <Authors />
+        <TrustPanel />
         <Pricing counts={counts} />
         <Faq />
         <Closer onStart={startFree} />

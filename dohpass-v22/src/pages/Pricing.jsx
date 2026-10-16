@@ -32,7 +32,7 @@ function comparisonRows(counts) {
   const n = (v) => fmt(v) ?? '—'
   return [
     { label: 'Questions', gp: n(counts?.gp), sp: n(counts?.specialist), all: n(total) },
-    { label: 'Question bank', gp: 'GP', sp: 'Specialist', all: 'Both' },
+    { label: 'Question bank', gp: 'GP', sp: 'Specialist', all: 'Both', repeat: true },
     { label: 'Explanations for every option', gp: true, sp: true, all: true },
     { label: 'Progress and weak-topic tracking', gp: true, sp: true, all: true },
     { label: 'Mock exams', gp: false, sp: false, all: true },
@@ -105,7 +105,7 @@ export default function Pricing() {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.label}>
+                    <tr key={r.label} className={r.repeat ? 'dp-cmp__row--repeat' : undefined}>
                       <th scope="row">{r.label}</th>
                       <td><Cell value={r.gp} /></td>
                       <td><Cell value={r.sp} /></td>

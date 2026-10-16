@@ -55,7 +55,7 @@ const DEMO_QUESTIONS = [
       { key: 'E', text: 'Give a STAT bolus of IV insulin' },
     ],
     correct: 'C',
-    citation: 'JBDS DKA Guidelines / general IM',
+    citation: 'JBDS DKA Guidelines',
     explanation: {
       correct: 'Fluid resuscitation with 0.9% sodium chloride is the first step in DKA — patients are profoundly volume-depleted, and rehydration begins before or alongside insulin.',
       distractors: {
@@ -82,7 +82,7 @@ const DEMO_QUESTIONS = [
       { key: 'E', text: 'Urgent haemodialysis' },
     ],
     correct: 'A',
-    citation: 'UK Renal Association / general IM',
+    citation: 'UK Renal Association',
     explanation: {
       correct: 'With ECG changes present, IV calcium gluconate is given FIRST to stabilise the myocardial membrane and protect against arrhythmia. It does not lower potassium but buys time.',
       distractors: {

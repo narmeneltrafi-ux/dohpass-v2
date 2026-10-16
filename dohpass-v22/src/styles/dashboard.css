@@ -120,3 +120,49 @@
 .lp-dash .diag-dash-banner--renew .diag-dash-banner__cta { background: var(--brass-500); border-color: var(--brass-500); color: var(--ink-950); }
 .lp-dash .diag-dash-banner--renew .diag-dash-banner__cta:hover { background: var(--brass-400); }
 .lp-dash .exam-countdown { background: var(--ink-900); border-color: var(--ink-700); }
+
+/* ── Next step (returning hero) ─────────────────────────────── */
+.lp-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-6);
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--r-md);
+  background: var(--ink-900);
+}
+.lp-next--pending { min-height: 94px; border-color: transparent; background: transparent; }
+.lp-next__body { min-width: 0; }
+.lp-next__label { margin: 0; color: var(--fog-400); font-size: var(--fs-14); font-weight: 500; }
+.lp-next__title { margin: 2px 0 0; color: var(--fog-50); font-size: var(--fs-21); font-weight: 600; letter-spacing: -0.01em; }
+.lp-next__topics { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lp-next__cta { flex-shrink: 0; }
+@media (max-width: 559px) { .lp-next__cta { width: 100%; } }
+
+/* Free users: the upgrade prompt is real but secondary to using the
+   free questions — the gate at question 10 makes the offer. */
+.lp-dash .lp-dash__upgrade { border-color: var(--ink-700); background: var(--ink-900); }
+.lp-dash .lp-dash__upgrade__cta { background: transparent; border-color: var(--ink-500); color: var(--fog-50); border-radius: var(--r-sm); min-height: 40px; }
+.lp-dash .lp-dash__upgrade__cta:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--fog-400); }
+
+/* Countdown on phones: one left-aligned column, label unwrapped */
+@media (max-width: 480px) {
+  .lp-dash .exam-countdown__right { text-align: left; }
+  .lp-dash .exam-countdown__target-label { max-width: none; }
+}
+
+/* ── First run: neutral welcome, brass kept for the choice ──── */
+.lp-dash .lp-fr__eyebrow { color: var(--fog-300); background: transparent; border-color: var(--ink-600); border-radius: var(--r-xs); letter-spacing: 0; }
+.lp-dash .lp-fr__eyebrow-dot { background: var(--ok-on-dark); }
+.lp-dash .lp-fr__trust { margin-top: var(--sp-8); margin-bottom: 0; border-color: var(--ink-700); background: var(--ink-900); border-radius: var(--r-md); }
+.lp-dash .lp-fr__avatar { color: var(--fog-50); background: var(--ink-800); border: 1px solid var(--ink-600); }
+.lp-dash .lp-fr__proof { border-top-color: var(--ink-700); }
+.lp-dash .lp-fr__proof li::before { color: var(--fog-200); }
+.lp-dash .lp-fr__tracks { margin-top: var(--sp-8); }
+.lp-dash .lp-fr__tracks .lp-track__cta { background: var(--brass-500); border-color: var(--brass-500); color: var(--ink-950); }
+.lp-dash .lp-fr__tracks .lp-track:hover .lp-track__cta { background: var(--brass-400); }
+.lp-dash .lp-fr__diag-link { width: auto; justify-content: flex-start; margin: var(--sp-6) 0 0; padding: var(--sp-2) 0; color: var(--fog-300); }
+.lp-dash .lp-fr__diag-link:hover { color: var(--fog-50); text-decoration: underline; text-underline-offset: 4px; }

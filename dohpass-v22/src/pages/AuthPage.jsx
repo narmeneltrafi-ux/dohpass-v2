@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { track, getFirstTouch, getAnonId } from '../lib/attribution'
+import { safeNext, rememberNext, takeRememberedNext } from '../lib/postAuthRedirect'
 import BrandMark from '../components/BrandMark.jsx'
 
 // Where Supabase sends users after they click the email-confirmation link.
@@ -19,6 +20,9 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [mode, setMode] = useState(params.get('mode') === 'signup' ? 'signup' : 'login')
+  // Where to go once signed in (a chosen plan's checkout, or the track being
+  // previewed). Allowlisted in postAuthRedirect, so it can't be an open redirect.
+  const next = safeNext(params.get('next'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,8 +47,14 @@ export default function AuthPage() {
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
-      else navigate('/')
+      else {
+        // Always consume a remembered intent so it can't fire later by surprise.
+        const remembered = takeRememberedNext()
+        navigate(next || remembered || '/')
+      }
     } else {
+      // Survives the email-confirmation round trip (the link opens /dashboard).
+      rememberNext(next)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -56,7 +66,7 @@ export default function AuthPage() {
       })
       if (!error) track('signup_submitted', { confirm_required: !data?.session })
       if (error) setError(error.message)
-      else if (data.session) navigate('/dashboard')  // new account → first-run hero (pick exam, 10 free Qs)
+      else if (data.session) navigate(takeRememberedNext() || '/dashboard')  // new account → intent, else first-run hero
       else setAwaitingConfirm(true)                  // confirmation required → show confirm screen
     }
     setLoading(false)

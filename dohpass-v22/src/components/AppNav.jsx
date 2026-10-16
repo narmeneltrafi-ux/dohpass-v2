@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, getProfile, hasAccess } from '../lib/supabase'
 import BrandMark from './BrandMark.jsx'
+import { authPath } from '../lib/postAuthRedirect'
 
 /* Site navigation — one component for marketing pages and the signed-in
    app. Auth-aware: visitors get exam/pricing links and a single primary
@@ -77,6 +78,9 @@ export default function AppNav() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [open, setOpen] = useState(false)
+  // While the landing hero's own "Start free" is on screen, the nav copy of
+  // it steps back to an outline so the first screen has one brass action.
+  const [heroCtaVisible, setHeroCtaVisible] = useState(false)
   const toggleRef = useRef(null)
   const drawerRef = useRef(null)
 
@@ -92,6 +96,15 @@ export default function AppNav() {
     })
     return () => { cancelled = true; listener?.subscription?.unsubscribe?.() }
   }, [])
+
+  useEffect(() => {
+    setHeroCtaVisible(false)
+    const el = document.querySelector('[data-hero-cta]')
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [location.pathname])
 
   // Close the drawer whenever the route (or hash) changes.
   useEffect(() => { setOpen(false) }, [location.pathname, location.hash])
@@ -129,6 +142,13 @@ export default function AppNav() {
   // On the sign-in page itself, "Sign in" / "Start free" would point at the
   // form the visitor is already looking at.
   const onAuthPage = location.pathname === '/login'
+  // Pages whose main action is already sign-up/sign-in or payment: a nav
+  // "Start free" would compete with it.
+  const pageOwnsAction = location.pathname === '/checkout' || location.pathname === '/confirm-payment'
+  // Signing in from checkout returns to the plan the visitor chose.
+  const signInTo = location.pathname === '/checkout'
+    ? authPath({ next: location.pathname + location.search })
+    : '/login'
   const isActive = (l) => (l.match.includes('#') ? here === l.match : location.pathname === l.match)
 
   return (
@@ -171,14 +191,16 @@ export default function AppNav() {
             </>
           ) : onAuthPage ? null : (
             <>
-              <Link to="/login" className="dp-nav__signin">Sign in</Link>
-              <button
-                type="button"
-                className="btn btn--primary btn--sm dp-nav__cta"
-                onClick={() => navigate('/login?mode=signup')}
-              >
-                Start free
-              </button>
+              <Link to={signInTo} className="dp-nav__signin">Sign in</Link>
+              {!pageOwnsAction && (
+                <button
+                  type="button"
+                  className={`btn btn--primary btn--sm dp-nav__cta${heroCtaVisible ? ' is-quiet' : ''}`}
+                  onClick={() => navigate('/login?mode=signup')}
+                >
+                  Start free
+                </button>
+              )}
             </>
           )}
           <button
@@ -217,7 +239,7 @@ export default function AppNav() {
               Account{badge && <span className="dp-nav__drawer-badge">{badge}</span>}
             </Link>
           ) : (
-            <Link to="/login" className="dp-nav__drawer-link">Sign in</Link>
+            <Link to={signInTo} className="dp-nav__drawer-link">Sign in</Link>
           )}
         </nav>
       </div>

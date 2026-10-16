@@ -18,10 +18,10 @@ import {
 } from '../lib/supabase'
 import { resolveCorrectIndex } from '../lib/resolveCorrectIndex'
 import QuestionCard from '../components/QuestionCard'
+import QuizGate from '../components/QuizGate.jsx'
 import ResultsScreen from '../components/ResultsScreen'
 import { BookmarkButton } from '../components/BookmarkButton'
 import { useBookmarks } from '../hooks/useBookmarks'
-import { PLANS } from '../lib/paymentConfig'
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 
@@ -42,27 +42,6 @@ function incrementAnonCount() {
   const next = readAnonCount() + 1
   try { localStorage.setItem(ANON_KEY, String(next)) } catch { /* private mode */ }
   return next
-}
-
-function PaywallGate({ title, body, ctaLabel, ctaPath = '/pricing' }) {
-  const navigate = useNavigate()
-  return (
-    <div className="paywall-wrap">
-      <div className="paywall-card">
-        <div className="paywall-icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="11" width="16" height="10" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-        </div>
-        <h2 className="paywall-title">{title}</h2>
-        <p className="paywall-body">{body}</p>
-        <button className="btn-primary blue paywall-cta" onClick={() => navigate(ctaPath)}>
-          {ctaLabel}
-        </button>
-      </div>
-    </div>
-  )
 }
 
 export default function GPQuiz() {
@@ -307,57 +286,18 @@ export default function GPQuiz() {
   }
 
   if (wrongPlan) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="Wrong Plan"
-          body="This track requires the GP plan or All Access."
-          ctaLabel="Upgrade Plan"
-          ctaPath="/checkout?plan=gp"
-        />
-      </div>
-    )
+    return <QuizGate variant="wrong-plan" track="gp" />
   }
 
   if (trialExhausted) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="You've used your 10 free questions"
-          body={`Keep going with the full GP bank: AED ${PLANS.gp.amount} for 30 days, paid once by bank transfer. Nothing renews automatically.`}
-          ctaLabel={`Get ${PLANS.gp.name}`}
-          ctaPath="/checkout?plan=gp"
-        />
-      </div>
-    )
+    return <QuizGate variant="trial-used" track="gp" />
   }
 
   // Anonymous preview cap. Gated on !submitted so the user can finish viewing
   // feedback for the question that pushed them to the limit before the
   // paywall takes over.
   if (anonExhausted && !submitted) {
-    return (
-      <div className="quiz-page" style={{ paddingTop: '62px' }}>
-        <div className="quiz-header">
-          <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-          <div className="quiz-title blue">General Practitioner</div>
-        </div>
-        <PaywallGate
-          title="Preview limit reached"
-          body="Create a free account for 10 more questions with full explanations. No payment details needed."
-          ctaLabel="Create a free account"
-          ctaPath="/login?mode=signup"
-        />
-      </div>
-    )
+    return <QuizGate variant="preview-limit" track="gp" />
   }
 
   if (loading) {
@@ -376,20 +316,7 @@ export default function GPQuiz() {
   }
   if (done) {
     if (isAnon) {
-      return (
-        <div className="quiz-page" style={{ paddingTop: '62px' }}>
-          <div className="quiz-header">
-            <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-            <div className="quiz-title blue">General Practitioner</div>
-          </div>
-          <PaywallGate
-            title="Preview complete"
-            body="Create a free account for 10 more questions with full explanations. No payment details needed."
-            ctaLabel="Create a free account"
-            ctaPath="/login?mode=signup"
-          />
-        </div>
-      )
+      return <QuizGate variant="preview-done" track="gp" />
     }
     return (
       <div className="quiz-page" style={{ paddingTop: '62px' }}>

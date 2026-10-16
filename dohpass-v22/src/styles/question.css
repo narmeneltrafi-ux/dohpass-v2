@@ -423,3 +423,75 @@
   .qui-expl { margin: var(--sp-5) calc(-1 * var(--sp-4)) 0; border-radius: 0; border-left: 0; border-right: 0; padding: var(--sp-5) var(--sp-4); }
   .qui-hint { display: none; }
 }
+
+/* ── Session gates (QuizGate) ────────────────────────────────────
+   Preview cap, end of the free 10, plan without this bank. Same surface
+   and top bar as the question screen; one brass action, one quiet link. */
+.qgate {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 1rem + 5vw, 4.5rem) var(--sp-5) 8rem;
+}
+.qgate__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--q-text);
+  text-wrap: balance;
+}
+.qgate__body {
+  margin: var(--sp-3) 0 0;
+  color: var(--q-text-2);
+  font-size: var(--fs-18);
+  line-height: 1.6;
+}
+.qgate__offer {
+  margin-top: var(--sp-8);
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px solid var(--q-line);
+  border-radius: var(--r-md);
+  background: var(--q-panel);
+}
+.qgate__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--q-line);
+}
+.qgate__plan { flex-basis: 100%; font-weight: 600; color: var(--q-text); }
+.qgate__amount {
+  color: var(--q-text);
+  font-size: var(--fs-36);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.qgate__cur { font-size: var(--fs-14); letter-spacing: 0; color: var(--q-muted); }
+.qgate__per { color: var(--q-muted); font-size: var(--fs-14); }
+.qgate__terms { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.qgate__terms li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: var(--sp-3);
+  color: var(--q-text-2);
+  line-height: 1.5;
+}
+.qgate__terms svg { margin-top: 4px; color: var(--q-text); }
+.qgate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-6);
+  margin-top: var(--sp-8);
+}
+.qgate__link { color: var(--q-text); font-weight: 600; text-underline-offset: 4px; }
+@media (max-width: 559px) {
+  .qgate__cta { width: 100%; white-space: normal; }
+  .qgate__offer { padding: var(--sp-5); }
+}

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase, createManualOrder, generatePaymentReference } from '../lib/supabase'
 import { getPlan, BANK_DETAILS, SUPPORT_EMAIL, ACTIVATION_WINDOW } from '../lib/paymentConfig'
 import AppNav from '../components/AppNav.jsx'
+import { track } from '../lib/attribution'
 import LandingFooter from '../components/LandingFooter.jsx'
 
 const IconArrow = ({ size = 16 }) => (
@@ -70,6 +71,8 @@ export default function Checkout() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
 
+  useEffect(() => { track('checkout_view', { plan: plan?.id ?? null }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let cancelled = false
     supabase.auth.getUser().then(({ data }) => {
@@ -94,6 +97,7 @@ export default function Checkout() {
       setSubmitting(false)
       return
     }
+    track('order_placed', { plan: plan?.id ?? null, amount: plan?.amount ?? null })
     setSubmitted(true)
     setSubmitting(false)
   }

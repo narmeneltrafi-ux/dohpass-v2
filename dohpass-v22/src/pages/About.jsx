@@ -13,19 +13,10 @@ export default function About() {
     <div className="dp-page">
       <AppNav />
       <main id="main">
-        <section className="dp-pagehead" aria-labelledby="about-h1">
-          <div className="dp-wrap">
-            <h1 className="dp-pagehead__title" id="about-h1">Built by a physician who sat the DOH exam</h1>
-            <p className="dp-pagehead__sub">
-              Why DOHPass exists, who builds it, and how the question bank is kept accurate.
-            </p>
-          </div>
-        </section>
-
-        <section className="dp-section dp-section--white on-paper" aria-label="Why DOHPass exists">
+        <section className="dp-section dp-section--white dp-section--top on-paper" aria-label="Why DOHPass exists">
           <div className="dp-wrap">
             <div className="dp-prose">
-              <h2>DOH prep is scattered across PDFs and out-of-date resources</h2>
+              <h1>DOH prep is scattered across PDFs and out-of-date resources</h1>
               <p>
                 The DOH licensing exam decides whether you can practise in Abu Dhabi, but the prep
                 market hasn’t kept up with it. Most candidates end up stitching their revision
